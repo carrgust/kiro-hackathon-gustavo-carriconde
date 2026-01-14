@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Toaster, toast } from 'sonner';
 import { EngineState, Hypothesis, DNAData } from '@/types/project';
 import { getStoredApiKey } from '@/lib/api';
 import { HypothesisService } from '@/lib/api/hypothesis';
@@ -986,6 +987,21 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
         message="This hypothesis and related themes will be avoided in future AI generations"
         onConfirm={handleConfirmRemoval}
         onCancel={handleCancelRemoval}
+      />
+      
+      {/* Toast Notifications */}
+      <Toaster 
+        position="top-right" 
+        theme="dark"
+        toastOptions={{
+          style: {
+            background: 'rgba(26, 26, 36, 0.95)',
+            border: '1px solid rgba(148, 163, 184, 0.2)',
+            backdropFilter: 'blur(12px)',
+            color: '#f8fafc',
+          },
+          className: 'font-mono text-sm',
+        }}
       />
         </div>
       </div>
