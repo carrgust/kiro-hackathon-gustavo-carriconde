@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Lock, Unlock, Play, Square, Sparkles } from 'lucide-react';
 import GeoSelector from './GeoSelector';
 import AutopilotToggle from './AutopilotToggle';
 
@@ -51,31 +53,61 @@ export default function EnhancedHeader({
   };
 
   return (
-    <div className="border-b border-gray-800 p-3 font-mono text-xs">
-      <div className="flex items-center justify-between">
-        {/* Left: System info + Budget */}
-        <div className="flex items-center space-x-4 text-gray-400">
-          <span>{provider} | {model}</span>
-          <div className="flex items-center space-x-1">
-            <span>budget:</span>
-            <input
-              type="number"
-              value={tokenBudget}
-              onChange={(e) => onTokenBudgetChange(Number(e.target.value))}
-              className="bg-transparent border border-gray-600 rounded px-1 w-16 text-white"
-              disabled={engineRunning}
-            />
+    <motion.div 
+      className="glass border-b border-gray-800/50 p-4 font-mono text-xs sticky top-0 z-20"
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="flex items-center justify-between gap-6">
+        {/* Left: Branding + System Info */}
+        <div className="flex items-center gap-6">
+          <motion.div 
+            className="text-gradient-cyan text-lg font-bold tracking-tight"
+            whileHover={{ scale: 1.05 }}
+          >
+            CURATOS DNA
+          </motion.div>
+          
+          <div className="flex items-center gap-4 text-gray-400 text-xs">
+            <span className="text-gray-500">{provider}</span>
+            <span className="text-gray-600">|</span>
+            <span className="text-cyan-400/70">{model}</span>
+            <span className="text-gray-600">|</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-gray-500">budget:</span>
+              <input
+                type="number"
+                value={tokenBudget}
+                onChange={(e) => onTokenBudgetChange(Number(e.target.value))}
+                className="bg-gray-900/50 border border-gray-700 rounded px-2 py-0.5 w-20 text-white focus:border-cyan-500 focus:outline-none transition-colors"
+                disabled={engineRunning}
+              />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-gray-500">spent:</span>
+              <motion.span 
+                className="text-red-400 font-semibold"
+                key={totalTokensSpent}
+                initial={{ scale: 1.2 }}
+                animate={{ scale: 1 }}
+              >
+                {totalTokensSpent.toLocaleString()}
+              </motion.span>
+            </div>
+            <motion.span 
+              className="text-cyan-400 font-mono"
+              animate={engineRunning ? { opacity: [1, 0.5, 1] } : {}}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              {runningTime}
+            </motion.span>
           </div>
-          <div className="flex items-center space-x-1">
-            <span>invested:</span>
-            <span className="text-red-400">{totalTokensSpent.toLocaleString()}</span>
-          </div>
-          <span>{runningTime}</span>
         </div>
         
-        {/* Center: Niche input and Geo selector */}
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2">
+        {/* Center: Niche + Geo */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <span className="text-gray-500 text-xs">niche:</span>
             <div className="relative">
               <input
@@ -91,40 +123,46 @@ export default function EnhancedHeader({
                 onKeyPress={(e) => e.key === 'Enter' && handleNicheSubmit()}
                 placeholder="select your niche"
                 disabled={nicheLocked || engineRunning}
-                className={`bg-transparent border border-gray-600 rounded px-2 py-1 w-48 text-xs ${
-                  nicheLocked ? 'text-gray-500 border-gray-700' : 'text-white hover:border-cyan-500 focus:border-cyan-400'
+                className={`bg-gray-900/50 border rounded-lg px-3 py-1.5 w-52 text-xs transition-all ${
+                  nicheLocked 
+                    ? 'text-gray-500 border-gray-700' 
+                    : 'text-white border-gray-700 hover:border-cyan-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20'
                 }`}
               />
               {showNicheDropdown && !nicheLocked && filteredSuggestions.length > 0 && (
-                <div className="absolute top-full left-0 mt-1 bg-gray-900 border border-gray-700 rounded text-xs z-10 w-full">
-                  {filteredSuggestions.map((suggestion) => (
-                    <div
+                <motion.div 
+                  className="absolute top-full left-0 mt-2 glass rounded-lg text-xs z-30 w-full overflow-hidden"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  {filteredSuggestions.map((suggestion, i) => (
+                    <motion.div
                       key={suggestion}
                       onClick={() => handleNicheSelect(suggestion)}
-                      className="px-2 py-1 hover:bg-gray-800 cursor-pointer text-gray-300"
+                      className="px-3 py-2 hover:bg-cyan-500/10 cursor-pointer text-gray-300 hover:text-cyan-400 transition-colors"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      whileHover={{ x: 4 }}
                     >
                       {suggestion}
-                    </div>
+                    </motion.div>
                   ))}
-                </div>
+                </motion.div>
               )}
             </div>
-            <button
+            <motion.button
               onClick={onNicheLockToggle}
               disabled={engineRunning}
-              className="text-gray-500 hover:text-cyan-400 transition-colors"
+              className="text-gray-500 hover:text-cyan-400 transition-colors p-1"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                {nicheLocked ? (
-                  <path d="M19 11H5C3.89543 11 3 11.8954 3 13V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V13C21 11.8954 20.1046 11 19 11Z M7 11V7C7 4.23858 9.23858 2 12 2C14.7614 2 17 4.23858 17 7V11"/>
-                ) : (
-                  <path d="M19 11H5C3.89543 11 3 11.8954 3 13V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V13C21 11.8954 20.1046 11 19 11Z M7 11V7C7 4.23858 9.23858 2 12 2C14.7614 2 17 4.23858 17 7V9"/>
-                )}
-              </svg>
-            </button>
+              {nicheLocked ? <Lock size={14} /> : <Unlock size={14} />}
+            </motion.button>
           </div>
           
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <span className="text-gray-500 text-xs">geo:</span>
             <GeoSelector
               selectedRegions={selectedRegions}
@@ -133,52 +171,67 @@ export default function EnhancedHeader({
           </div>
         </div>
         
-        {/* Right: Slider + Scores + Start */}
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2 text-gray-500">
+        {/* Right: Controls */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-gray-500 text-xs">
             <span>problems</span>
-            <span>◄</span>
+            <span className="text-gray-700">◄</span>
             <input
               type="range"
               min="0"
               max="100"
               value={100 - sliderValue}
               onChange={(e) => onSliderChange(100 - Number(e.target.value))}
-              className="w-16 h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer slider-terminal"
+              className="w-20 h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer slider-terminal"
             />
-            <span>►</span>
+            <span className="text-gray-700">►</span>
             <span>solutions</span>
-            <span className="text-cyan-400">({sliderValue}%/{100-sliderValue}%)</span>
+            <span className="text-cyan-400 font-semibold ml-1">
+              {sliderValue}%/{100-sliderValue}%
+            </span>
           </div>
+          
           <AutopilotToggle
             enabled={autopilotEnabled}
             onToggle={onAutopilotToggle}
             disabled={engineRunning}
           />
+          
           {onDemoMode && (
-            <button
+            <motion.button
               onClick={onDemoMode}
-              className="px-2 py-1 text-xs border border-cyan-500 text-cyan-400 hover:bg-cyan-500 hover:text-black transition-colors rounded"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 transition-all rounded-lg"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline mr-1">
-                <polygon points="23 7 16 12 23 17 23 7"></polygon>
-                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-              </svg>
-              Demo
-            </button>
+              <Sparkles size={12} />
+              <span>Demo</span>
+            </motion.button>
           )}
-          <button
+          
+          <motion.button
             onClick={onEngineToggle}
-            className={`px-2 py-1 transition-colors ${
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg font-semibold transition-all ${
               engineRunning 
-                ? 'bg-red-600 hover:bg-red-700 text-white' 
-                : 'bg-green-600 hover:bg-green-700 text-white'
+                ? 'bg-red-600 hover:bg-red-700 text-white shadow-[0_0_20px_rgba(239,68,68,0.3)]' 
+                : 'bg-green-600 hover:bg-green-700 text-white shadow-[0_0_20px_rgba(34,197,94,0.3)]'
             }`}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            animate={engineRunning ? { 
+              boxShadow: [
+                '0 0 20px rgba(239,68,68,0.3)',
+                '0 0 30px rgba(239,68,68,0.5)',
+                '0 0 20px rgba(239,68,68,0.3)'
+              ]
+            } : {}}
+            transition={{ duration: 1.5, repeat: Infinity }}
           >
-            [ {engineRunning ? 'STOP' : 'START'} ]
-          </button>
+            {engineRunning ? <Square size={14} /> : <Play size={14} />}
+            <span>{engineRunning ? 'STOP' : 'START'}</span>
+          </motion.button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
