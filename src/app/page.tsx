@@ -303,30 +303,17 @@ export default function Dashboard() {
   const researchHypothesis = useCallback(async (hypothesis: Hypothesis, column: 'hypotheses' | 'solutions' | 'requirements') => {
     if (!hypothesisService) return;
     
-    // Set status to downloading
+    // Set status to downloading - quiet start message
     setState(prev => ({
       ...prev,
       [column]: prev[column].map(h => h.id === hypothesis.id ? { ...h, status: 'downloading' as const } : h),
-      agentRationale: [...prev.agentRationale, `[SEARCHING] ${hypothesis.text.substring(0, 40)}...`].slice(-15)
+      agentRationale: [...prev.agentRationale, `Validating: "${hypothesis.text.substring(0, 35)}..."`].slice(-10)
     }));
     
     try {
       const result = await hypothesisService.researchHypothesis(hypothesis, stateRef.current.niche, column === 'hypotheses');
       
-      // Set status to analyzing with sources
-      setState(prev => ({
-        ...prev,
-        [column]: prev[column].map(h => h.id === hypothesis.id ? { 
-          ...h, 
-          status: 'analyzing' as const,
-          sources: result.sources
-        } : h),
-        agentRationale: [...prev.agentRationale, `[FOUND] ${result.sources.length} sources`].slice(-15)
-      }));
-      
-      // Small delay for visual effect
-      await new Promise(r => setTimeout(r, 200));
-      
+      // Skip intermediate "analyzing" message - go straight to result
       const isFact = result.confidence >= 90;
       const updatedHypothesis = { 
         ...hypothesis, 
@@ -336,13 +323,15 @@ export default function Dashboard() {
         status: 'complete' as const
       };
       
+      // Single result message with all info
+      const verdict = isFact ? `✓ FACT ${result.confidence}%` : `○ ${result.confidence}%`;
       setState(prev => ({
         ...prev,
         [column]: prev[column].map(h => h.id === hypothesis.id ? updatedHypothesis : h),
-        agentRationale: [...prev.agentRationale, isFact ? `[VALIDATED] ${result.confidence}%` : `[VALIDATING] ${result.confidence}%`].slice(-15)
+        agentRationale: [...prev.agentRationale, `${verdict} (${result.sources.length} sources)`].slice(-10)
       }));
       
-      // AUTO-CHAIN: When problem becomes fact, generate solution
+      // AUTO-CHAIN: When problem becomes fact, generate solution (silent)
       if (isFact && column === 'hypotheses' && stateRef.current.solutions.length < 4) {
         setTimeout(async () => {
           try {
@@ -350,15 +339,14 @@ export default function Dashboard() {
             const newSolution = { ...newSolutions[0], status: 'pending' as const };
             setState(prev => ({
               ...prev,
-              solutions: [...prev.solutions, newSolution].slice(0, 4),
-              agentRationale: [...prev.agentRationale, `[HYPOTHESIS] Solution: ${newSolution.text.substring(0, 30)}...`].slice(-15)
+              solutions: [...prev.solutions, newSolution].slice(0, 4)
             }));
             setTimeout(() => researchHypothesisRef.current?.(newSolution, 'solutions'), 200);
           } catch (e) { console.error('Auto-solution error:', e); }
         }, 100);
       }
       
-      // AUTO-CHAIN: When solution becomes fact, generate requirement
+      // AUTO-CHAIN: When solution becomes fact, generate requirement (silent)
       if (isFact && column === 'solutions' && stateRef.current.requirements.length < 4) {
         setTimeout(async () => {
           try {
@@ -367,8 +355,7 @@ export default function Dashboard() {
             const newReq = { ...newReqs[0], type: type as 'functional' | 'non-functional', status: 'pending' as const };
             setState(prev => ({
               ...prev,
-              requirements: [...prev.requirements, newReq].slice(0, 4),
-              agentRationale: [...prev.agentRationale, `[HYPOTHESIS] ${type} requirement`].slice(-15)
+              requirements: [...prev.requirements, newReq].slice(0, 4)
             }));
             setTimeout(() => researchHypothesisRef.current?.(newReq, 'requirements'), 200);
           } catch (e) { console.error('Auto-requirement error:', e); }
@@ -379,7 +366,7 @@ export default function Dashboard() {
       setState(prev => ({
         ...prev,
         [column]: prev[column].map(h => h.id === hypothesis.id ? { ...h, status: 'complete' as const } : h),
-        agentRationale: [...prev.agentRationale, `[ERROR] Research failed`].slice(-15)
+        agentRationale: [...prev.agentRationale, `✗ Research failed`].slice(-10)
       }));
     }
   }, [hypothesisService]);
@@ -430,36 +417,26 @@ export default function Dashboard() {
         
         try {
           if (shouldGenerateProblem) {
-            setState(prev => ({
-              ...prev,
-              agentRationale: [...prev.agentRationale, `[THINKING] Analyzing problems in ${currentNiche}`].slice(-15)
-            }));
-            
             const newProblems = await hypothesisService.generateHypotheses(currentNiche, 'problems', 1);
             const newProblem = { ...newProblems[0], status: 'pending' as const };
             
             setState(prev => ({
               ...prev,
               hypotheses: [...prev.hypotheses, newProblem].slice(0, 4),
-              agentRationale: [...prev.agentRationale, `[HYPOTHESIS] ${newProblem.text.substring(0, 40)}...`].slice(-15)
+              agentRationale: [...prev.agentRationale, `+ Problem: "${newProblem.text.substring(0, 35)}..."`].slice(-10)
             }));
             
             setTimeout(() => researchHypothesisRef.current?.(newProblem, 'hypotheses'), 300);
           }
           
           if (shouldGenerateSolution) {
-            setState(prev => ({
-              ...prev,
-              agentRationale: [...prev.agentRationale, `[THINKING] Analyzing solutions in ${currentNiche}`].slice(-15)
-            }));
-            
             const newSolutions = await hypothesisService.generateHypotheses(currentNiche, 'solutions', 1);
             const newSolution = { ...newSolutions[0], status: 'pending' as const };
             
             setState(prev => ({
               ...prev,
               solutions: [...prev.solutions, newSolution].slice(0, 4),
-              agentRationale: [...prev.agentRationale, `[HYPOTHESIS] ${newSolution.text.substring(0, 40)}...`].slice(-15)
+              agentRationale: [...prev.agentRationale, `+ Solution: "${newSolution.text.substring(0, 35)}..."`].slice(-10)
             }));
             
             setTimeout(() => researchHypothesisRef.current?.(newSolution, 'solutions'), 300);
@@ -473,7 +450,7 @@ export default function Dashboard() {
             setState(prev => ({
               ...prev,
               requirements: [...prev.requirements, newReq].slice(0, 4),
-              agentRationale: [...prev.agentRationale, `[HYPOTHESIS] ${type} requirement`].slice(-15)
+              agentRationale: [...prev.agentRationale, `+ Requirement: ${type}`].slice(-10)
             }));
             
             setTimeout(() => researchHypothesisRef.current?.(newReq, 'requirements' as any), 300);
