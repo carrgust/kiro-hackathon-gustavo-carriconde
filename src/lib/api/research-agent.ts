@@ -76,20 +76,6 @@ const API_REGISTRY = {
         source: 'hackerNews'
       }));
     }
-  },
-  reddit: {
-    name: 'Reddit',
-    description: 'Community discussions, user opinions, real-world experiences, pain points',
-    search: async (query: string): Promise<ApiResult[]> => {
-      const res = await fetch(`https://www.reddit.com/search.json?q=${encodeURIComponent(query)}&limit=5&sort=relevance`);
-      const data = await res.json();
-      return (data.data?.children || []).map((r: { data: { title: string; selftext: string; permalink: string } }) => ({
-        title: r.data.title,
-        snippet: r.data.selftext?.substring(0, 200) || '',
-        url: `https://reddit.com${r.data.permalink}`,
-        source: 'reddit'
-      }));
-    }
   }
 } as const;
 
