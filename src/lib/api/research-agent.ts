@@ -137,7 +137,14 @@ export class ResearchAgent {
         return this.formatResult(findings, decision.confidence || 50, reasoning);
       }
       
-      // Execute the chosen API
+      // FORCE: Skip if API already used (LLM might ignore markers)
+      if (usedApis.has(decision.api)) {
+        const unusedApi = Object.keys(API_REGISTRY).find(k => !usedApis.has(k) && (this.serperKey || k !== 'serper')) as keyof typeof API_REGISTRY | undefined;
+        if (!unusedApi) break;
+        decision.api = unusedApi;
+        decision.query = hypothesis;
+      }
+      
       const api = API_REGISTRY[decision.api];
       const results = await api.search(decision.query, this.serperKey);
       findings.push(...results);
@@ -150,34 +157,34 @@ export class ResearchAgent {
   }
 
   private async decide(hypothesis: string, findings: ApiResult[], usedApis: Set<string>): Promise<AgentDecision> {
+    // Only show APIs that haven't been used
     const availableApis = Object.entries(API_REGISTRY)
-      .filter(([key]) => !this.serperKey ? key !== 'serper' : true)
-      .map(([key, api]) => `- ${key}: ${api.description}${usedApis.has(key) ? ' [ALREADY USED]' : ''}`)
+      .filter(([key]) => !usedApis.has(key) && (this.serperKey || key !== 'serper'))
+      .map(([key, api]) => `- ${key}: ${api.description}`)
       .join('\n');
+    
+    if (!availableApis) {
+      return { action: 'done', confidence: 60, reasoning: 'All APIs exhausted' };
+    }
 
     const currentFindings = findings.length > 0
       ? findings.map(f => `[${f.source}] ${f.title}: ${f.snippet.substring(0, 100)}`).join('\n')
       : 'None yet';
 
-    const prompt = `You are a research agent validating a hypothesis. Decide the next action.
+    const prompt = `You are a research agent. Pick ONE API to query.
 
 HYPOTHESIS: "${hypothesis}"
 
-AVAILABLE APIs:
+AVAILABLE APIs (pick one):
 ${availableApis}
 
-CURRENT FINDINGS (${findings.length} sources):
+FINDINGS SO FAR (${findings.length}):
 ${currentFindings}
 
-RULES:
-- Query APIs you haven't used yet for diverse evidence
-- If findings strongly support/refute hypothesis, you can stop early
-- Craft specific queries that will find relevant evidence
-- After 3+ good sources, consider stopping if confident
-
-Respond in JSON only:
-{"action":"query","api":"apiName","query":"specific search query","reasoning":"why this API/query"}
-OR
+Respond JSON only:
+{"action":"query","api":"apiName","query":"search query","reasoning":"brief reason"}
+OR if enough evidence:
+{"action":"done","confidence":0-100,"reasoning":"why stopping"}
 {"action":"done","confidence":0-100,"reasoning":"why stopping"}`;
 
     try {

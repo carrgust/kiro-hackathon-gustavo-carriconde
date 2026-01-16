@@ -483,14 +483,18 @@ export default function Dashboard() {
         }
       }
       
-      // Research pending hypotheses
+      // Research pending hypotheses - MAX 2 researching at once per column
+      const researchingProblems = currentState.hypotheses.filter(h => h.status === 'downloading' || h.status === 'analyzing').length;
+      const researchingSolutions = currentState.solutions.filter(h => h.status === 'downloading' || h.status === 'analyzing').length;
+      const researchingRequirements = currentState.requirements.filter(h => h.status === 'downloading' || h.status === 'analyzing').length;
+      
       const pendingProblems = currentState.hypotheses.filter(h => h.status === 'pending' && h.confidence === 0);
       const pendingSolutions = currentState.solutions.filter(h => h.status === 'pending' && h.confidence === 0);
       const pendingRequirements = currentState.requirements.filter(h => h.status === 'pending' && h.confidence === 0);
       
-      if (pendingProblems.length > 0) researchHypothesisRef.current?.(pendingProblems[0], 'hypotheses');
-      if (pendingSolutions.length > 0) researchHypothesisRef.current?.(pendingSolutions[0], 'solutions');
-      if (pendingRequirements.length > 0) researchHypothesisRef.current?.(pendingRequirements[0], 'requirements' as any);
+      if (pendingProblems.length > 0 && researchingProblems < 2) researchHypothesisRef.current?.(pendingProblems[0], 'hypotheses');
+      if (pendingSolutions.length > 0 && researchingSolutions < 2) researchHypothesisRef.current?.(pendingSolutions[0], 'solutions');
+      if (pendingRequirements.length > 0 && researchingRequirements < 2) researchHypothesisRef.current?.(pendingRequirements[0], 'requirements' as any);
       
       // Schedule next run with dynamic interval
       timeoutId = setTimeout(generateAndResearch, nextInterval);
