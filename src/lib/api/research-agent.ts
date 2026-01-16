@@ -120,7 +120,7 @@ export class ResearchAgent {
       reasoning.push(`Step ${step + 1}: ${decision.reasoning}`);
       
       if (decision.action === 'done' || !decision.api || !decision.query) {
-        return this.formatResult(findings, decision.confidence || 50, reasoning);
+        return this.formatResult(findings, 0, reasoning, hypothesis);
       }
       
       // FORCE: Skip if API already used (LLM might ignore markers)
@@ -139,7 +139,7 @@ export class ResearchAgent {
       reasoning.push(`  → Found ${results.length} results from ${api.name}`);
     }
     
-    return this.formatResult(findings, 60, reasoning);
+    return this.formatResult(findings, 0, reasoning, hypothesis);
   }
 
   private async decide(hypothesis: string, findings: ApiResult[], usedApis: Set<string>): Promise<AgentDecision> {
@@ -150,7 +150,7 @@ export class ResearchAgent {
       .join('\n');
     
     if (!availableApis) {
-      return { action: 'done', confidence: 60, reasoning: 'All APIs exhausted' };
+      return { action: 'done', confidence: 0, reasoning: 'All APIs exhausted' };
     }
 
     const currentFindings = findings.length > 0
@@ -212,7 +212,7 @@ OR if enough evidence:
     return { action: 'done', confidence: 50, reasoning: 'All APIs exhausted' };
   }
 
-  private formatResult(findings: ApiResult[], confidence: number, reasoning: string[]): ResearchResult {
+  private formatResult(findings: ApiResult[], _confidence: number, reasoning: string[], hypothesis?: string): ResearchResult {
     const sources: Source[] = findings
       .filter(f => f.url)
       .slice(0, 8)
@@ -226,6 +226,30 @@ OR if enough evidence:
         isAcademic: f.source === 'openAlex',
         citationCount: f.source === 'openAlex' ? Math.floor(Math.random() * 100) : undefined
       }));
+
+    // Calculate confidence dynamically
+    let confidence = 50; // base
+    if (findings.length >= 5) confidence = 70;
+    else if (findings.length >= 3) confidence = 60;
+    
+    // Academic sources bonus
+    const hasAcademic = findings.some(f => f.source === 'openAlex');
+    if (hasAcademic) confidence += 15;
+    
+    // Diversity bonus (2+ different APIs)
+    const uniqueSources = new Set(findings.map(f => f.source));
+    if (uniqueSources.size >= 2) confidence += 10;
+    
+    // Relevance bonus - check if snippets/titles contain hypothesis keywords
+    if (hypothesis) {
+      const keywords = hypothesis.toLowerCase().split(/\s+/).filter(w => w.length > 4);
+      const allText = findings.map(f => `${f.title} ${f.snippet}`.toLowerCase()).join(' ');
+      const matchCount = keywords.filter(k => allText.includes(k)).length;
+      if (matchCount >= 3) confidence += 10;
+      else if (matchCount >= 1) confidence += 5;
+    }
+    
+    confidence = Math.min(98, confidence); // cap at 98
 
     return { sources, confidence, reasoning };
   }
