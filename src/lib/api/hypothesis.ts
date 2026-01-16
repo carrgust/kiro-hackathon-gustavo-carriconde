@@ -73,9 +73,13 @@ export class HypothesisService {
       if (response.ok) {
         const data = await response.json();
         console.log('[Research] Agent returned:', data.confidence, 'confidence');
+        // Format sources as "[Domain] Title ||| Snippet ||| URL" for consistency
+        const formattedSources = data.sources?.map((s: { title: string; snippet: string; url: string; domain: string }) => 
+          `[${s.domain || 'Web'}] ${s.title} ||| ${s.snippet || ''} ||| ${s.url}`
+        ) || [];
         return { 
           confidence: data.confidence || 50, 
-          sources: data.sources?.map((s: { url: string }) => s.url) || [] 
+          sources: formattedSources
         };
       } else {
         console.error('[Research] Agent response not ok:', response.status);

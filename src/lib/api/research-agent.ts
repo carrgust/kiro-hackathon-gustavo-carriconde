@@ -103,7 +103,6 @@ interface ResearchResult {
 export class ResearchAgent {
   private apiKey: string;
   private serperKey?: string;
-  private maxSteps = 3;  // 3 steps for better diversity
   
   constructor(apiKey: string, serperKey?: string) {
     this.apiKey = apiKey;
@@ -113,109 +112,48 @@ export class ResearchAgent {
   async research(hypothesis: string): Promise<ResearchResult> {
     const findings: ApiResult[] = [];
     const reasoning: string[] = [];
-    const usedApis = new Set<string>();
     
-    for (let step = 0; step < this.maxSteps; step++) {
-      const decision = await this.decide(hypothesis, findings, usedApis);
-      reasoning.push(`Step ${step + 1}: ${decision.reasoning}`);
-      
-      if (decision.action === 'done' || !decision.api || !decision.query) {
-        return this.formatResult(findings, 0, reasoning, hypothesis);
+    // Query each API once (round-robin, no LLM decision)
+    const apis = Object.entries(API_REGISTRY).filter(([key]) => this.serperKey || key !== 'serper');
+    
+    for (const [key, api] of apis) {
+      try {
+        const results = await api.search(hypothesis, this.serperKey);
+        findings.push(...results);
+        reasoning.push(`${api.name}: ${results.length} results`);
+      } catch (e) {
+        reasoning.push(`${api.name}: failed`);
       }
-      
-      // FORCE: Skip if API already used (LLM might ignore markers)
-      if (usedApis.has(decision.api)) {
-        const unusedApi = Object.keys(API_REGISTRY).find(k => !usedApis.has(k) && (this.serperKey || k !== 'serper')) as keyof typeof API_REGISTRY | undefined;
-        if (!unusedApi) break;
-        decision.api = unusedApi;
-        decision.query = hypothesis;
-      }
-      
-      const api = API_REGISTRY[decision.api];
-      const results = await api.search(decision.query, this.serperKey);
-      findings.push(...results);
-      usedApis.add(decision.api);
-      
-      reasoning.push(`  → Found ${results.length} results from ${api.name}`);
     }
     
     return this.formatResult(findings, 0, reasoning, hypothesis);
   }
 
-  private async decide(hypothesis: string, findings: ApiResult[], usedApis: Set<string>): Promise<AgentDecision> {
-    // Only show APIs that haven't been used
-    const availableApis = Object.entries(API_REGISTRY)
-      .filter(([key]) => !usedApis.has(key) && (this.serperKey || key !== 'serper'))
-      .map(([key, api]) => `- ${key}: ${api.description}`)
-      .join('\n');
-    
-    if (!availableApis) {
-      return { action: 'done', confidence: 0, reasoning: 'All APIs exhausted' };
-    }
-
-    const currentFindings = findings.length > 0
-      ? findings.map(f => `[${f.source}] ${f.title}: ${f.snippet.substring(0, 100)}`).join('\n')
-      : 'None yet';
-
-    const prompt = `You are a research agent. Pick ONE API to query.
-
-HYPOTHESIS: "${hypothesis}"
-
-AVAILABLE APIs (pick one):
-${availableApis}
-
-FINDINGS SO FAR (${findings.length}):
-${currentFindings}
-
-Respond JSON only:
-{"action":"query","api":"apiName","query":"search query","reasoning":"brief reason"}
-OR if enough evidence:
-{"action":"done","confidence":0-100,"reasoning":"why stopping"}
-{"action":"done","confidence":0-100,"reasoning":"why stopping"}`;
-
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
-      
-      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'openai/gpt-4o-mini',
-          messages: [{ role: 'user', content: prompt }],
-          temperature: 0.3
-        }),
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeout);
-      const data = await res.json();
-      const content = data.choices?.[0]?.message?.content || '';
-      
-      // Extract JSON from response (handle markdown code blocks)
-      const jsonMatch = content.match(/\{[\s\S]*?\}/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]) as AgentDecision;
-      }
-    } catch (e) {
-      console.error('Agent decision error:', e);
-    }
-    
-    // Fallback: query next unused API
-    const nextApi = Object.keys(API_REGISTRY).find(k => !usedApis.has(k)) as keyof typeof API_REGISTRY | undefined;
-    if (nextApi) {
-      return { action: 'query', api: nextApi, query: hypothesis, reasoning: 'Fallback to next API' };
-    }
-    return { action: 'done', confidence: 50, reasoning: 'All APIs exhausted' };
-  }
-
   private formatResult(findings: ApiResult[], _confidence: number, reasoning: string[], hypothesis?: string): ResearchResult {
-    const sources: Source[] = findings
+    // Ensure diversity: take max 2 from each source first
+    const bySource: Record<string, ApiResult[]> = {};
+    for (const f of findings) {
+      if (!bySource[f.source]) bySource[f.source] = [];
+      bySource[f.source].push(f);
+    }
+    
+    const diverseFindings: ApiResult[] = [];
+    const sources_list = Object.keys(bySource);
+    // First pass: take 2 from each source
+    for (const src of sources_list) {
+      diverseFindings.push(...bySource[src].slice(0, 2));
+    }
+    // Second pass: fill remaining slots to 8
+    for (const src of sources_list) {
+      if (diverseFindings.length >= 8) break;
+      for (const item of bySource[src].slice(2)) {
+        if (diverseFindings.length >= 8) break;
+        diverseFindings.push(item);
+      }
+    }
+    
+    const sources: Source[] = diverseFindings
       .filter(f => f.url)
-      .slice(0, 8)
       .map((f, i) => ({
         id: `src-${Date.now()}-${i}`,
         url: f.url,
