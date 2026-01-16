@@ -60,6 +60,9 @@ export default function Dashboard() {
   
   // Ref for researchHypothesis to avoid dependency issues
   const researchHypothesisRef = useRef<((h: Hypothesis, c: 'hypotheses' | 'solutions' | 'requirements') => Promise<void>) | null>(null);
+  
+  // Ref to prevent duplicate initialization in StrictMode
+  const initializedRef = useRef(false);
 
   const [apiError, setApiError] = useState<string | null>(null);
   const [engineRunning, setEngineRunning] = useState(false);
@@ -86,6 +89,29 @@ export default function Dashboard() {
     hypothesis: null,
     columnType: 'hypotheses'
   });
+  
+  // Track recent messages to prevent duplicates
+  const recentMessagesRef = useRef<Set<string>>(new Set());
+  
+  // Helper to add rationale message (prevents duplicates with Set)
+  const addRationale = useCallback((msg: string) => {
+    // Normalize message for comparison (first 50 chars)
+    const key = msg.substring(0, 50);
+    
+    if (recentMessagesRef.current.has(key)) return;
+    
+    recentMessagesRef.current.add(key);
+    
+    // Clear old messages from Set after 2 seconds
+    setTimeout(() => {
+      recentMessagesRef.current.delete(key);
+    }, 2000);
+    
+    setState(prev => ({
+      ...prev,
+      agentRationale: [...prev.agentRationale, msg].slice(-8)
+    }));
+  }, []);
 
   // Scoring hook for stage progression
   const scoring = useScoring({
@@ -217,16 +243,15 @@ export default function Dashboard() {
     localStorage.setItem('curatos_total_spent', state.totalTokensSpent.toString());
   }, [state.totalTokensSpent]);
 
-  // Initialize services on mount
+  // Initialize services on mount (prevent double init in StrictMode)
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
     console.log('[Init] Initializing services...');
     setHypothesisService(new HypothesisService('live'));
     setStreamingService(new StreamingService('live'));
-    setState(prev => ({
-      ...prev,
-      agentRationale: [...prev.agentRationale, '[VALIDATED] Services initialized'].slice(-15)
-    }));
-  }, []);
+    addRationale('Ready');
+  }, [addRationale]);
 
   // Calculate scores and unlock status
   useEffect(() => {
@@ -270,18 +295,13 @@ export default function Dashboard() {
         
         const focus = Math.random() < (currentSlider / 100) ? 'problems' : 'solutions';
         
-        // Clear current stream and start new one
         setCurrentRationaleStream('');
         
         const onRationaleUpdate = (text: string) => {
           setCurrentRationaleStream(prev => {
             const newStream = prev + text;
-            // Update rationale state with complete lines
             if (text.includes('\n') || newStream.length > 100) {
-              setState(current => ({
-                ...current,
-                agentRationale: [...current.agentRationale, newStream.trim()].slice(-15)
-              }));
+              addRationale(newStream.trim());
               return '';
             }
             return newStream;
@@ -303,17 +323,22 @@ export default function Dashboard() {
   const researchHypothesis = useCallback(async (hypothesis: Hypothesis, column: 'hypotheses' | 'solutions' | 'requirements') => {
     if (!hypothesisService) return;
     
-    // Set status to downloading - quiet start message
+    // Skip if already researching or complete
+    const current = stateRef.current[column].find(h => h.id === hypothesis.id);
+    if (!current || current.status === 'downloading' || current.status === 'analyzing' || current.status === 'complete') {
+      return;
+    }
+    
+    // Set status to downloading
     setState(prev => ({
       ...prev,
-      [column]: prev[column].map(h => h.id === hypothesis.id ? { ...h, status: 'downloading' as const } : h),
-      agentRationale: [...prev.agentRationale, `Validating: "${hypothesis.text.substring(0, 35)}..."`].slice(-10)
+      [column]: prev[column].map(h => h.id === hypothesis.id ? { ...h, status: 'downloading' as const } : h)
     }));
+    addRationale(`Validating: "${hypothesis.text.substring(0, 35)}..."`);
     
     try {
       const result = await hypothesisService.researchHypothesis(hypothesis, stateRef.current.niche, column === 'hypotheses');
       
-      // Skip intermediate "analyzing" message - go straight to result
       const isFact = result.confidence >= 90;
       const updatedHypothesis = { 
         ...hypothesis, 
@@ -323,13 +348,11 @@ export default function Dashboard() {
         status: 'complete' as const
       };
       
-      // Single result message with all info
-      const verdict = isFact ? `✓ FACT ${result.confidence}%` : `○ ${result.confidence}%`;
       setState(prev => ({
         ...prev,
-        [column]: prev[column].map(h => h.id === hypothesis.id ? updatedHypothesis : h),
-        agentRationale: [...prev.agentRationale, `${verdict} (${result.sources.length} sources)`].slice(-10)
+        [column]: prev[column].map(h => h.id === hypothesis.id ? updatedHypothesis : h)
       }));
+      addRationale(isFact ? `✓ FACT ${result.confidence}%` : `○ ${result.confidence}%`);
       
       // AUTO-CHAIN: When problem becomes fact, generate solution (silent)
       if (isFact && column === 'hypotheses' && stateRef.current.solutions.length < 4) {
@@ -365,11 +388,11 @@ export default function Dashboard() {
       console.error('[Research] Error:', error);
       setState(prev => ({
         ...prev,
-        [column]: prev[column].map(h => h.id === hypothesis.id ? { ...h, status: 'complete' as const } : h),
-        agentRationale: [...prev.agentRationale, `✗ Research failed`].slice(-10)
+        [column]: prev[column].map(h => h.id === hypothesis.id ? { ...h, status: 'complete' as const } : h)
       }));
+      addRationale(`✗ Research failed`);
     }
-  }, [hypothesisService]);
+  }, [hypothesisService, addRationale]);
   
   // Keep ref updated
   useEffect(() => { researchHypothesisRef.current = researchHypothesis; }, [researchHypothesis]);
@@ -422,9 +445,9 @@ export default function Dashboard() {
             
             setState(prev => ({
               ...prev,
-              hypotheses: [...prev.hypotheses, newProblem].slice(0, 4),
-              agentRationale: [...prev.agentRationale, `+ Problem: "${newProblem.text.substring(0, 35)}..."`].slice(-10)
+              hypotheses: [...prev.hypotheses, newProblem].slice(0, 4)
             }));
+            addRationale(`+ Problem: "${newProblem.text.substring(0, 35)}..."`);
             
             setTimeout(() => researchHypothesisRef.current?.(newProblem, 'hypotheses'), 300);
           }
@@ -435,9 +458,9 @@ export default function Dashboard() {
             
             setState(prev => ({
               ...prev,
-              solutions: [...prev.solutions, newSolution].slice(0, 4),
-              agentRationale: [...prev.agentRationale, `+ Solution: "${newSolution.text.substring(0, 35)}..."`].slice(-10)
+              solutions: [...prev.solutions, newSolution].slice(0, 4)
             }));
+            addRationale(`+ Solution: "${newSolution.text.substring(0, 35)}..."`);
             
             setTimeout(() => researchHypothesisRef.current?.(newSolution, 'solutions'), 300);
           }
@@ -449,9 +472,9 @@ export default function Dashboard() {
             
             setState(prev => ({
               ...prev,
-              requirements: [...prev.requirements, newReq].slice(0, 4),
-              agentRationale: [...prev.agentRationale, `+ Requirement: ${type}`].slice(-10)
+              requirements: [...prev.requirements, newReq].slice(0, 4)
             }));
+            addRationale(`+ Requirement: ${type}`);
             
             setTimeout(() => researchHypothesisRef.current?.(newReq, 'requirements' as any), 300);
           }
@@ -568,10 +591,7 @@ export default function Dashboard() {
     
     if (!state.autopilotEnabled) {
       // Autopilot activated - start the magic
-      setState(prev => ({
-        ...prev,
-        agentRationale: [...prev.agentRationale, '[THINKING] Autopilot engaged. AI is now flying your business...'].slice(-15)
-      }));
+      addRationale('Autopilot engaged');
       
       // Auto-configure settings with animations
       setTimeout(() => typewriterNiche(), 500);
@@ -589,11 +609,6 @@ export default function Dashboard() {
     const niches = ['fintech payments', 'ai saas tools', 'healthcare tech', 'climate solutions', 'developer tools'];
     const selectedNiche = niches[Math.floor(Math.random() * niches.length)];
     
-    setState(prev => ({
-      ...prev,
-      agentRationale: [...prev.agentRationale, `[THINKING] Analyzing market opportunities...`].slice(-15)
-    }));
-    
     let i = 0;
     const typeInterval = setInterval(() => {
       setState(prev => ({ ...prev, niche: selectedNiche.slice(0, i) }));
@@ -602,8 +617,7 @@ export default function Dashboard() {
         clearInterval(typeInterval);
         setState(prev => ({
           ...prev,
-          nicheLocked: true,
-          agentRationale: [...prev.agentRationale, `[THINKING] Selected niche: ${selectedNiche}`].slice(-15)
+          nicheLocked: true
         }));
       }
     }, 100);
@@ -611,10 +625,6 @@ export default function Dashboard() {
 
   const animateGeoSelection = () => {
     const regions = ['US', 'GB', 'DE'];
-    setState(prev => ({
-      ...prev,
-      agentRationale: [...prev.agentRationale, '[THINKING] Selecting optimal geographic markets...'].slice(-15)
-    }));
     
     regions.forEach((region, index) => {
       setTimeout(() => {
@@ -624,20 +634,9 @@ export default function Dashboard() {
         }));
       }, index * 800);
     });
-    
-    setTimeout(() => {
-      setState(prev => ({
-        ...prev,
-        agentRationale: [...prev.agentRationale, `[THINKING] Geographic focus: ${regions.join(', ')}`].slice(-15)
-      }));
-    }, regions.length * 800);
   };
 
   const animateSlider = () => {
-    setState(prev => ({
-      ...prev,
-      agentRationale: [...prev.agentRationale, '[THINKING] Optimizing problem-solution balance...'].slice(-15)
-    }));
     
     const targetValue = 70;
     const currentValue = state.slider;
@@ -653,112 +652,8 @@ export default function Dashboard() {
       step++;
       if (step > steps) {
         clearInterval(sliderInterval);
-        setState(prev => ({
-          ...prev,
-          agentRationale: [...prev.agentRationale, `[THINKING] Optimal balance achieved: ${targetValue}% problems focus`].slice(-15)
-        }));
       }
     }, 100);
-  };
-
-  const handleAddHypothesis = async () => {
-    if (!hypothesisService) {
-      toast.error('Service not initialized', { description: 'Please refresh the page' });
-      return;
-    }
-    
-    try {
-      const newHypotheses = await hypothesisService.generateHypotheses(state.niche, 'problems', 1);
-      setState(prev => ({
-        ...prev,
-        hypotheses: [...prev.hypotheses, ...newHypotheses.map(h => ({ ...h, status: 'pending' as const }))],
-        agentRationale: [...prev.agentRationale, `[HYPOTHESIS] ${newHypotheses[0]?.text || 'New hypothesis'}`].slice(-15)
-      }));
-      
-      // Auto-research each new hypothesis with API Machine Gun
-      for (const hypothesis of newHypotheses) {
-        setState(prev => ({
-          ...prev,
-          hypotheses: prev.hypotheses.map(h => h.id === hypothesis.id ? { ...h, status: 'downloading' as const } : h),
-          agentRationale: [...prev.agentRationale, `[SEARCHING] Firing API Machine Gun for: ${hypothesis.text}`].slice(-15)
-        }));
-        
-        const result = await hypothesisService.researchHypothesis(hypothesis, state.niche, true);
-        
-        setState(prev => ({
-          ...prev,
-          hypotheses: prev.hypotheses.map(h => h.id === hypothesis.id ? { ...h, status: 'analyzing' as const } : h),
-          agentRationale: [...prev.agentRationale, `[FOUND] ${result.sources.length} sources found`].slice(-15)
-        }));
-        
-        setState(prev => ({
-          ...prev,
-          hypotheses: prev.hypotheses.map(h =>
-            h.id === hypothesis.id
-              ? { ...h, state: result.confidence >= 90 ? 'fact' as const : 'hypothesis' as const, confidence: result.confidence, sources: result.sources, status: 'complete' as const }
-              : h
-          ),
-          agentRationale: [...prev.agentRationale, result.confidence >= 90 ? `[VALIDATED] ${result.confidence}% confidence` : `[VALIDATING] ${result.confidence}% confidence`].slice(-15)
-        }));
-      }
-    } catch (error) {
-      console.error('Error adding hypothesis:', error);
-      toast.error('Failed to generate hypothesis', { description: String(error) });
-      setState(prev => ({
-        ...prev,
-        agentRationale: [...prev.agentRationale, `[ERROR] ${error}`].slice(-15)
-      }));
-    }
-  };
-
-  const handleAddSolution = async () => {
-    if (!hypothesisService) {
-      toast.error('Service not initialized', { description: 'Please refresh the page' });
-      return;
-    }
-    
-    try {
-      const newSolutions = await hypothesisService.generateHypotheses(state.niche, 'solutions', 1);
-      setState(prev => ({
-        ...prev,
-        solutions: [...prev.solutions, ...newSolutions.map(s => ({ ...s, status: 'pending' as const }))],
-        agentRationale: [...prev.agentRationale, `[HYPOTHESIS] ${newSolutions[0]?.text || 'New solution'}`].slice(-15)
-      }));
-      
-      // Auto-research each new solution with API Machine Gun
-      for (const solution of newSolutions) {
-        setState(prev => ({
-          ...prev,
-          solutions: prev.solutions.map(s => s.id === solution.id ? { ...s, status: 'downloading' as const } : s),
-          agentRationale: [...prev.agentRationale, `[SEARCHING] Firing API Machine Gun for: ${solution.text}`].slice(-15)
-        }));
-        
-        const result = await hypothesisService.researchHypothesis(solution, state.niche, false);
-        
-        setState(prev => ({
-          ...prev,
-          solutions: prev.solutions.map(s => s.id === solution.id ? { ...s, status: 'analyzing' as const } : s),
-          agentRationale: [...prev.agentRationale, `[FOUND] ${result.sources.length} sources found`].slice(-15)
-        }));
-        
-        setState(prev => ({
-          ...prev,
-          solutions: prev.solutions.map(s =>
-            s.id === solution.id
-              ? { ...s, state: result.confidence >= 90 ? 'fact' as const : 'hypothesis' as const, confidence: result.confidence, sources: result.sources, status: 'complete' as const }
-              : s
-          ),
-          agentRationale: [...prev.agentRationale, result.confidence >= 90 ? `[VALIDATED] ${result.confidence}% confidence` : `[VALIDATING] ${result.confidence}% confidence`].slice(-15)
-        }));
-      }
-    } catch (error) {
-      console.error('Error adding solution:', error);
-      toast.error('Failed to generate solution', { description: String(error) });
-      setState(prev => ({
-        ...prev,
-        agentRationale: [...prev.agentRationale, `[ERROR] ${error}`].slice(-15)
-      }));
-    }
   };
 
   const handleSliderChange = (value: number) => {
@@ -771,64 +666,6 @@ export default function Dashboard() {
       tokenBudget: budget,
       tokensAvailable: budget - prev.tokensUsed
     }));
-  };
-
-  const handleAddRequirement = async () => {
-    if (!hypothesisService) {
-      toast.error('Service not initialized', { description: 'Please refresh the page' });
-      return;
-    }
-    
-    try {
-      const type = Math.random() < 0.6 ? 'functional' : 'non-functional';
-      const newReqs = await hypothesisService.generateHypotheses(state.niche, 'problems', 1);
-      const requirements = newReqs.map(req => ({ 
-        ...req, 
-        text: req.text,
-        type: type as 'functional' | 'non-functional',
-        status: 'pending' as const
-      }));
-      
-      setState(prev => ({
-        ...prev,
-        requirements: [...prev.requirements, ...requirements],
-        agentRationale: [...prev.agentRationale, `[HYPOTHESIS] ${requirements[0]?.text || 'New requirement'}`].slice(-15)
-      }));
-      
-      // Auto-research each new requirement with API Machine Gun
-      for (const req of requirements) {
-        setState(prev => ({
-          ...prev,
-          requirements: prev.requirements.map(r => r.id === req.id ? { ...r, status: 'downloading' as const } : r),
-          agentRationale: [...prev.agentRationale, `[SEARCHING] Firing API Machine Gun for: ${req.text}`].slice(-15)
-        }));
-        
-        const result = await hypothesisService.researchHypothesis(req, state.niche, true);
-        
-        setState(prev => ({
-          ...prev,
-          requirements: prev.requirements.map(r => r.id === req.id ? { ...r, status: 'analyzing' as const } : r),
-          agentRationale: [...prev.agentRationale, `[FOUND] ${result.sources.length} sources found`].slice(-15)
-        }));
-        
-        setState(prev => ({
-          ...prev,
-          requirements: prev.requirements.map(r =>
-            r.id === req.id
-              ? { ...r, state: result.confidence >= 90 ? 'fact' as const : 'hypothesis' as const, confidence: result.confidence, sources: result.sources, status: 'complete' as const }
-              : r
-          ),
-          agentRationale: [...prev.agentRationale, result.confidence >= 90 ? `[VALIDATED] ${result.confidence}% confidence` : `[VALIDATING] ${result.confidence}% confidence`].slice(-15)
-        }));
-      }
-    } catch (error) {
-      console.error('Error adding requirement:', error);
-      toast.error('Failed to generate requirement', { description: String(error) });
-      setState(prev => ({
-        ...prev,
-        agentRationale: [...prev.agentRationale, `[ERROR] ${error}`].slice(-15)
-      }));
-    }
   };
 
   const handleSendMessage = (message: string) => {
@@ -846,12 +683,11 @@ export default function Dashboard() {
 
     setState(prev => ({
       ...prev,
-      chatHistory: [...prev.chatHistory, userMessage, agentResponse].slice(-20) // Keep last 20
+      chatHistory: [...prev.chatHistory, userMessage, agentResponse].slice(-20)
     }));
   };
 
   const handleCreateDNA = async () => {
-    // Generate DNA from validated facts
     const validatedProblems = state.hypotheses.filter(h => h.state === 'fact');
     const validatedSolutions = state.solutions.filter(h => h.state === 'fact');
     const validatedRequirements = state.requirements.filter(h => h.state === 'fact');
@@ -865,12 +701,10 @@ export default function Dashboard() {
       tokenCost: state.totalTokensSpent
     };
 
-    // Store in state and localStorage
     try {
       setState(prev => ({ 
         ...prev, 
-        generatedDNA: dnaData,
-        agentRationale: [...prev.agentRationale, `[VALIDATED] DNA generated with ${validatedProblems.length + validatedSolutions.length + validatedRequirements.length} validated hypotheses`].slice(-15)
+        generatedDNA: dnaData
       }));
       localStorage.setItem('curatos_dna', JSON.stringify(dnaData));
     } catch (error) {
@@ -878,7 +712,6 @@ export default function Dashboard() {
       toast.error('Failed to save DNA', { description: 'LocalStorage may be full' });
     }
     
-    // Open DNA modal first
     setShowDNAModal(true);
   };
 
@@ -889,10 +722,7 @@ export default function Dashboard() {
     }
 
     setIsGeneratingLandingPage(true);
-    setState(prev => ({
-      ...prev,
-      agentRationale: [...prev.agentRationale, '[THINKING] Generating landing page...'].slice(-15)
-    }));
+    addRationale('Generating landing page...');
 
     try {
       const validatedProblems = state.hypotheses.filter(h => h.state === 'fact');
@@ -907,18 +737,11 @@ export default function Dashboard() {
       setLandingPageHtml(html);
       setShowDNAModal(false);
       setShowLandingPageModal(true);
-
-      setState(prev => ({
-        ...prev,
-        agentRationale: [...prev.agentRationale, '[VALIDATED] Landing page generated!'].slice(-15)
-      }));
+      addRationale('✓ Landing page ready');
     } catch (error) {
       console.error('Landing page generation failed:', error);
       toast.error('Landing page generation failed', { description: String(error) });
-      setState(prev => ({
-        ...prev,
-        agentRationale: [...prev.agentRationale, '[ERROR] Landing page generation failed'].slice(-15)
-      }));
+      addRationale('✗ LP generation failed');
     } finally {
       setIsGeneratingLandingPage(false);
     }
@@ -931,10 +754,7 @@ export default function Dashboard() {
     }
 
     setIsGeneratingPRD(true);
-    setState(prev => ({
-      ...prev,
-      agentRationale: [...prev.agentRationale, '[THINKING] Generating PRD...'].slice(-15)
-    }));
+    addRationale('Generating PRD...');
 
     try {
       const validatedProblems = state.hypotheses.filter(h => h.state === 'fact');
@@ -949,18 +769,11 @@ export default function Dashboard() {
       setPrdMarkdown(markdown);
       setShowDNAModal(false);
       setShowPRDModal(true);
-
-      setState(prev => ({
-        ...prev,
-        agentRationale: [...prev.agentRationale, '[VALIDATED] PRD generated!'].slice(-15)
-      }));
+      addRationale('✓ PRD ready');
     } catch (error) {
       console.error('PRD generation failed:', error);
       toast.error('PRD generation failed', { description: String(error) });
-      setState(prev => ({
-        ...prev,
-        agentRationale: [...prev.agentRationale, '[ERROR] PRD generation failed'].slice(-15)
-      }));
+      addRationale('✗ PRD generation failed');
     } finally {
       setIsGeneratingPRD(false);
     }
@@ -1152,7 +965,6 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
           requiredCount={3}
           onItemClick={handleItemClick}
           onItemRemove={(h) => handleItemRemove(h, 'hypotheses')}
-          onAdd={handleAddHypothesis}
         />
         
         <div className="hidden md:block w-px bg-gray-800" />
@@ -1168,7 +980,6 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
           requiredCount={2}
           onItemClick={handleItemClick}
           onItemRemove={(h) => handleItemRemove(h, 'solutions')}
-          onAdd={handleAddSolution}
         />
         
         <div className="hidden md:block w-px bg-gray-800" />
@@ -1183,7 +994,6 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
           requiredCount={2}
           onItemClick={handleItemClick}
           onItemRemove={(h) => handleItemRemove(h, 'requirements')}
-          onAdd={handleAddRequirement}
         />
       </div>
       

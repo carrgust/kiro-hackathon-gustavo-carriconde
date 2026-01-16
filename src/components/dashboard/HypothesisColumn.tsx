@@ -14,7 +14,7 @@ interface HypothesisColumnProps {
   requiredCount?: number;
   onItemClick: (hypothesis: Hypothesis) => void;
   onItemRemove: (hypothesis: Hypothesis) => void;
-  onAdd: () => void;
+  onAdd?: () => void;
 }
 
 // Stagger animation variants
@@ -183,21 +183,22 @@ const HypothesisColumn = memo(function HypothesisColumn({
             ))}
           </AnimatePresence>
           
-          {/* Add button with micro-interactions */}
-          <motion.button
-            onClick={onAdd}
-            className="group flex items-center gap-2 py-2 px-3 text-gray-600 hover:text-cyan-400 transition-all w-full text-left font-mono text-xs sm:text-sm rounded-lg hover:bg-gray-900/50 relative overflow-hidden min-h-[44px]"
-            whileHover={{ x: 4, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
-            whileTap={{ scale: 0.98 }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            {/* Shimmer effect on hover */}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-500/10 to-transparent"
-              initial={{ x: '-100%' }}
-              whileHover={{ x: '100%' }}
+          {/* Add button - only show if onAdd provided */}
+          {onAdd && (
+            <motion.button
+              onClick={onAdd}
+              className="group flex items-center gap-2 py-2 px-3 text-gray-600 hover:text-cyan-400 transition-all w-full text-left font-mono text-xs sm:text-sm rounded-lg hover:bg-gray-900/50 relative overflow-hidden min-h-[44px]"
+              whileHover={{ x: 4, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
+              whileTap={{ scale: 0.98 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              {/* Shimmer effect on hover */}
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-500/10 to-transparent"
+                initial={{ x: '-100%' }}
+                whileHover={{ x: '100%' }}
               transition={{ duration: 0.6 }}
             />
             <motion.div
@@ -215,6 +216,7 @@ const HypothesisColumn = memo(function HypothesisColumn({
               <Sparkles size={12} className="text-cyan-400" />
             </motion.div>
           </motion.button>
+          )}
         </motion.div>
       )}
       
