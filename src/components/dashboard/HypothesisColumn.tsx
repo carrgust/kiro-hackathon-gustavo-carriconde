@@ -44,10 +44,8 @@ const itemVariants = {
 };
 
 const HypothesisColumn = memo(function HypothesisColumn({ 
-  title, hypotheses, score, percentage, locked = false, validatedCount = 0, requiredCount = 3, onItemClick, onItemRemove, onAdd 
+  title, hypotheses, score, percentage, locked = false, validatedCount = 0, onItemClick, onItemRemove, onAdd 
 }: HypothesisColumnProps) {
-  const isUnlocked = useMemo(() => validatedCount >= requiredCount, [validatedCount, requiredCount]);
-  
   // Memoize click handlers to prevent child re-renders
   const handleItemClick = useCallback((hypothesis: Hypothesis) => {
     onItemClick(hypothesis);
@@ -98,8 +96,8 @@ const HypothesisColumn = memo(function HypothesisColumn({
               </motion.span>
             )}
             <motion.div 
-              className={`text-[10px] sm:text-xs mt-0.5 sm:mt-1 font-medium ${isUnlocked ? 'text-gradient-green' : 'text-gray-600'}`}
-              animate={isUnlocked ? { 
+              className={`text-[10px] sm:text-xs mt-0.5 sm:mt-1 font-medium ${validatedCount > 0 ? 'text-gradient-green' : 'text-gray-600'}`}
+              animate={validatedCount > 0 ? { 
                 scale: [1, 1.05, 1],
                 textShadow: ['0 0 0px #4ade80', '0 0 10px #4ade80', '0 0 0px #4ade80']
               } : {}}
@@ -107,10 +105,7 @@ const HypothesisColumn = memo(function HypothesisColumn({
               role="status"
               aria-live="polite"
             >
-              {title === 'requirements' && !locked ? 
-                `${validatedCount} validated` : 
-                `${validatedCount}/${requiredCount} validated`
-              }
+              {validatedCount} validated
             </motion.div>
           </div>
           <motion.div 

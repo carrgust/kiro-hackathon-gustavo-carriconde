@@ -58,23 +58,50 @@ export class HypothesisService {
   }
 
   async researchHypothesis(hypothesis: Hypothesis, niche: string, isProblemParam?: boolean): Promise<{ confidence: number; sources: string[] }> {
-    // Use the new ScoringEngine for structured validation
-    const { ScoringEngine } = await import('../research/engines/scoring-engine');
-    const scoringEngine = new ScoringEngine(this.apiKey);
+    // Use intelligent research agent
+    try {
+      const response = await fetch('/api/research/agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          hypothesis: `${hypothesis.text} in ${niche}`,
+          apiKey: this.apiKey
+        }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        return { 
+          confidence: data.confidence || 50, 
+          sources: data.sources?.map((s: { url: string }) => s.url) || [] 
+        };
+      }
+    } catch (error) {
+      console.error('[HypothesisService] Research agent failed:', error);
+    }
     
-    // Use explicit parameter if provided, otherwise infer from type
-    const isProblemType = isProblemParam !== undefined 
-      ? isProblemParam 
-      : (hypothesis.type === 'functional' || hypothesis.type === undefined);
+    // Fallback to machine-gun if agent fails
+    const searchQuery = `${hypothesis.text} ${niche} market research`;
+    let sources: string[] = [];
     
-    // Score using structured criteria
-    const result = isProblemType
-      ? await scoringEngine.scoreProblem(hypothesis.text, niche)
-      : await scoringEngine.scoreSolution(hypothesis.text, niche);
+    try {
+      const response = await fetch('/api/research/machine-gun', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: searchQuery }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        sources = data.sources || [];
+      }
+    } catch (error) {
+      console.error('[HypothesisService] Machine gun fallback failed:', error);
+    }
     
-    return {
-      confidence: result.confidence,
-      sources: result.sources,
-    };
+    const { calculateConfidence } = await import('../confidence');
+    const confidence = calculateConfidence(sources, hypothesis.text);
+    
+    return { confidence, sources };
   }
 }

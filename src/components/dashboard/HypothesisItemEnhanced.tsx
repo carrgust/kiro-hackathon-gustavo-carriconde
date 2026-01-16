@@ -1,6 +1,6 @@
-import { useState, memo, useMemo, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import { Sparkles, CheckCircle2, Trash2, Download, Search } from 'lucide-react';
+import { useState, memo, useMemo, useCallback, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, CheckCircle2, Trash2, Loader2, AlertTriangle, AlertCircle } from 'lucide-react';
 import { Hypothesis } from '@/types/project';
 import ScoreBreakdown from './ScoreBreakdown';
 import SourceStack from './SourceStack';
@@ -12,51 +12,67 @@ interface HypothesisItemEnhancedProps {
   index?: number;
 }
 
-// Processing Progress Bar (shown during downloading/analyzing)
-function ProcessingProgress({ status, sourceCount }: { status: string; sourceCount?: number }) {
-  const statusText = status === 'downloading' 
-    ? `Downloading sources...` 
-    : `Analyzing ${sourceCount || 0} sources...`;
-  
-  return (
-    <div className="mt-2">
-      <div className="flex items-center gap-2 mb-1">
-        {status === 'downloading' ? (
-          <Download size={10} className="text-blue-400 animate-bounce" />
-        ) : (
-          <Search size={10} className="text-blue-400 animate-pulse" />
-        )}
-        <span className="text-[10px] text-blue-400 font-mono">{statusText}</span>
-      </div>
-      <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
-        <motion.div
-          className="h-full bg-gradient-to-r from-blue-500 to-cyan-400"
-          animate={{ x: ['-100%', '100%'] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-          style={{ width: '50%' }}
-        />
-      </div>
-    </div>
-  );
-}
+// Stall states
+type StallState = 'ok' | 'warning' | 'critical';
 
-// Confidence Gauge (shown after processing complete)
-function ConfidenceGauge({ confidence }: { confidence: number }) {
-  const gaugeColor = confidence >= 90 ? 'bg-green-500' : confidence >= 50 ? 'bg-yellow-500' : 'bg-red-500';
-  const textColor = confidence >= 90 ? 'text-green-400' : confidence >= 50 ? 'text-yellow-400' : 'text-red-400';
-  const zone = confidence >= 90 ? 'FACT' : 'HYPOTHESIS';
+// Confidence Gauge with smooth animation
+function ConfidenceGauge({ 
+  confidence, 
+  isProcessing, 
+  stallState,
+  penalty 
+}: { 
+  confidence: number; 
+  isProcessing: boolean;
+  stallState: StallState;
+  penalty: number;
+}) {
+  const effectiveConfidence = Math.max(0, confidence - penalty);
+  const gaugeColor = stallState === 'critical' ? 'bg-red-500' : 
+                     stallState === 'warning' ? 'bg-yellow-500' :
+                     effectiveConfidence >= 90 ? 'bg-green-500' : 
+                     effectiveConfidence >= 50 ? 'bg-yellow-500' : 
+                     effectiveConfidence > 0 ? 'bg-orange-500' : 'bg-gray-700';
+  const textColor = stallState === 'critical' ? 'text-red-400' :
+                    stallState === 'warning' ? 'text-yellow-400' :
+                    effectiveConfidence >= 90 ? 'text-green-400' : 
+                    effectiveConfidence >= 50 ? 'text-yellow-400' : 
+                    effectiveConfidence > 0 ? 'text-orange-400' : 'text-gray-500';
+  const zone = effectiveConfidence >= 90 ? 'FACT' : 'HYPOTHESIS';
   
   return (
     <div className="mt-2">
       <div className="flex items-center justify-between mb-1">
-        <span className={`text-[10px] font-mono font-bold ${textColor}`}>CONFIDENCE: {confidence}%</span>
-        <span className={`text-[9px] font-mono ${confidence >= 90 ? 'text-green-500' : 'text-gray-500'}`}>{zone}</span>
+        <span className={`text-[10px] font-mono font-bold ${textColor}`}>
+          CONFIDENCE: {effectiveConfidence > 0 ? `${effectiveConfidence}%` : '—'}
+          {penalty > 0 && <span className="text-red-500 ml-1">(-{penalty}%)</span>}
+        </span>
+        <div className="flex items-center gap-1">
+          {stallState === 'warning' && (
+            <AlertTriangle size={10} className="text-yellow-500" />
+          )}
+          {stallState === 'critical' && (
+            <AlertCircle size={10} className="text-red-500" />
+          )}
+          <span className={`text-[9px] font-mono ${effectiveConfidence >= 90 ? 'text-green-500' : 'text-gray-500'}`}>
+            {effectiveConfidence > 0 ? zone : 'PENDING'}
+          </span>
+        </div>
       </div>
       <div className="relative h-2 bg-gray-800 rounded-full overflow-hidden">
-        {/* 90% threshold marker */}
         <div className="absolute left-[90%] top-0 bottom-0 w-px bg-gray-500 z-10" />
-        {/* Confidence fill */}
-        <div className={`h-full ${gaugeColor} transition-all duration-500`} style={{ width: `${confidence}%` }} />
+        <motion.div 
+          className={`h-full ${gaugeColor}`}
+          animate={{ width: `${effectiveConfidence}%` }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+        />
+        {isProcessing && stallState === 'ok' && (
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+            animate={{ x: ['-100%', '100%'] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+          />
+        )}
       </div>
       <div className="flex justify-between mt-0.5">
         <span className="text-[8px] text-gray-600 font-mono">0</span>
@@ -71,12 +87,116 @@ const HypothesisItemEnhanced = memo(function HypothesisItemEnhanced({
   hypothesis, onClick, onRemove, index = 0 
 }: HypothesisItemEnhancedProps) {
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const [displayedSourceCount, setDisplayedSourceCount] = useState(0);
+  const [stallState, setStallState] = useState<StallState>('ok');
+  const [penalty, setPenalty] = useState(0);
+  const [displayedConfidence, setDisplayedConfidence] = useState(0);
+  
+  const lastSourceTimeRef = useRef<number>(Date.now());
+  const revealIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const stallCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const prevSourceCountRef = useRef(0);
   
   const status = hypothesis.status || (hypothesis.confidence > 0 ? 'complete' : 'pending');
   const isProcessing = status === 'downloading' || status === 'analyzing';
+  const totalSources = hypothesis.sources?.length || 0;
+  
+  // TRUE one-by-one source reveal - 600ms per source
+  useEffect(() => {
+    const sources = hypothesis.sources || [];
+    
+    // New sources arrived - start revealing one by one
+    if (sources.length > prevSourceCountRef.current) {
+      prevSourceCountRef.current = sources.length;
+      lastSourceTimeRef.current = Date.now();
+      
+      // Clear existing interval
+      if (revealIntervalRef.current) {
+        clearInterval(revealIntervalRef.current);
+      }
+      
+      // Reveal sources one at a time, every 600ms
+      revealIntervalRef.current = setInterval(() => {
+        setDisplayedSourceCount(prev => {
+          if (prev >= sources.length) {
+            if (revealIntervalRef.current) clearInterval(revealIntervalRef.current);
+            return sources.length;
+          }
+          lastSourceTimeRef.current = Date.now();
+          return prev + 1; // Exactly +1
+        });
+      }, 600);
+    }
+    
+    return () => {
+      if (revealIntervalRef.current) clearInterval(revealIntervalRef.current);
+    };
+  }, [hypothesis.sources?.length]);
+  
+  // Stall detection - check every second
+  useEffect(() => {
+    if (!isProcessing && displayedSourceCount >= totalSources) {
+      setStallState('ok');
+      setPenalty(0);
+      if (stallCheckIntervalRef.current) clearInterval(stallCheckIntervalRef.current);
+      return;
+    }
+    
+    stallCheckIntervalRef.current = setInterval(() => {
+      const elapsed = (Date.now() - lastSourceTimeRef.current) / 1000;
+      
+      if (elapsed > 10) {
+        setStallState('critical');
+        // Penalty: -2% per second over 10s
+        setPenalty(prev => Math.min(30, prev + 2));
+      } else if (elapsed > 5) {
+        setStallState('warning');
+      } else {
+        setStallState('ok');
+      }
+    }, 1000);
+    
+    return () => {
+      if (stallCheckIntervalRef.current) clearInterval(stallCheckIntervalRef.current);
+    };
+  }, [isProcessing, displayedSourceCount, totalSources]);
+  
+  // Smooth confidence growth as sources appear
+  useEffect(() => {
+    if (totalSources === 0) {
+      setDisplayedConfidence(hypothesis.confidence);
+      return;
+    }
+    
+    // Base confidence + growth per source
+    const baseConfidence = Math.max(10, hypothesis.confidence * 0.3);
+    const perSourceGrowth = (hypothesis.confidence - baseConfidence) / totalSources;
+    const newConfidence = Math.round(baseConfidence + (displayedSourceCount * perSourceGrowth));
+    
+    setDisplayedConfidence(Math.min(newConfidence, hypothesis.confidence));
+  }, [displayedSourceCount, totalSources, hypothesis.confidence]);
+  
+  // Reset when hypothesis changes
+  useEffect(() => {
+    if (totalSources === 0) {
+      setDisplayedSourceCount(0);
+      setDisplayedConfidence(0);
+      setPenalty(0);
+      setStallState('ok');
+      prevSourceCountRef.current = 0;
+    }
+  }, [hypothesis.id, totalSources]);
+  
+  // Get only revealed sources
+  const displayedSources = useMemo(() => {
+    return (hypothesis.sources || []).slice(0, displayedSourceCount);
+  }, [hypothesis.sources, displayedSourceCount]);
+  
+  const isRevealing = displayedSourceCount < totalSources && totalSources > 0;
+  const effectiveConfidence = Math.max(0, displayedConfidence - penalty);
   
   const config = useMemo(() => {
-    if (hypothesis.state === 'fact') {
+    if (hypothesis.state === 'fact' && effectiveConfidence >= 90) {
       return {
         icon: CheckCircle2,
         color: 'text-green-400',
@@ -94,16 +214,16 @@ const HypothesisItemEnhanced = memo(function HypothesisItemEnhanced({
       glow: '',
       stateLabel: 'Unvalidated hypothesis'
     };
-  }, [hypothesis.state]);
+  }, [hypothesis.state, effectiveConfidence]);
 
   const StatusIcon = config.icon;
-  const isAnimating = isProcessing || (hypothesis.state === 'hypothesis' && hypothesis.confidence === 0);
+  const isAnimating = isProcessing || isRevealing || (hypothesis.state === 'hypothesis' && hypothesis.confidence === 0);
 
   const breakdownScores = useMemo(() => [
-    { label: 'Evidence', value: Math.round(hypothesis.confidence * 0.4), max: 40 },
-    { label: 'Relevance', value: Math.round(hypothesis.confidence * 0.3), max: 30 },
-    { label: 'Sources', value: Math.round(hypothesis.confidence * 0.3), max: 30 },
-  ], [hypothesis.confidence]);
+    { label: 'Evidence', value: Math.round(effectiveConfidence * 0.4), max: 40 },
+    { label: 'Relevance', value: Math.round(effectiveConfidence * 0.3), max: 30 },
+    { label: 'Sources', value: Math.round(effectiveConfidence * 0.3), max: 30 },
+  ], [effectiveConfidence]);
 
   const handleRemove = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -141,7 +261,7 @@ const HypothesisItemEnhanced = memo(function HypothesisItemEnhanced({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       role="article"
-      aria-label={`${config.stateLabel}: ${hypothesis.text}${hypothesis.confidence > 0 ? `, ${hypothesis.confidence}% confidence` : ''}`}
+      aria-label={`${config.stateLabel}: ${hypothesis.text}${effectiveConfidence > 0 ? `, ${effectiveConfidence}% confidence` : ''}`}
       tabIndex={0}
     >
       <motion.div
@@ -167,33 +287,60 @@ const HypothesisItemEnhanced = memo(function HypothesisItemEnhanced({
             {hypothesis.text}
           </p>
 
-          {/* Processing Progress - shown during downloading/analyzing */}
-          {isProcessing && (
-            <ProcessingProgress status={status} sourceCount={hypothesis.sources?.length} />
-          )}
+          {/* Confidence Gauge with stall indicator */}
+          <ConfidenceGauge 
+            confidence={displayedConfidence} 
+            isProcessing={isProcessing || isRevealing}
+            stallState={stallState}
+            penalty={penalty}
+          />
 
-          {/* Confidence Gauge - shown after complete */}
-          {status === 'complete' && hypothesis.confidence > 0 && (
-            <ConfidenceGauge confidence={hypothesis.confidence} />
-          )}
-
-          {hypothesis.sources && hypothesis.sources.length > 0 && (
-            <motion.div 
-              className="mt-2 flex items-center gap-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
-              <SourceStack sources={hypothesis.sources} />
-              <span className="text-xs text-gray-500 font-mono flex-shrink-0">{hypothesis.sources.length} sources</span>
-            </motion.div>
-          )}
+          {/* Source Stack with one-by-one reveal */}
+          <motion.div 
+            className="mt-2 flex items-center gap-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            {/* Spinner when processing or revealing */}
+            <AnimatePresence>
+              {(isProcessing || isRevealing) && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0 }}
+                  className="flex items-center gap-1"
+                >
+                  <Loader2 
+                    size={14} 
+                    className={`animate-spin ${
+                      stallState === 'critical' ? 'text-red-400' : 
+                      stallState === 'warning' ? 'text-yellow-400' : 
+                      'text-cyan-400'
+                    }`} 
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
+            {/* Source icons - revealed one by one */}
+            {displayedSourceCount > 0 && <SourceStack sources={displayedSources} />}
+            
+            {/* Live source counter */}
+            <span className={`text-xs font-mono flex-shrink-0 ${
+              stallState === 'critical' ? 'text-red-400' :
+              stallState === 'warning' ? 'text-yellow-400' :
+              'text-gray-500'
+            }`}>
+              {displayedSourceCount}{totalSources > displayedSourceCount ? `/${totalSources}` : ''} sources
+            </span>
+          </motion.div>
           
-          {hypothesis.state === 'fact' && hypothesis.confidence > 0 && (
+          {hypothesis.state === 'fact' && effectiveConfidence >= 90 && (
             <ScoreBreakdown
               isVisible={showBreakdown}
               scores={breakdownScores}
-              total={hypothesis.confidence}
+              total={effectiveConfidence}
             />
           )}
         </div>
@@ -211,7 +358,11 @@ const HypothesisItemEnhanced = memo(function HypothesisItemEnhanced({
 
       {isAnimating && (
         <motion.div
-          className="absolute inset-0 border-2 border-cyan-400/50 rounded-lg"
+          className={`absolute inset-0 border-2 rounded-lg ${
+            stallState === 'critical' ? 'border-red-400/50' :
+            stallState === 'warning' ? 'border-yellow-400/50' :
+            'border-cyan-400/50'
+          }`}
           animate={{ opacity: [0.5, 0, 0.5], scale: [1, 1.05, 1] }}
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           aria-hidden="true"

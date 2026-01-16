@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getProvider } from '@/lib/api';
 
+async function tryWithKey(apiKey: string, messages: any[], options: any, keyName: string) {
+  const aiProvider = getProvider('openrouter', apiKey);
+  const response = await aiProvider.chat(messages, options);
+  console.log(`[Chat API] Success with ${keyName}`);
+  return response;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { messages, model, models, route, provider = 'openrouter' } = await request.json();
@@ -9,22 +16,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Messages array required' }, { status: 400 });
     }
 
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    const primaryKey = process.env.OPENROUTER_API_KEY;
+    const backupKey = process.env.OPENROUTER_API_KEY_BACKUP;
 
-    if (!apiKey) {
-      return NextResponse.json({ error: 'Server not configured' }, { status: 500 });
+    if (!primaryKey && !backupKey) {
+      return NextResponse.json({ error: 'Server not configured - no API keys' }, { status: 500 });
     }
 
-    const aiProvider = getProvider(provider, apiKey);
-    
-    // Support both single model and models array with fallback route
     const options = models && route === 'fallback' 
       ? { models, route } 
       : { model };
-    
-    const response = await aiProvider.chat(messages, options);
 
-    return NextResponse.json(response);
+    // Try primary key first
+    if (primaryKey) {
+      try {
+        const response = await tryWithKey(primaryKey, messages, options, 'PRIMARY_KEY');
+        return NextResponse.json(response);
+      } catch (error: any) {
+        const is401 = error?.message?.includes('401') || error?.message?.includes('User not found');
+        if (!is401 || !backupKey) throw error;
+        console.log('[Chat API] Primary key failed (401), trying backup...');
+      }
+    }
+
+    // Fallback to backup key
+    if (backupKey) {
+      const response = await tryWithKey(backupKey, messages, options, 'BACKUP_KEY');
+      return NextResponse.json(response);
+    }
+
+    throw new Error('All API keys exhausted');
   } catch (error) {
     console.error('Chat API error:', error);
     return NextResponse.json(

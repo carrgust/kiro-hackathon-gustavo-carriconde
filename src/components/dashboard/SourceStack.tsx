@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
 
 function extractDomain(source: string): string | null {
   const urlMatch = source.match(/https?:\/\/([^\/\s]+)/);
@@ -28,15 +29,25 @@ function SourceBadge({ source, index }: { source: string; index: number }) {
   const bgColor = domain ? getDomainColor(domain) : '#666';
   
   return (
-    <div
+    <motion.div
       className="relative flex-shrink-0"
       style={{ marginLeft: index > 0 ? '-10px' : 0, zIndex: 20 - index }}
+      initial={{ opacity: 0, scale: 0, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ 
+        type: 'spring', 
+        stiffness: 500, 
+        damping: 20,
+        mass: 0.8
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <div
-        className="w-8 h-8 rounded-full border-2 border-gray-800 flex items-center justify-center overflow-hidden transition-transform hover:scale-110 hover:z-30"
+      <motion.div
+        className="w-8 h-8 rounded-full border-2 border-gray-800 flex items-center justify-center overflow-hidden"
         style={{ backgroundColor: imgError ? bgColor : '#1f2937' }}
+        whileHover={{ scale: 1.2, zIndex: 30 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 15 }}
       >
         {faviconUrl && !imgError ? (
           <img 
@@ -48,13 +59,17 @@ function SourceBadge({ source, index }: { source: string; index: number }) {
         ) : (
           <span className="text-xs font-bold text-white">{(domain || 'W').charAt(0).toUpperCase()}</span>
         )}
-      </div>
+      </motion.div>
       {hovered && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-900 border border-gray-600 text-[9px] text-white whitespace-nowrap rounded z-50 pointer-events-none">
+        <motion.div 
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-900 border border-gray-600 text-[9px] text-white whitespace-nowrap rounded z-50 pointer-events-none"
+        >
           {domain || 'Web'}
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }
 

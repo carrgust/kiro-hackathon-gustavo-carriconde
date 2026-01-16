@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
+import { useState, useEffect, useCallback, useMemo, Suspense, lazy, useRef } from 'react';
 import { Toaster, toast } from 'sonner';
 import { EngineState, Hypothesis, DNAData } from '@/types/project';
 import { getStoredApiKey } from '@/lib/api';
@@ -53,6 +53,13 @@ export default function Dashboard() {
     agentRationale: [],
     chatHistory: []
   });
+  
+  // Ref to track current state for use in intervals
+  const stateRef = useRef(state);
+  useEffect(() => { stateRef.current = state; }, [state]);
+  
+  // Ref for researchHypothesis to avoid dependency issues
+  const researchHypothesisRef = useRef<((h: Hypothesis, c: 'hypotheses' | 'solutions' | 'requirements') => Promise<void>) | null>(null);
 
   const [apiError, setApiError] = useState<string | null>(null);
   const [engineRunning, setEngineRunning] = useState(false);
@@ -255,7 +262,13 @@ export default function Dashboard() {
 
     const interval = setInterval(async () => {
       if (Math.random() < 0.4) { // 40% chance to start streaming
-        const focus = Math.random() < (state.slider / 100) ? 'problems' : 'solutions';
+        // Get current state from ref
+        const currentNiche = stateRef.current.niche;
+        const currentSlider = stateRef.current.slider;
+        
+        if (!currentNiche) return;
+        
+        const focus = Math.random() < (currentSlider / 100) ? 'problems' : 'solutions';
         
         // Clear current stream and start new one
         setCurrentRationaleStream('');
@@ -276,7 +289,7 @@ export default function Dashboard() {
         };
 
         try {
-          await streamingService.streamHypothesisGeneration(state.niche, focus, onRationaleUpdate);
+          await streamingService.streamHypothesisGeneration(currentNiche, focus, onRationaleUpdate);
         } catch (error) {
           console.error('Streaming error:', error);
         }
@@ -284,170 +297,218 @@ export default function Dashboard() {
     }, 8000); // Every 8 seconds
 
     return () => clearInterval(interval);
-  }, [engineRunning, streamingService, state.slider, state.niche]);
+  }, [engineRunning, streamingService]);
 
-  // Engine logic - generate and research hypotheses
+  // Helper function to research a hypothesis
+  const researchHypothesis = useCallback(async (hypothesis: Hypothesis, column: 'hypotheses' | 'solutions' | 'requirements') => {
+    if (!hypothesisService) return;
+    
+    // Set status to downloading
+    setState(prev => ({
+      ...prev,
+      [column]: prev[column].map(h => h.id === hypothesis.id ? { ...h, status: 'downloading' as const } : h),
+      agentRationale: [...prev.agentRationale, `[SEARCHING] ${hypothesis.text.substring(0, 40)}...`].slice(-15)
+    }));
+    
+    try {
+      const result = await hypothesisService.researchHypothesis(hypothesis, stateRef.current.niche, column === 'hypotheses');
+      
+      // Set status to analyzing with sources
+      setState(prev => ({
+        ...prev,
+        [column]: prev[column].map(h => h.id === hypothesis.id ? { 
+          ...h, 
+          status: 'analyzing' as const,
+          sources: result.sources
+        } : h),
+        agentRationale: [...prev.agentRationale, `[FOUND] ${result.sources.length} sources`].slice(-15)
+      }));
+      
+      // Small delay for visual effect
+      await new Promise(r => setTimeout(r, 200));
+      
+      const isFact = result.confidence >= 90;
+      const updatedHypothesis = { 
+        ...hypothesis, 
+        state: isFact ? 'fact' as const : 'hypothesis' as const, 
+        confidence: result.confidence, 
+        sources: result.sources,
+        status: 'complete' as const
+      };
+      
+      setState(prev => ({
+        ...prev,
+        [column]: prev[column].map(h => h.id === hypothesis.id ? updatedHypothesis : h),
+        agentRationale: [...prev.agentRationale, isFact ? `[VALIDATED] ${result.confidence}%` : `[VALIDATING] ${result.confidence}%`].slice(-15)
+      }));
+      
+      // AUTO-CHAIN: When problem becomes fact, generate solution
+      if (isFact && column === 'hypotheses' && stateRef.current.solutions.length < 4) {
+        setTimeout(async () => {
+          try {
+            const newSolutions = await hypothesisService.generateHypotheses(stateRef.current.niche, 'solutions', 1);
+            const newSolution = { ...newSolutions[0], status: 'pending' as const };
+            setState(prev => ({
+              ...prev,
+              solutions: [...prev.solutions, newSolution].slice(0, 4),
+              agentRationale: [...prev.agentRationale, `[HYPOTHESIS] Solution: ${newSolution.text.substring(0, 30)}...`].slice(-15)
+            }));
+            setTimeout(() => researchHypothesisRef.current?.(newSolution, 'solutions'), 200);
+          } catch (e) { console.error('Auto-solution error:', e); }
+        }, 100);
+      }
+      
+      // AUTO-CHAIN: When solution becomes fact, generate requirement
+      if (isFact && column === 'solutions' && stateRef.current.requirements.length < 4) {
+        setTimeout(async () => {
+          try {
+            const type = Math.random() < 0.6 ? 'functional' : 'non-functional';
+            const newReqs = await hypothesisService.generateHypotheses(stateRef.current.niche, 'problems', 1);
+            const newReq = { ...newReqs[0], type: type as 'functional' | 'non-functional', status: 'pending' as const };
+            setState(prev => ({
+              ...prev,
+              requirements: [...prev.requirements, newReq].slice(0, 4),
+              agentRationale: [...prev.agentRationale, `[HYPOTHESIS] ${type} requirement`].slice(-15)
+            }));
+            setTimeout(() => researchHypothesisRef.current?.(newReq, 'requirements'), 200);
+          } catch (e) { console.error('Auto-requirement error:', e); }
+        }, 100);
+      }
+    } catch (error) {
+      console.error('[Research] Error:', error);
+      setState(prev => ({
+        ...prev,
+        [column]: prev[column].map(h => h.id === hypothesis.id ? { ...h, status: 'complete' as const } : h),
+        agentRationale: [...prev.agentRationale, `[ERROR] Research failed`].slice(-15)
+      }));
+    }
+  }, [hypothesisService]);
+  
+  // Keep ref updated
+  useEffect(() => { researchHypothesisRef.current = researchHypothesis; }, [researchHypothesis]);
+
+  // Engine logic - dynamic speed based on completion
   useEffect(() => {
-    console.log('[Engine] useEffect triggered:', { engineRunning, hypothesisService: !!hypothesisService });
     if (!engineRunning || !hypothesisService) return;
+    
+    let timeoutId: NodeJS.Timeout;
 
-    console.log('[Engine] Starting interval loop');
-    const interval = setInterval(async () => {
-      console.log('[Engine] Interval tick');
+    const generateAndResearch = async () => {
+      const currentNiche = stateRef.current.niche;
+      if (!currentNiche) return;
+      
+      const currentState = stateRef.current;
+      const problemsFacts = currentState.hypotheses.filter(h => h.state === 'fact').length;
+      const solutionsFacts = currentState.solutions.filter(h => h.state === 'fact').length;
+      const requirementsFacts = currentState.requirements.filter(h => h.state === 'fact').length;
+      const allComplete = problemsFacts >= 4 && solutionsFacts >= 4 && requirementsFacts >= 4;
+      
+      // Dynamic interval: fast (800ms) when generating, slow (3000ms) when complete
+      const nextInterval = allComplete ? 3000 : 800;
+      
+      // Update tokens (slower when complete)
       setState(prev => {
-        // Update token usage
-        const tokensUsed = Math.floor(Math.random() * 15) + 5;
-        const newState = {
+        const tokensUsed = allComplete ? 1 : Math.floor(Math.random() * 10) + 5;
+        return {
           ...prev,
           tokensAvailable: Math.max(0, prev.tokensAvailable - tokensUsed),
           tokensUsed: prev.tokensUsed + tokensUsed,
           totalTokensSpent: prev.totalTokensSpent + tokensUsed,
           tokenRate: tokensUsed
         };
-
-        // Stop if no tokens left
-        if (newState.tokensAvailable <= 0) {
-          setEngineRunning(false);
-        }
-
-        return newState;
       });
 
-      // Generate new hypotheses occasionally
-      if (Math.random() < 0.3) {
-        console.log('[Engine] Generating hypotheses');
+      // Skip generation if all complete
+      if (!allComplete && Math.random() < 0.85) {
+        const problemsCount = currentState.hypotheses.length;
+        const solutionsCount = currentState.solutions.length;
+        const requirementsCount = currentState.requirements.length;
+        
+        const shouldGenerateProblem = problemsCount < 4;
+        const shouldGenerateSolution = problemsFacts >= 2 && solutionsCount < 4;
+        const shouldGenerateRequirement = problemsFacts >= 2 && solutionsFacts >= 2 && requirementsCount < 4;
+        
         try {
-          // Slider logic: higher value = more problems focus
-          const focus = Math.random() < (state.slider / 100) ? 'problems' : 'solutions';
+          if (shouldGenerateProblem) {
+            setState(prev => ({
+              ...prev,
+              agentRationale: [...prev.agentRationale, `[THINKING] Analyzing problems in ${currentNiche}`].slice(-15)
+            }));
+            
+            const newProblems = await hypothesisService.generateHypotheses(currentNiche, 'problems', 1);
+            const newProblem = { ...newProblems[0], status: 'pending' as const };
+            
+            setState(prev => ({
+              ...prev,
+              hypotheses: [...prev.hypotheses, newProblem].slice(0, 4),
+              agentRationale: [...prev.agentRationale, `[HYPOTHESIS] ${newProblem.text.substring(0, 40)}...`].slice(-15)
+            }));
+            
+            setTimeout(() => researchHypothesisRef.current?.(newProblem, 'hypotheses'), 300);
+          }
           
-          // Add rationale for hypothesis creation
-          setState(prev => ({
-            ...prev,
-            agentRationale: [...prev.agentRationale, `[THINKING] Analyzing ${focus} in ${state.niche}`].slice(-15)
-          }));
+          if (shouldGenerateSolution) {
+            setState(prev => ({
+              ...prev,
+              agentRationale: [...prev.agentRationale, `[THINKING] Analyzing solutions in ${currentNiche}`].slice(-15)
+            }));
+            
+            const newSolutions = await hypothesisService.generateHypotheses(currentNiche, 'solutions', 1);
+            const newSolution = { ...newSolutions[0], status: 'pending' as const };
+            
+            setState(prev => ({
+              ...prev,
+              solutions: [...prev.solutions, newSolution].slice(0, 4),
+              agentRationale: [...prev.agentRationale, `[HYPOTHESIS] ${newSolution.text.substring(0, 40)}...`].slice(-15)
+            }));
+            
+            setTimeout(() => researchHypothesisRef.current?.(newSolution, 'solutions'), 300);
+          }
           
-          const newHypotheses = await hypothesisService.generateHypotheses(state.niche, focus, 1);
-          console.log('[Engine] Generated hypotheses:', newHypotheses);
-          
-          // Broadcast new hypothesis to other users
-          const column = focus === 'problems' ? 'hypotheses' : 'solutions';
-          newHypotheses.forEach(h => sync.broadcastAdd(h, column));
-          
-          setState(prev => ({
-            ...prev,
-            [focus === 'problems' ? 'hypotheses' : 'solutions']: [
-              ...prev[focus === 'problems' ? 'hypotheses' : 'solutions'],
-              ...newHypotheses.map(h => ({ ...h, status: 'pending' as const }))
-            ].slice(0, 4), // Keep max 4 items
-            agentRationale: [...prev.agentRationale, `[HYPOTHESIS] ${newHypotheses[0]?.text || 'New hypothesis'}`].slice(-15)
-          }));
+          if (shouldGenerateRequirement) {
+            const type = Math.random() < 0.6 ? 'functional' : 'non-functional';
+            const newReqs = await hypothesisService.generateHypotheses(currentNiche, 'problems', 1);
+            const newReq = { ...newReqs[0], type: type as 'functional' | 'non-functional', status: 'pending' as const };
+            
+            setState(prev => ({
+              ...prev,
+              requirements: [...prev.requirements, newReq].slice(0, 4),
+              agentRationale: [...prev.agentRationale, `[HYPOTHESIS] ${type} requirement`].slice(-15)
+            }));
+            
+            setTimeout(() => researchHypothesisRef.current?.(newReq, 'requirements' as any), 300);
+          }
         } catch (error) {
-          console.error('Error generating hypotheses:', error);
+          console.error('Generation error:', error);
         }
       }
+      
+      // Research pending hypotheses
+      const pendingProblems = currentState.hypotheses.filter(h => h.status === 'pending' && h.confidence === 0);
+      const pendingSolutions = currentState.solutions.filter(h => h.status === 'pending' && h.confidence === 0);
+      const pendingRequirements = currentState.requirements.filter(h => h.status === 'pending' && h.confidence === 0);
+      
+      if (pendingProblems.length > 0) researchHypothesisRef.current?.(pendingProblems[0], 'hypotheses');
+      if (pendingSolutions.length > 0) researchHypothesisRef.current?.(pendingSolutions[0], 'solutions');
+      if (pendingRequirements.length > 0) researchHypothesisRef.current?.(pendingRequirements[0], 'requirements' as any);
+      
+      // Schedule next run with dynamic interval
+      timeoutId = setTimeout(generateAndResearch, nextInterval);
+    };
 
-      // Auto-generate requirements when both problems and solutions have 3+ green facts
-      setState(prev => {
-        const problemsGreenFacts = prev.hypotheses.filter(h => h.state === 'fact').length;
-        const solutionsGreenFacts = prev.solutions.filter(h => h.state === 'fact').length;
-        const requirementsCount = prev.requirements.length;
-        
-        if (problemsGreenFacts >= 2 && solutionsGreenFacts >= 2 && requirementsCount < 8 && Math.random() < 0.2) {
-          // Generate requirement
-          hypothesisService.generateHypotheses(prev.niche, 'problems', 1)
-            .then(newReqs => {
-              const type = Math.random() < 0.6 ? 'functional' : 'non-functional';
-              setState(current => ({
-                ...current,
-                requirements: [...current.requirements, ...newReqs.map(req => ({ 
-                  ...req, 
-                  text: req.text,
-                  type: type as 'functional' | 'non-functional',
-                  status: 'pending' as const
-                }))],
-                agentRationale: [...current.agentRationale, `[HYPOTHESIS] Auto-generated ${type} requirement`].slice(-15)
-              }));
-            })
-            .catch(error => {
-              console.error('Error auto-generating requirement:', error);
-            });
-        }
-        
-        return prev;
-      });
-
-      // Research existing hypotheses
-      setState(prev => {
-        const allItems = [...prev.hypotheses, ...prev.solutions];
-        const hypothesisItems = allItems.filter(h => h.state === 'hypothesis');
-        
-        if (hypothesisItems.length > 0 && Math.random() < 0.3) {
-          const itemToResearch = hypothesisItems[0];
-          const isHypothesis = prev.hypotheses.some(h => h.id === itemToResearch.id);
-          const column = isHypothesis ? 'hypotheses' : 'solutions';
-          
-          // Set status to downloading
-          setState(current => ({
-            ...current,
-            [column]: current[column].map(h => h.id === itemToResearch.id ? { ...h, status: 'downloading' as const } : h),
-            agentRationale: [...current.agentRationale, `[SEARCHING] ${itemToResearch.text}`].slice(-15)
-          }));
-          
-          // Simulate research completion
-          hypothesisService.researchHypothesis(itemToResearch, prev.niche, isHypothesis)
-            .then(result => {
-              // Set status to analyzing
-              setState(current => ({
-                ...current,
-                [column]: current[column].map(h => h.id === itemToResearch.id ? { ...h, status: 'analyzing' as const } : h),
-                agentRationale: [...current.agentRationale, `[FOUND] ${result.sources.length} sources found`].slice(-15)
-              }));
-              
-              const updatedHypothesis = { 
-                ...itemToResearch, 
-                state: result.confidence >= 90 ? 'fact' as const : 'hypothesis' as const, 
-                confidence: result.confidence, 
-                sources: result.sources,
-                status: 'complete' as const
-              };
-              
-              // Broadcast update to other users
-              sync.broadcastUpdate(updatedHypothesis, column);
-              
-              setState(current => ({
-                ...current,
-                [column]: current[column].map(h =>
-                  h.id === itemToResearch.id ? updatedHypothesis : h
-                ),
-                agentRationale: [...current.agentRationale, result.confidence >= 90 ? `[VALIDATED] ${result.confidence}% confidence` : `[VALIDATING] ${result.confidence}% confidence`].slice(-15)
-              }));
-            })
-            .catch(error => {
-              console.error('Error researching hypothesis:', error);
-              setState(current => ({
-                ...current,
-                agentRationale: [...current.agentRationale, `[ERROR] Research failed`].slice(-15)
-              }));
-            });
-        }
-
-        return prev;
-      });
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [engineRunning, hypothesisService, state.slider, state.niche]);
+    generateAndResearch();
+    return () => clearTimeout(timeoutId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engineRunning, hypothesisService]);
 
   const handleStartEngine = useCallback(() => {
-    console.log('[StartEngine] Called with:', { niche: state.niche, hypothesisService: !!hypothesisService });
     if (!state.niche.trim()) {
-      alert('Enter a niche first');
+      toast.error('Enter a niche first');
       return;
     }
-    console.log('[StartEngine] Setting engine running to true');
     setEngineRunning(true);
     setEngineStartTime(new Date());
-  }, [state.niche, hypothesisService]);
+  }, [state.niche]);
 
   const handleStopEngine = useCallback(() => {
     setEngineRunning(false);
@@ -1121,9 +1182,9 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
           hypotheses={state.solutions}
           score={state.solutionsScore}
           percentage={100 - state.slider}
-          locked={countGreenFacts() < 3}
+          locked={countGreenFacts() < 2}
           validatedCount={countSolutionsGreenFacts()}
-          requiredCount={3}
+          requiredCount={2}
           onItemClick={handleItemClick}
           onItemRemove={(h) => handleItemRemove(h, 'solutions')}
           onAdd={handleAddSolution}
@@ -1136,8 +1197,9 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
           title="requirements"
           hypotheses={state.requirements}
           score={state.requirements.filter(h => h.state === 'fact').reduce((sum, h) => sum + h.confidence, 0)}
-          locked={!(countGreenFacts() >= 3 && countSolutionsGreenFacts() >= 3)}
+          locked={!(countGreenFacts() >= 2 && countSolutionsGreenFacts() >= 2)}
           validatedCount={countRequirementsGreenFacts()}
+          requiredCount={2}
           onItemClick={handleItemClick}
           onItemRemove={(h) => handleItemRemove(h, 'requirements')}
           onAdd={handleAddRequirement}
