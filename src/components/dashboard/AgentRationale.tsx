@@ -6,6 +6,24 @@ interface AgentRationaleProps {
   autopilotEnabled?: boolean;
 }
 
+const TAG_COLORS: Record<string, string> = {
+  'THINKING': 'text-purple-500',
+  'HYPOTHESIS': 'text-yellow-500',
+  'SEARCHING': 'text-blue-500',
+  'FOUND': 'text-cyan-400',
+  'VALIDATING': 'text-orange-500',
+  'VALIDATED': 'text-green-500',
+  'ERROR': 'text-red-500',
+};
+
+function parseTaggedLine(line: string) {
+  const match = line.match(/^\[([A-Z]+)\]\s*(.*)/);
+  if (match && TAG_COLORS[match[1]]) {
+    return { tag: match[1], text: match[2], color: TAG_COLORS[match[1]] };
+  }
+  return { tag: null, text: line, color: 'text-gray-300' };
+}
+
 export default function AgentRationale({ 
   rationale, 
   isActive, 
@@ -39,13 +57,23 @@ export default function AgentRationale({
           {rationale.length === 0 ? (
             <div className="text-gray-600">Waiting for engine to start...</div>
           ) : (
-            rationale.map((line, index) => (
-              <div key={index} className="leading-tight">
-                <span className="text-gray-600">&gt;</span>
-                {autopilotEnabled && <span className="text-green-500 ml-1">[AP]</span>}
-                <span className="ml-1">{line}</span>
-              </div>
-            ))
+            rationale.map((line, index) => {
+              const { tag, text, color } = parseTaggedLine(line);
+              return (
+                <div key={index} className="leading-tight">
+                  <span className="text-gray-600">&gt;</span>
+                  {autopilotEnabled && <span className="text-green-500 ml-1">[AP]</span>}
+                  {tag ? (
+                    <>
+                      <span className={`ml-1 font-bold ${color}`}>[{tag}]</span>
+                      <span className="ml-1 text-gray-300">{text}</span>
+                    </>
+                  ) : (
+                    <span className="ml-1">{text}</span>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       </div>

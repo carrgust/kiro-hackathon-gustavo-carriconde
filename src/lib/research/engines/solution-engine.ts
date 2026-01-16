@@ -36,7 +36,7 @@ Respond in JSON format:
       },
     ];
 
-    const response = await provider.chat(messages, 'deepseek/deepseek-r1-0528:free');
+    const response = await provider.chat(messages, 'deepseek/deepseek-chat');
 
     // Track tokens
     const tracker = getTokenTracker();

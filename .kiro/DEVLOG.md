@@ -247,4 +247,133 @@ Fallback:  meta-llama/llama-3.3-70b-instruct:free
 
 ---
 
+## Day 6 - January 15, 2026
+
+### Sprint 2: Documentation & Quality
+
+#### 1. Comprehensive Test Suite
+- Created evaluation test suite with 47 passing tests
+- Test categories:
+  - API health checks (service status, error handling)
+  - Demo mode isolation (pre-generated data, no API calls)
+  - Streaming service (landing page, PRD generation)
+- Test framework: Vitest with Testing Library
+- Coverage targets: Core services and API routes
+
+#### 2. Demo Mode Isolation Fix
+- Ensured demo mode (`apiKey: 'demo'`) never makes real API calls
+- Pre-generated data in `src/lib/demo-data.ts`
+- Simulated delays for realistic UX
+- Complete isolation from production code paths
+
+#### 3. Scoring System Implementation
+- Multi-stage quality gates with thresholds
+- Structured scoring criteria:
+  - Problems: Market Size, Pain Intensity, Existing Solutions, Willingness to Pay
+  - Solutions: Technical Feasibility, Competitive Advantage, Time to Market, Market Validation
+- `useScoring` hook for stage progression
+- Visual progress bar component
+
+#### 4. Documentation Suite
+- **Steering Docs** (`.kiro/steering/`):
+  - `product.md` - Product vision, target users, value proposition
+  - `tech.md` - Technical architecture, decisions, trade-offs
+  - `structure.md` - Codebase organization, patterns
+  - `scoring-system.md` - Scoring criteria and thresholds
+- **Feature Specs** (`.kiro/specs/`):
+  - `hypothesis-engine.md` - Core AI generation system
+  - `demo-mode.md` - Demo isolation architecture
+  - `prd-generator.md` - PRD generation with FR/NFR format
+- **API Documentation** (`docs/API.md`):
+  - All 4 endpoints documented
+  - Request/response examples
+  - Error codes and rate limits
+  - TypeScript types
+
+#### 5. README Enhancement
+- Added badges (build, tests, coverage)
+- Feature highlights with screenshots
+- Quick start guide
+- ASCII architecture diagram
+- Demo mode instructions
+- Comprehensive tech stack table
+
+### Kiro CLI Usage Today
+| Task | Kiro Contribution |
+|------|-------------------|
+| Test suite creation | Generated test boilerplate and assertions |
+| Documentation | Created all steering docs and specs |
+| Code review | Identified documentation gaps |
+| README update | Generated showcase-worthy content |
+
+**Kiro Prompts Used Today:** ~20
+**Total Kiro Prompts:** ~70 of 2,000 available
+
+### Quality Metrics
+- **Tests:** 47 passing
+- **TypeScript Errors:** 0
+- **ESLint Warnings:** 0
+- **npm Vulnerabilities:** 0
+- **Documentation Files:** 12 created/updated
+
+---
+
+## Day 7 - January 15, 2026
+
+### API Machine Gun Feature 🔫
+Major feature: Multi-source hypothesis validation replacing expensive OpenRouter `:online` search.
+
+#### Architecture
+- 7 FREE APIs queried in parallel + Serper for web search
+- LLM consolidates results (OpenRouter grok-4.1-fast WITHOUT search)
+- No silent failures - all API calls logged with timing
+
+#### Files Created
+- `src/lib/research/apis/types.ts` - Shared APIResult interface
+- `src/lib/research/apis/wikipedia.ts` - Wikipedia API adapter
+- `src/lib/research/apis/wikidata.ts` - Wikidata entity search
+- `src/lib/research/apis/hackernews.ts` - Algolia HN search
+- `src/lib/research/apis/openAlex.ts` - Academic papers search
+- `src/lib/research/apis/remoteok.ts` - Job market signals
+- `src/lib/research/apis/pullpush.ts` - Reddit via PullPush
+- `src/lib/research/apis/fred.ts` - FRED economic data
+- `src/lib/research/apis/serper.ts` - Serper web search
+- `src/lib/research/engines/api-machine-gun.ts` - Orchestrator
+
+#### Integration
+- Updated `scoring-engine.ts` to use API Machine Gun
+- Sources now show which APIs contributed
+- Parallel execution for speed
+
+#### Spec Created
+- `.kiro/specs/api-machine-gun.md` - Full feature specification
+
+### Kiro CLI Usage Today
+| Task | Kiro Contribution |
+|------|-------------------|
+| Spec creation | Generated feature specification |
+| API adapters | Created 8 API adapter files |
+| Orchestrator | Built parallel execution engine |
+| Integration | Updated scoring engine |
+
+**Kiro Prompts Used Today:** ~5
+**Total Kiro Prompts:** ~75 of 2,000 available
+
+---
+
+## Final Stats (Updated)
+
+- **Lines of Code:** ~9,500+ TypeScript/React
+- **Components:** 20 dashboard components
+- **API Routes:** 4 endpoints
+- **AI Models:** 3 (DeepSeek R1, Gemini Flash, Llama 3.3)
+- **External APIs:** 8 (Wikipedia, Wikidata, HN, OpenAlex, RemoteOK, PullPush, FRED, Serper)
+- **Features:** Research engine, web validation, landing page gen, PRD gen, scoring system, API Machine Gun
+- **Tests:** 47 passing
+- **Documentation Files:** 16+
+- **Development Time:** 7 days
+- **Kiro Prompts Used:** ~75 of 2,000 available
+
+---
+
 *This devlog documents the complete development journey of Curatos for the Dynamous x Kiro Hackathon.*

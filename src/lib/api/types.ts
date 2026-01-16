@@ -16,9 +16,15 @@ export interface ChatResponse {
   }>;
 }
 
+export interface ChatOptions {
+  model?: string;
+  models?: string[];
+  route?: 'fallback';
+}
+
 export interface AIProvider {
   name: string;
-  chat(messages: Message[], model?: string): Promise<ChatResponse>;
+  chat(messages: Message[], modelOrOptions?: string | ChatOptions): Promise<ChatResponse>;
   listModels(): Promise<string[]>;
   validateKey(): Promise<boolean>;
 }

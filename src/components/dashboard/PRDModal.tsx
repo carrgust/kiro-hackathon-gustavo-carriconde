@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Copy, Download, Eye, FileText, Check, ChevronRight, List } from 'lucide-react';
 import { Hypothesis } from '@/types/project';
 
 interface PRDModalProps {
@@ -12,10 +14,10 @@ interface PRDModalProps {
   markdown: string;
 }
 
-interface Requirement {
+interface Section {
   id: string;
-  text: string;
-  validated: boolean;
+  title: string;
+  level: number;
 }
 
 export default function PRDModal({
@@ -28,41 +30,36 @@ export default function PRDModal({
 }: PRDModalProps) {
   const [activeTab, setActiveTab] = useState<'preview' | 'raw'>('preview');
   const [copied, setCopied] = useState(false);
-  const [showBuildMessage, setShowBuildMessage] = useState(false);
+  const [copiedSection, setCopiedSection] = useState<string | null>(null);
+  const [showSidebar, setShowSidebar] = useState(true);
 
-  // Parse requirements from markdown
-  const { functionalReqs, nonFunctionalReqs } = useMemo(() => {
-    const frMatches = markdown.match(/FR-\d+:.*$/gm) || [];
-    const nfrMatches = markdown.match(/NFR-\d+:.*$/gm) || [];
-
-    return {
-      functionalReqs: frMatches.map(req => ({
-        id: req.match(/FR-\d+/)?.[0] || '',
-        text: req,
-        validated: false
-      })),
-      nonFunctionalReqs: nfrMatches.map(req => ({
-        id: req.match(/NFR-\d+/)?.[0] || '',
-        text: req,
-        validated: false
-      }))
-    };
+  // Parse sections from markdown
+  const sections = useMemo<Section[]>(() => {
+    const matches = markdown.matchAll(/^(#{1,3})\s+(.+)$/gm);
+    return Array.from(matches).map((match, i) => ({
+      id: `section-${i}`,
+      title: match[2],
+      level: match[1].length,
+    }));
   }, [markdown]);
-
-  const [frs, setFrs] = useState<Requirement[]>(functionalReqs);
-  const [nfrs, setNfrs] = useState<Requirement[]>(nonFunctionalReqs);
-
-  // Calculate validation stats
-  const frValidated = frs.filter(r => r.validated).length;
-  const nfrValidated = nfrs.filter(r => r.validated).length;
-  const allValidated = frValidated === frs.length && nfrValidated === nfrs.length && frs.length > 0 && nfrs.length > 0;
 
   if (!isOpen) return null;
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(markdown);
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(markdown);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCopySection = async (sectionTitle: string) => {
+    // Find section content
+    const regex = new RegExp(`^#{1,3}\\s+${sectionTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\S]*?(?=^#{1,3}\\s|$)`, 'gm');
+    const match = markdown.match(regex);
+    if (match) {
+      await navigator.clipboard.writeText(match[0].trim());
+      setCopiedSection(sectionTitle);
+      setTimeout(() => setCopiedSection(null), 2000);
+    }
   };
 
   const handleDownload = () => {
@@ -77,206 +74,202 @@ export default function PRDModal({
     URL.revokeObjectURL(url);
   };
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
+  const scrollToSection = (sectionId: string) => {
+    const index = parseInt(sectionId.split('-')[1]);
+    const element = document.querySelector(`[data-section="${index}"]`);
+    element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const toggleFR = (id: string) => {
-    setFrs(prev => prev.map(r => r.id === id ? { ...r, validated: !r.validated } : r));
-  };
-
-  const toggleNFR = (id: string) => {
-    setNfrs(prev => prev.map(r => r.id === id ? { ...r, validated: !r.validated } : r));
-  };
-
-  const handleBuild = () => {
-    setShowBuildMessage(true);
-    setTimeout(() => setShowBuildMessage(false), 3000);
-  };
-
-  // Simple markdown to HTML converter for preview
+  // Enhanced markdown renderer with section anchors
   const renderMarkdown = (md: string) => {
+    let sectionIndex = 0;
     return md
-      .replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold text-white mt-4 mb-2">$1</h3>')
-      .replace(/^## (.*$)/gim, '<h2 class="text-xl font-semibold text-cyan-400 mt-6 mb-3">$1</h2>')
-      .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold text-white mb-4">$1</h1>')
-      .replace(/^\* (.*$)/gim, '<li class="ml-4 text-gray-300">$1</li>')
-      .replace(/^- (.*$)/gim, '<li class="ml-4 text-gray-300">$1</li>')
-      .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>')
-      .replace(/\n\n/g, '<br/><br/>')
+      .replace(/^### (.*$)/gim, (_, title) => {
+        const html = `<h3 data-section="${sectionIndex}" class="text-base font-semibold text-white mt-4 mb-2 scroll-mt-4">${title}</h3>`;
+        sectionIndex++;
+        return html;
+      })
+      .replace(/^## (.*$)/gim, (_, title) => {
+        const html = `<h2 data-section="${sectionIndex}" class="text-lg font-semibold text-cyan-400 mt-6 mb-3 scroll-mt-4 flex items-center gap-2"><span class="w-1 h-5 bg-cyan-400 rounded"></span>${title}</h2>`;
+        sectionIndex++;
+        return html;
+      })
+      .replace(/^# (.*$)/gim, (_, title) => {
+        const html = `<h1 data-section="${sectionIndex}" class="text-xl font-bold text-white mb-4 scroll-mt-4">${title}</h1>`;
+        sectionIndex++;
+        return html;
+      })
+      .replace(/^(FR-\d+:.*)$/gim, '<div class="pl-4 py-1 border-l-2 border-green-500/50 text-green-300 text-sm my-1">$1</div>')
+      .replace(/^(NFR-\d+:.*)$/gim, '<div class="pl-4 py-1 border-l-2 border-purple-500/50 text-purple-300 text-sm my-1">$1</div>')
+      .replace(/^\* (.*$)/gim, '<li class="ml-4 text-gray-300 text-sm">• $1</li>')
+      .replace(/^- (.*$)/gim, '<li class="ml-4 text-gray-300 text-sm">• $1</li>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
+      .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 bg-gray-800 text-cyan-300 rounded text-xs">$1</code>')
+      .replace(/\n\n/g, '<div class="h-3"></div>')
       .replace(/\n/g, '<br/>');
   };
 
   return (
-    <div
-      className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
-      onClick={handleBackdropClick}
-    >
-      <div className="bg-gray-900 border border-gray-700 w-full max-w-6xl h-[90vh] flex flex-col font-mono">
-        {/* Header */}
-        <div className="border-b border-gray-700 p-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-white text-lg font-normal">Product Requirements Document</h2>
-            <p className="text-gray-500 text-xs mt-1">
-              {problems.length} problems + {solutions.length} solutions → {niche}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-white transition-colors text-2xl"
-          >
-            ×
-          </button>
-        </div>
-
-        {/* Validation Status Bar */}
-        {(frs.length > 0 || nfrs.length > 0) && (
-          <div className="border-b border-gray-700 p-3 bg-gray-950 flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-2">
-                <div className={`w-3 h-3 rounded-full ${allValidated ? 'bg-green-500' : 'bg-gray-600'}`} />
-                <span className="text-xs text-gray-400">
-                  {allValidated ? 'All Requirements Validated' : 'Validation Incomplete'}
-                </span>
-              </div>
-              <div className="text-xs text-gray-400">
-                FRs: {frValidated}/{frs.length}
-              </div>
-              <div className="text-xs text-gray-400">
-                NFRs: {nfrValidated}/{nfrs.length}
-              </div>
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={(e) => e.target === e.currentTarget && onClose()}
+      >
+        <motion.div
+          className="bg-gray-900 border border-gray-700 rounded-xl w-full max-w-6xl h-[95vh] sm:h-[90vh] flex flex-col font-mono overflow-hidden"
+          initial={{ scale: 0.95, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.95, y: 20 }}
+        >
+          {/* Header */}
+          <div className="border-b border-gray-700 p-3 sm:p-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-white text-base sm:text-lg font-semibold flex items-center gap-2">
+                <span className="text-green-400">✓</span> PRD Generated
+              </h2>
+              <p className="text-gray-500 text-xs mt-1">
+                {problems.length} problems + {solutions.length} solutions → {niche}
+              </p>
             </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+            >
+              <X size={20} />
+            </button>
           </div>
-        )}
 
-        {/* Tabs */}
-        <div className="border-b border-gray-700 flex">
-          <button
-            onClick={() => setActiveTab('preview')}
-            className={`px-6 py-3 text-sm transition-colors ${
-              activeTab === 'preview'
-                ? 'text-cyan-400 border-b-2 border-cyan-400'
-                : 'text-gray-500 hover:text-gray-300'
-            }`}
-          >
-            Preview
-          </button>
-          <button
-            onClick={() => setActiveTab('raw')}
-            className={`px-6 py-3 text-sm transition-colors ${
-              activeTab === 'raw'
-                ? 'text-cyan-400 border-b-2 border-cyan-400'
-                : 'text-gray-500 hover:text-gray-300'
-            }`}
-          >
-            Raw Markdown
-          </button>
-        </div>
+          {/* Tabs */}
+          <div className="border-b border-gray-700 flex items-center justify-between px-2 sm:px-4">
+            <div className="flex">
+              <button
+                onClick={() => setActiveTab('preview')}
+                className={`flex items-center gap-2 px-3 sm:px-4 py-3 text-sm transition-colors ${
+                  activeTab === 'preview'
+                    ? 'text-cyan-400 border-b-2 border-cyan-400'
+                    : 'text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                <Eye size={16} />
+                <span className="hidden sm:inline">Preview</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('raw')}
+                className={`flex items-center gap-2 px-3 sm:px-4 py-3 text-sm transition-colors ${
+                  activeTab === 'raw'
+                    ? 'text-cyan-400 border-b-2 border-cyan-400'
+                    : 'text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                <FileText size={16} />
+                <span className="hidden sm:inline">Markdown</span>
+              </button>
+            </div>
+            {activeTab === 'preview' && sections.length > 0 && (
+              <button
+                onClick={() => setShowSidebar(!showSidebar)}
+                className={`p-2 rounded-lg transition-colors ${showSidebar ? 'bg-gray-800 text-cyan-400' : 'text-gray-500 hover:text-gray-300'}`}
+              >
+                <List size={16} />
+              </button>
+            )}
+          </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-auto p-6 bg-gray-950">
-          {activeTab === 'preview' ? (
-            <div className="space-y-6">
-              <div 
-                className="prose prose-invert max-w-none"
-                dangerouslySetInnerHTML={{ __html: renderMarkdown(markdown) }}
-              />
-              
-              {/* Interactive Requirements Validation */}
-              {frs.length > 0 && (
-                <div className="mt-8 border-t border-gray-700 pt-6">
-                  <h3 className="text-lg font-semibold text-cyan-400 mb-4">Validate Functional Requirements</h3>
-                  <div className="space-y-2">
-                    {frs.map(req => (
-                      <label key={req.id} className="flex items-start space-x-3 cursor-pointer hover:bg-gray-800 p-2 rounded">
-                        <input
-                          type="checkbox"
-                          checked={req.validated}
-                          onChange={() => toggleFR(req.id)}
-                          className="mt-1 w-4 h-4 text-cyan-600 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500"
-                        />
-                        <span className={`text-sm ${req.validated ? 'text-green-400' : 'text-gray-300'}`}>
-                          {req.text}
-                        </span>
-                      </label>
-                    ))}
+          {/* Content */}
+          <div className="flex-1 flex overflow-hidden">
+            {/* Sidebar - Section Navigation */}
+            <AnimatePresence>
+              {activeTab === 'preview' && showSidebar && sections.length > 0 && (
+                <motion.div
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: 200, opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  className="hidden sm:block border-r border-gray-800 bg-gray-950 overflow-y-auto"
+                >
+                  <div className="p-3">
+                    <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">Sections</div>
+                    <nav className="space-y-1">
+                      {sections.map((section) => (
+                        <button
+                          key={section.id}
+                          onClick={() => scrollToSection(section.id)}
+                          className={`w-full text-left px-2 py-1.5 rounded text-xs hover:bg-gray-800 transition-colors flex items-center gap-1 group ${
+                            section.level === 1 ? 'text-white font-semibold' :
+                            section.level === 2 ? 'text-cyan-400 pl-3' :
+                            'text-gray-400 pl-5'
+                          }`}
+                        >
+                          <ChevronRight size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <span className="truncate">{section.title}</span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleCopySection(section.title); }}
+                            className="ml-auto opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-700 rounded"
+                            title="Copy section"
+                          >
+                            {copiedSection === section.title ? <Check size={10} className="text-green-400" /> : <Copy size={10} />}
+                          </button>
+                        </button>
+                      ))}
+                    </nav>
                   </div>
-                </div>
+                </motion.div>
               )}
+            </AnimatePresence>
 
-              {nfrs.length > 0 && (
-                <div className="mt-6 border-t border-gray-700 pt-6">
-                  <h3 className="text-lg font-semibold text-cyan-400 mb-4">Validate Non-Functional Requirements</h3>
-                  <div className="space-y-2">
-                    {nfrs.map(req => (
-                      <label key={req.id} className="flex items-start space-x-3 cursor-pointer hover:bg-gray-800 p-2 rounded">
-                        <input
-                          type="checkbox"
-                          checked={req.validated}
-                          onChange={() => toggleNFR(req.id)}
-                          className="mt-1 w-4 h-4 text-cyan-600 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500"
-                        />
-                        <span className={`text-sm ${req.validated ? 'text-green-400' : 'text-gray-300'}`}>
-                          {req.text}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Build Button */}
-              {(frs.length > 0 || nfrs.length > 0) && (
-                <div className="mt-8 border-t border-gray-700 pt-6 text-center">
+            {/* Main Content */}
+            <div className="flex-1 overflow-auto p-4 sm:p-6 bg-gray-950">
+              {activeTab === 'preview' ? (
+                <div 
+                  className="prose prose-invert max-w-none"
+                  dangerouslySetInnerHTML={{ __html: renderMarkdown(markdown) }}
+                />
+              ) : (
+                <div className="relative">
                   <button
-                    onClick={handleBuild}
-                    disabled={!allValidated}
-                    className={`px-8 py-3 rounded font-mono font-normal transition-colors ${
-                      allValidated
-                        ? 'bg-cyan-600 hover:bg-cyan-700 text-black cursor-pointer'
-                        : 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                    }`}
+                    onClick={handleCopy}
+                    className="absolute top-2 right-2 p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-2 text-xs"
                   >
-                    [ BUILD THIS SYSTEM ]
+                    {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                    {copied ? 'Copied!' : 'Copy'}
                   </button>
-                  {showBuildMessage && (
-                    <div className="mt-4 text-green-400 text-sm animate-pulse">
-                      ✅ System ready for development!
-                    </div>
-                  )}
+                  <pre className="text-xs text-gray-300 whitespace-pre-wrap bg-black/50 p-4 rounded-lg">
+                    {markdown}
+                  </pre>
                 </div>
               )}
             </div>
-          ) : (
-            <pre className="text-xs text-gray-300 whitespace-pre-wrap">
-              {markdown}
-            </pre>
-          )}
-        </div>
+          </div>
 
-        {/* Actions */}
-        <div className="border-t border-gray-700 p-4 flex items-center justify-between">
-          <div className="text-xs text-gray-500">
-            Markdown format • Ready for Notion, GitHub, or any markdown editor
+          {/* Actions */}
+          <div className="border-t border-gray-700 p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-xs text-gray-500 text-center sm:text-left">
+              ✓ Markdown format • Compatible with Notion, GitHub, Confluence
+            </div>
+            <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
+              <motion.button
+                onClick={handleCopy}
+                className="flex-1 sm:flex-none px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-white text-sm rounded-lg transition-colors flex items-center justify-center gap-2 min-h-[44px]"
+                whileTap={{ scale: 0.98 }}
+              >
+                {copied ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
+                {copied ? 'Copied!' : 'Copy'}
+              </motion.button>
+              <motion.button
+                onClick={handleDownload}
+                className="flex-1 sm:flex-none px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm rounded-lg transition-colors font-medium flex items-center justify-center gap-2 min-h-[44px]"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Download size={16} />
+                Download
+              </motion.button>
+            </div>
           </div>
-          <div className="flex space-x-3">
-            <button
-              onClick={handleCopy}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors"
-            >
-              {copied ? '✓ Copied!' : 'Copy Markdown'}
-            </button>
-            <button
-              onClick={handleDownload}
-              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-black text-sm rounded transition-colors font-medium"
-            >
-              Download .md
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }

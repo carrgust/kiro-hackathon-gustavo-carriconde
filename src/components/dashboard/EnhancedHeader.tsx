@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Lock, Unlock, Play, Square, Sparkles } from 'lucide-react';
+import { Lock, Unlock, Play, Square } from 'lucide-react';
 import GeoSelector from './GeoSelector';
 import AutopilotToggle from './AutopilotToggle';
 
@@ -23,7 +23,6 @@ interface EnhancedHeaderProps {
   onAutopilotToggle: () => void;
   onSliderChange: (value: number) => void;
   onEngineToggle: () => void;
-  onDemoMode?: () => void;
 }
 
 const nicheSuggestions = [
@@ -32,7 +31,7 @@ const nicheSuggestions = [
 
 export default function EnhancedHeader({
   provider, model, tokenBudget, totalTokensSpent, runningTime, niche, nicheLocked, selectedRegions, autopilotEnabled, engineRunning, sliderValue,
-  onTokenBudgetChange, onNicheChange, onNicheLockToggle, onRegionsChange, onAutopilotToggle, onSliderChange, onEngineToggle, onDemoMode
+  onTokenBudgetChange, onNicheChange, onNicheLockToggle, onRegionsChange, onAutopilotToggle, onSliderChange, onEngineToggle
 }: EnhancedHeaderProps) {
   const [showNicheDropdown, setShowNicheDropdown] = useState(false);
   const [nicheInput, setNicheInput] = useState(niche);
@@ -196,18 +195,6 @@ export default function EnhancedHeader({
             onToggle={onAutopilotToggle}
             disabled={engineRunning}
           />
-          
-          {onDemoMode && (
-            <motion.button
-              onClick={onDemoMode}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 transition-all rounded-lg"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Sparkles size={12} />
-              <span>Demo</span>
-            </motion.button>
-          )}
           
           <motion.button
             onClick={onEngineToggle}

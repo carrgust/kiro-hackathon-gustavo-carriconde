@@ -1,9 +1,10 @@
-# Curatos DNA 🧬
+d# Curatos DNA 🧬
 
 > **Autonomous SaaS Research Engine** - Transform market research into deployable products with AI-powered validation and generation
 
 [![Next.js](https://img.shields.io/badge/Next.js-14.2-black?logo=next.js)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Tests](https://img.shields.io/badge/Tests-47%20passing-brightgreen)](./src/__tests__)
 [![OpenRouter](https://img.shields.io/badge/OpenRouter-API-cyan)](https://openrouter.ai/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -45,11 +46,10 @@ Stop spending weeks on manual market research. Let AI discover validated opportu
 - Preview rendered markdown or raw source
 - Download as .md file
 
-### 🎯 **Requirements Extraction**
-- Automatic functional/non-functional requirements
-- Unlocks after validating problems + solutions
-- Feeds into PRD generation
-- Structured for development teams
+### 🎯 **Stage Progression System**
+- 6-stage quality gates with thresholds
+- Visual progress bar
+- Unlocks outputs at validated milestones
 
 ### 🎨 **Terminal Aesthetic**
 - Hacker-style UI with dark theme
@@ -75,15 +75,58 @@ cd kiro-hackathon-gustavo-carriconde
 # Install dependencies
 npm install
 
-# Set up environment
-cp .env.example .env.local
-# Add your OpenRouter API key to .env.local
-
 # Start development server
 npm run dev
 ```
 
 Open [http://localhost:5001](http://localhost:5001) and start researching!
+
+### Demo Mode (No API Key Required)
+
+Click **"Try Demo Mode"** to explore all features with pre-generated data.
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        CLIENT (Browser)                          │
+├─────────────────────────────────────────────────────────────────┤
+│  Dashboard  │  Hypothesis Columns  │  Modals (DNA/PRD/LP)       │
+│             │  (Problems/Solutions) │                            │
+├─────────────────────────────────────────────────────────────────┤
+│                    State Management                              │
+│  • EngineState (hypotheses, solutions, requirements)            │
+│  • useScoring hook (stage progression)                          │
+│  • localStorage (API key, total spent)                          │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      API LAYER (Next.js)                         │
+├─────────────────────────────────────────────────────────────────┤
+│  /api/health          GET   Health check                        │
+│  /api/chat            POST  AI chat completion                  │
+│  /api/research/start  POST  Start research pipeline             │
+│  /api/research/status GET   Get research status                 │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    SERVICE LAYER                                 │
+├─────────────────────────────────────────────────────────────────┤
+│  HypothesisService  │  StreamingService  │  ScoringEngine       │
+│  • generate()       │  • generateLP()    │  • scoreProblem()    │
+│  • research()       │  • generatePRD()   │  • scoreSolution()   │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    OpenRouter API                                │
+│  DeepSeek R1 (generation) │ Gemini Flash (LP/PRD) │ Exa.ai     │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -120,31 +163,23 @@ Once 5+ hypotheses reach 80%+ confidence:
 
 ## 🛠️ Tech Stack
 
-### Frontend
-- **Next.js 14.2** - React framework with App Router
-- **TypeScript 5** - Type-safe development
-- **Tailwind CSS** - Utility-first styling
-- **React 19** - Latest React features
-
-### AI & APIs
-- **OpenRouter** - Unified AI model access
-- **DeepSeek R1** - Hypothesis generation (free tier)
-- **Gemini Flash** - Landing page & PRD generation (free tier)
-- **Exa.ai** - Real web search via OpenRouter `:online`
-
-### Database (Optional)
-- **Prisma 6** - Type-safe ORM
-- **PostgreSQL** - Relational database
-- **Docker** - Local development
-
-### Development
-- **Kiro CLI** - AI-powered development workflow
-- **ESLint** - Code linting
-- **TypeScript** - Static type checking
+| Category | Technology | Version |
+|----------|------------|---------|
+| **Framework** | Next.js | 14.2.35 |
+| **Language** | TypeScript | 5.3.3 |
+| **UI** | React | 18.2.0 |
+| **Styling** | Tailwind CSS | 3.4.0 |
+| **Animations** | Framer Motion | 12.26.2 |
+| **Notifications** | Sonner | 2.0.7 |
+| **Database** | PostgreSQL + Prisma | 6.19.2 |
+| **Testing** | Vitest | 4.0.17 |
+| **AI Gateway** | OpenRouter | - |
+| **AI Models** | DeepSeek R1, Gemini Flash | Free tier |
+| **Web Search** | Exa.ai | via OpenRouter |
 
 ---
 
-## 🎥 Demo & Screenshots
+## 🎥 Screenshots
 
 ### Main Dashboard
 ![Main Dashboard](./public/screenshots/main-dashboard.png)
@@ -170,59 +205,70 @@ Once 5+ hypotheses reach 80%+ confidence:
 curatos-dna/
 ├── src/
 │   ├── app/                    # Next.js App Router
-│   │   ├── api/               # API routes
+│   │   ├── api/               # API routes (4 endpoints)
 │   │   └── page.tsx           # Main dashboard
-│   ├── components/            # React components
-│   │   └── dashboard/         # Dashboard-specific components
-│   ├── lib/                   # Utilities and services
+│   ├── components/dashboard/   # 20 React components
+│   ├── hooks/                 # Custom hooks (useScoring)
+│   ├── lib/
 │   │   ├── api/              # OpenRouter integration
-│   │   ├── research/         # Research pipeline
-│   │   └── constants.ts      # App constants
-│   └── types/                 # TypeScript definitions
-├── .kiro/                     # Kiro CLI configuration
+│   │   ├── research/         # 3-engine pipeline
+│   │   └── scoring/          # Stage progression
+│   └── __tests__/            # 47 tests
+├── .kiro/
 │   ├── steering/             # Product context docs
-│   ├── DEVLOG.md            # Development timeline
-│   └── CODE_REVIEW.md       # Security & quality audit
-├── prisma/                    # Database schema (optional)
-└── public/                    # Static assets
+│   ├── specs/                # Feature specifications
+│   └── DEVLOG.md            # Development timeline
+├── docs/                      # API documentation
+└── prisma/                    # Database schema
 ```
 
 ---
 
-## 🔑 Environment Variables
+## 🧪 Testing
 
-Create `.env.local` with:
+```bash
+# Run all tests
+npm test
 
-```env
-# OpenRouter API Key (required)
-OPENROUTER_API_KEY=sk-or-v1-...
+# Run with UI
+npm run test:ui
 
-# Database (optional - for persistence)
-DATABASE_URL=postgresql://user:pass@localhost:5432/curatos
-
-# NextAuth (optional - removed in MVP)
-# NEXTAUTH_SECRET=your-secret-here
-# NEXTAUTH_URL=http://localhost:5001
+# Run with coverage
+npm run test:coverage
 ```
+
+**Test Coverage:**
+- API health checks
+- Demo mode isolation
+- Streaming service
+- Scoring engine
 
 ---
 
-## 🎯 Use Cases
+## 📊 Scoring System
 
-### For Solo Founders
-- Validate SaaS ideas before building
-- Generate landing pages for market testing
-- Create PRDs for development planning
+### Quality Gates
+| Stage | Threshold | Unlocks |
+|-------|-----------|---------|
+| Hypothesis | 80% avg, 5+ facts | Problem Quality |
+| Problem Quality | 70% | Solution Quality |
+| Solution Quality | 70% | Requirements |
+| Requirements | 75% | PRD |
+| PRD | 80% | DNA |
 
-### For Product Teams
-- Rapid market research and validation
-- Generate requirements from research
-- Create marketing materials from validated insights
+### Scoring Criteria
 
-### For Indie Hackers
-- Find profitable niches systematically
-- Validate problems before solutions
-- Export deliverables for quick launches
+**Problems:**
+- Market Size (25 pts)
+- Pain Intensity (25 pts)
+- Existing Solutions (25 pts)
+- Willingness to Pay (25 pts)
+
+**Solutions:**
+- Technical Feasibility (25 pts)
+- Competitive Advantage (25 pts)
+- Time to Market (25 pts)
+- Market Validation (25 pts)
 
 ---
 
@@ -230,54 +276,48 @@ DATABASE_URL=postgresql://user:pass@localhost:5432/curatos
 
 This project was built using [Kiro CLI](https://kiro.dev) for the **AWS Kiro Hackathon 2026**.
 
-Kiro CLI accelerated development by:
-- Generating React components from specifications
-- Implementing API integrations with error handling
-- Creating type-safe TypeScript interfaces
-- Scaffolding project structure
-- Providing AI-powered code assistance
+### Kiro Usage Highlights
+| Task | Kiro Contribution |
+|------|-------------------|
+| Project Scaffolding | Initial Next.js setup |
+| Component Generation | All 20 dashboard components |
+| API Integration | OpenRouter provider with retry logic |
+| Test Suite | 47 tests with assertions |
+| Documentation | Steering docs, specs, API docs |
 
-**Estimated time saved:** 40+ hours of manual coding
+**Kiro Prompts Used:** ~70 of 2,000 available
 
 ---
 
-## 📊 Hackathon Highlights
+## 📈 Development Stats
 
-### Innovation
-- **Dual AI Outputs:** Landing Page + PRD from same research
-- **Real Web Search:** Exa.ai integration via OpenRouter `:online`
-- **Autonomous Pipeline:** 3-engine research system
-- **Terminal Aesthetic:** Unique hacker-style UI
-
-### Technical Excellence
-- ✅ 0 TypeScript errors
-- ✅ 0 ESLint warnings
-- ✅ 0 npm vulnerabilities
-- ✅ Error boundary implementation
-- ✅ Comprehensive code review
-
-### Documentation
-- Complete DEVLOG with 5-day timeline
-- Code review with 23 issues addressed
-- Feature documentation for Landing Page & PRD
-- Steering docs (product, tech, structure)
+| Metric | Value |
+|--------|-------|
+| Lines of Code | ~9,000+ |
+| Components | 20 |
+| API Routes | 4 |
+| Tests | 47 passing |
+| AI Models | 3 |
+| Development Time | 6 days |
+| TypeScript Errors | 0 |
+| npm Vulnerabilities | 0 |
 
 ---
 
 ## 🚧 Roadmap
 
-### Phase 1: MVP (Complete ✅)
+### Phase 1: MVP ✅
 - [x] Hypothesis generation
 - [x] Web search validation
 - [x] Landing page generator
 - [x] PRD generator
-- [x] Token tracking
+- [x] Demo mode
+- [x] Scoring system
 
 ### Phase 2: Enhancement
-- [ ] Streaming generation (real-time updates)
+- [ ] Streaming generation
 - [ ] Multiple landing page templates
 - [ ] A/B testing variations
-- [ ] Image generation for landing pages
 - [ ] Export to Notion/Jira/Linear
 
 ### Phase 3: Scale
@@ -285,13 +325,20 @@ Kiro CLI accelerated development by:
 - [ ] Project persistence
 - [ ] Team collaboration
 - [ ] API for programmatic access
-- [ ] Chrome extension
+
+---
+
+## 📄 Documentation
+
+- [API Documentation](./docs/API.md)
+- [Development Log](./.kiro/DEVLOG.md)
+- [Technical Architecture](./.kiro/steering/tech.md)
+- [Product Overview](./.kiro/steering/product.md)
+- [Feature Specs](./.kiro/specs/)
 
 ---
 
 ## 🤝 Contributing
-
-This is a hackathon project, but contributions are welcome!
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing`)
@@ -317,30 +364,12 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-## 🙏 Acknowledgments
-
-- **Kiro CLI** - AI-powered development workflow
-- **OpenRouter** - Unified AI model access
-- **Dynamous** - Hackathon organization
-- **AWS** - Cloud infrastructure and sponsorship
-- **Cole Medin** - Hackathon template and guidance
-
----
-
-## 📞 Support
-
-- 📧 Email: [your-email]
-- 🐛 Issues: [GitHub Issues](https://github.com/gustavocarriconde/kiro-hackathon-gustavo-carriconde/issues)
-- 💬 Discussions: [GitHub Discussions](https://github.com/gustavocarriconde/kiro-hackathon-gustavo-carriconde/discussions)
-
----
-
 <div align="center">
 
 **⭐ Star this repo if you find it useful!**
 
 Built with ❤️ using Kiro CLI for the AWS Kiro Hackathon 2026
 
-[Demo](https://curatos.vercel.app) • [Documentation](.kiro/DEVLOG.md) • [Report Bug](https://github.com/gustavocarriconde/kiro-hackathon-gustavo-carriconde/issues)
+[Demo Mode](#demo-mode-no-api-key-required) • [Documentation](./docs/API.md) • [Report Bug](https://github.com/gustavocarriconde/kiro-hackathon-gustavo-carriconde/issues)
 
 </div>

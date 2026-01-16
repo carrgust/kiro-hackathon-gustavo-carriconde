@@ -12,7 +12,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const pipeline = new ResearchPipeline(apiKey, 'demo-user');
+    const pipeline = new ResearchPipeline(apiKey, 'user');
     const result = await pipeline.execute(idea, niche);
 
     return NextResponse.json(result);

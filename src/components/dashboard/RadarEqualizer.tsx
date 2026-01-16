@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 interface RadarEqualizerProps {
   problems: number;
@@ -10,28 +10,46 @@ interface RadarEqualizerProps {
 export default function RadarEqualizer({ problems, solutions, requirements, isActive }: RadarEqualizerProps) {
   const [sweepAngle, setSweepAngle] = useState(0);
   const [pulseStates, setPulseStates] = useState<boolean[]>([]);
+  const prevCounts = useRef({ problems: 0, solutions: 0, requirements: 0 });
+  const [hasActivity, setHasActivity] = useState(false);
 
-  // Animation effects
+  // Detect activity when counts change or isActive
+  const totalCount = problems + solutions + requirements;
+  const shouldAnimate = isActive || totalCount > 0;
+
+  // Detect new activity (count changes)
   useEffect(() => {
-    if (!isActive) return;
+    const prev = prevCounts.current;
+    if (problems !== prev.problems || solutions !== prev.solutions || requirements !== prev.requirements) {
+      setHasActivity(true);
+      prevCounts.current = { problems, solutions, requirements };
+      // Keep activity indicator on for 3 seconds after last change
+      const timer = setTimeout(() => setHasActivity(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [problems, solutions, requirements]);
+
+  // Animation effects - run when there's any data or activity
+  useEffect(() => {
+    if (!shouldAnimate) return;
 
     const sweepInterval = setInterval(() => {
-      setSweepAngle(prev => (prev + 2) % 360);
-    }, 50);
+      setSweepAngle(prev => (prev + 3) % 360);
+    }, 30);
 
     const pulseInterval = setInterval(() => {
-      setPulseStates(prev => prev.map(() => Math.random() > 0.7));
-    }, 200);
+      setPulseStates(prev => prev.map(() => Math.random() > 0.6));
+    }, 150);
 
     return () => {
       clearInterval(sweepInterval);
       clearInterval(pulseInterval);
     };
-  }, [isActive]);
+  }, [shouldAnimate]);
 
   // Initialize pulse states
   useEffect(() => {
-    setPulseStates(new Array(108).fill(false)); // 6 rings * 6 tiles * 3 sections
+    setPulseStates(new Array(108).fill(false));
   }, []);
 
   const renderSection = (
@@ -45,7 +63,7 @@ export default function RadarEqualizer({ problems, solutions, requirements, isAc
     
     const tiles = [];
     const maxRings = 6;
-    const tilesPerRing = 6; // Reduced to fit within 120 degrees
+    const tilesPerRing = 6;
     const activeRings = Math.min(Math.ceil(count / 4), maxRings);
     const sectionSpan = endAngle - startAngle;
 
@@ -53,15 +71,14 @@ export default function RadarEqualizer({ problems, solutions, requirements, isAc
       const radius = 25 + ring * 12;
       
       for (let tile = 0; tile < tilesPerRing; tile++) {
-        // Keep tiles within the section boundaries with padding
-        const padding = sectionSpan * 0.1; // 10% padding on each side
+        const padding = sectionSpan * 0.1;
         const usableSpan = sectionSpan - 2 * padding;
         const angle = startAngle + padding + (tile / (tilesPerRing - 1)) * usableSpan;
         const x = Math.cos(angle * Math.PI / 180) * radius;
         const y = Math.sin(angle * Math.PI / 180) * radius;
         
-        const tileIndex = sectionIndex * 36 + ring * 6 + tile; // Updated for 6 tiles per ring
-        const isPulsing = isActive && pulseStates[tileIndex];
+        const tileIndex = sectionIndex * 36 + ring * 6 + tile;
+        const isPulsing = shouldAnimate && pulseStates[tileIndex];
         const opacity = isPulsing ? 1 : 0.6;
         
         tiles.push(
@@ -81,22 +98,58 @@ export default function RadarEqualizer({ problems, solutions, requirements, isAc
     return tiles;
   };
 
+  // Always render sweep line when there's data
   const renderSweepLine = () => {
-    if (!isActive) return null;
+    if (!shouldAnimate) return null;
     
     const x = Math.cos(sweepAngle * Math.PI / 180) * 105;
     const y = Math.sin(sweepAngle * Math.PI / 180) * 105;
     
+    // Brighter color when actively processing
+    const baseColor = hasActivity || isActive ? '0, 255, 150' : '0, 200, 150';
+    const glowIntensity = hasActivity || isActive ? '12px' : '6px';
+    
     return (
-      <line
-        x1="0"
-        y1="0"
-        x2={x}
-        y2={y}
-        stroke="rgba(255, 255, 255, 0.3)"
-        strokeWidth="1"
-        className="drop-shadow-lg"
-      />
+      <g>
+        {/* Trailing fade effect - render first so main line is on top */}
+        {[5, 4, 3, 2, 1].map(i => {
+          const trailAngle = (sweepAngle - i * 10 + 360) % 360;
+          const tx = Math.cos(trailAngle * Math.PI / 180) * 105;
+          const ty = Math.sin(trailAngle * Math.PI / 180) * 105;
+          return (
+            <line
+              key={`trail-${i}`}
+              x1="0"
+              y1="0"
+              x2={tx}
+              y2={ty}
+              stroke={`rgba(${baseColor}, ${0.4 - i * 0.07})`}
+              strokeWidth={2 - i * 0.2}
+            />
+          );
+        })}
+        {/* Main sweep line with glow */}
+        <line
+          x1="0"
+          y1="0"
+          x2={x}
+          y2={y}
+          stroke={`rgba(${baseColor}, 0.95)`}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          style={{ 
+            filter: `drop-shadow(0 0 ${glowIntensity} rgba(${baseColor}, 0.9))`,
+          }}
+        />
+        {/* Bright tip */}
+        <circle
+          cx={x}
+          cy={y}
+          r="3"
+          fill={`rgba(${baseColor}, 1)`}
+          style={{ filter: `drop-shadow(0 0 8px rgba(${baseColor}, 1))` }}
+        />
+      </g>
     );
   };
 
@@ -136,7 +189,13 @@ export default function RadarEqualizer({ problems, solutions, requirements, isAc
         {renderSweepLine()}
         
         {/* Center dot */}
-        <circle cx="0" cy="0" r="3" fill="rgba(255, 255, 255, 0.5)" />
+        <circle 
+          cx="0" 
+          cy="0" 
+          r="4" 
+          fill={shouldAnimate ? "rgba(0, 255, 150, 0.8)" : "rgba(255, 255, 255, 0.5)"} 
+          style={shouldAnimate ? { filter: 'drop-shadow(0 0 6px rgba(0, 255, 150, 0.8))' } : {}}
+        />
         
         {/* Section labels */}
         <text x="0" y="-115" textAnchor="middle" className="fill-blue-400 text-xs font-mono">

@@ -1,17 +1,18 @@
 import { getProvider, Message } from '@/lib/api';
 import { Hypothesis } from '@/types/project';
-import { DEMO_PRD, DEMO_LANDING_PAGE } from '../demo-data';
 
 export class StreamingService {
   private apiKey: string;
+  private isLiveMode: boolean;
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
+    this.isLiveMode = apiKey === 'live';
   }
 
   async streamHypothesisGeneration(
-    niche: string, 
-    focus: 'problems' | 'solutions', 
+    niche: string,
+    focus: 'problems' | 'solutions',
     onRationaleUpdate: (text: string) => void
   ): Promise<void> {
     const systemPrompt = `You are a market research expert. Think step by step about ${focus} in the ${niche} niche. Show your reasoning process as you analyze and generate insights. Start each thought with "> " and be concise.`;
@@ -24,18 +25,29 @@ export class StreamingService {
     ];
 
     try {
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      // In live mode, use server-side proxy to access API key
+      const url = this.isLiveMode
+        ? '/api/stream'
+        : 'https://openrouter.ai/api/v1/chat/completions';
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Only add Authorization header for direct OpenRouter calls (not live mode)
+      if (!this.isLiveMode) {
+        headers['Authorization'] = `Bearer ${this.apiKey}`;
+        headers['HTTP-Referer'] = typeof window !== 'undefined' ? window.location.origin : 'https://curatos.app';
+        headers['X-Title'] = 'Curatos DNA';
+      }
+
+      const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'Curatos DNA'
-        },
+        headers,
         body: JSON.stringify({
-          model: 'deepseek/deepseek-r1-0528:free',
+          model: 'deepseek/deepseek-chat',
           messages,
-          stream: true,
+          stream: !this.isLiveMode, // Server handles streaming flag for live mode
           temperature: 0.7,
           max_tokens: 500
         })
@@ -103,21 +115,15 @@ export class StreamingService {
     problems: Hypothesis[],
     solutions: Hypothesis[]
   ): Promise<string> {
-    // Demo mode: return pre-generated data
-    if (this.apiKey === 'demo') {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate delay
-      return DEMO_LANDING_PAGE;
-    }
-
     const provider = getProvider('openrouter', this.apiKey);
 
     const problemsList = problems
-      .filter(p => p.state === 'fact' && p.confidence >= 80)
+      .filter(p => p.state === 'fact' && p.confidence >= 90)
       .map(p => `- ${p.text}`)
       .join('\n');
 
     const solutionsList = solutions
-      .filter(s => s.state === 'fact' && s.confidence >= 80)
+      .filter(s => s.state === 'fact' && s.confidence >= 90)
       .map(s => `- ${s.text}`)
       .join('\n');
 
@@ -147,7 +153,7 @@ Return ONLY the HTML code, no explanations.`;
       { role: 'user', content: prompt }
     ];
 
-    const response = await provider.chat(messages, 'google/gemini-2.0-flash-exp:free');
+    const response = await provider.chat(messages, 'deepseek/deepseek-chat');
     
     // Extract HTML from response (remove markdown code blocks if present)
     let html = response.content.trim();
@@ -165,21 +171,15 @@ Return ONLY the HTML code, no explanations.`;
     problems: Hypothesis[],
     solutions: Hypothesis[]
   ): Promise<string> {
-    // Demo mode: return pre-generated data
-    if (this.apiKey === 'demo') {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate delay
-      return DEMO_PRD;
-    }
-
     const provider = getProvider('openrouter', this.apiKey);
 
     const problemsList = problems
-      .filter(p => p.state === 'fact' && p.confidence >= 80)
+      .filter(p => p.state === 'fact' && p.confidence >= 90)
       .map(p => `- ${p.text}`)
       .join('\n');
 
     const solutionsList = solutions
-      .filter(s => s.state === 'fact' && s.confidence >= 80)
+      .filter(s => s.state === 'fact' && s.confidence >= 90)
       .map(s => `- ${s.text}`)
       .join('\n');
 
@@ -238,7 +238,7 @@ IMPORTANT: Use the exact format FR-001, FR-002, NFR-001, NFR-002 for requirement
       { role: 'user', content: prompt }
     ];
 
-    const response = await provider.chat(messages, 'google/gemini-2.0-flash-exp:free');
+    const response = await provider.chat(messages, 'deepseek/deepseek-chat');
     
     // Extract markdown from response (remove markdown code blocks if present)
     let markdown = response.content.trim();

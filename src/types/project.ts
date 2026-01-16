@@ -1,14 +1,29 @@
+import { ProblemQuality, SolutionQuality, RequirementsQuality, PRDQuality, DNAQuality } from '@/lib/scoring';
+
 export type HypothesisState = 'hypothesis' | 'fact';
+export type HypothesisStatus = 'pending' | 'downloading' | 'analyzing' | 'complete';
 
 export interface Hypothesis {
   id: string;
   text: string;
   state: HypothesisState;
+  status?: HypothesisStatus;
   confidence: number; // 0-100
   sources?: string[];
   type?: 'functional' | 'non-functional'; // For requirements column
   createdAt: Date;
 }
+
+export interface StageScores {
+  hypothesis: { avgConfidence: number; factCount: number };
+  problemQuality: ProblemQuality | null;
+  solutionQuality: SolutionQuality | null;
+  requirementsQuality: RequirementsQuality | null;
+  prdQuality: PRDQuality | null;
+  dnaQuality: DNAQuality | null;
+}
+
+export type StageName = 'HYPOTHESIS' | 'PROBLEM_QUALITY' | 'SOLUTION_QUALITY' | 'REQUIREMENTS' | 'PRD' | 'DNA';
 
 export interface ChatMessage {
   role: 'user' | 'agent';

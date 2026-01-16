@@ -1,23 +1,32 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
 import { Toaster, toast } from 'sonner';
 import { EngineState, Hypothesis, DNAData } from '@/types/project';
 import { getStoredApiKey } from '@/lib/api';
 import { HypothesisService } from '@/lib/api/hypothesis';
 import { StreamingService } from '@/lib/api/streaming';
+import { useScoring } from '@/hooks/useScoring';
+import { useSync } from '@/hooks/useSync';
+import { useSyncToasts } from '@/hooks/useSyncToasts';
 import ConfirmationModal from '@/components/dashboard/ConfirmationModal';
 import EnhancedHeader from '@/components/dashboard/EnhancedHeader';
 import AgentRationale from '@/components/dashboard/AgentRationale';
 import ChatInterface from '@/components/dashboard/ChatInterface';
 import RadarEqualizer from '@/components/dashboard/RadarEqualizer';
 import HypothesisModal from '@/components/dashboard/HypothesisModal';
-import DNAModal from '@/components/dashboard/DNAModal';
-import LandingPageModal from '@/components/dashboard/LandingPageModal';
-import PRDModal from '@/components/dashboard/PRDModal';
 import HypothesisColumn from '@/components/dashboard/HypothesisColumn';
 import DNAButton from '@/components/dashboard/DNAButton';
-import APIConnector from '@/components/dashboard/APIConnector';
+import StageProgressBar from '@/components/dashboard/StageProgressBar';
+import SyncIndicator from '@/components/dashboard/SyncIndicator';
+import ModalLoading from '@/components/ui/ModalLoading';
+import { KeyboardShortcuts } from '@/components/ui/KeyboardShortcuts';
+
+// Lazy load heavy modals
+const DNAModal = lazy(() => import('@/components/dashboard/DNAModal'));
+const LandingPageModal = lazy(() => import('@/components/dashboard/LandingPageModal'));
+const PRDModal = lazy(() => import('@/components/dashboard/PRDModal'));
+const ExportModal = lazy(() => import('@/components/dashboard/ExportModal').then(m => ({ default: m.ExportModal })));
 
 export default function Dashboard() {
   const [state, setState] = useState<EngineState>({
@@ -44,18 +53,17 @@ export default function Dashboard() {
     chatHistory: []
   });
 
-  const [apiConnected, setApiConnected] = useState(false);
-  const [apiKey, setApiKey] = useState<string>('');
+  const [appMode, setAppMode] = useState<'live' | ''>('');
   const [engineRunning, setEngineRunning] = useState(false);
   const [engineStartTime, setEngineStartTime] = useState<Date | null>(null);
   const [runningTime, setRunningTime] = useState('00:00');
   const [hypothesisService, setHypothesisService] = useState<HypothesisService | null>(null);
   const [streamingService, setStreamingService] = useState<StreamingService | null>(null);
-  const [isDemoMode, setIsDemoMode] = useState(false);
   const [selectedHypothesis, setSelectedHypothesis] = useState<Hypothesis | null>(null);
   const [showDNAModal, setShowDNAModal] = useState(false);
   const [showLandingPageModal, setShowLandingPageModal] = useState(false);
   const [showPRDModal, setShowPRDModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [landingPageHtml, setLandingPageHtml] = useState('');
   const [prdMarkdown, setPrdMarkdown] = useState('');
   const [isGeneratingLandingPage, setIsGeneratingLandingPage] = useState(false);
@@ -69,6 +77,94 @@ export default function Dashboard() {
     isOpen: false,
     hypothesis: null,
     columnType: 'hypotheses'
+  });
+
+  // Scoring hook for stage progression
+  const scoring = useScoring({
+    hypotheses: state.hypotheses,
+    solutions: state.solutions,
+    requirements: state.requirements,
+  });
+
+  // Memoized computed values to prevent unnecessary re-renders
+  const validatedProblems = useMemo(
+    () => state.hypotheses.filter(h => h.state === 'fact'),
+    [state.hypotheses]
+  );
+
+  const validatedSolutions = useMemo(
+    () => state.solutions.filter(h => h.state === 'fact'),
+    [state.solutions]
+  );
+
+  const validatedRequirements = useMemo(
+    () => state.requirements.filter(h => h.state === 'fact'),
+    [state.requirements]
+  );
+
+  const problemsScore = useMemo(
+    () => state.hypotheses.filter(h => h.state === 'fact').length,
+    [state.hypotheses]
+  );
+
+  const solutionsScore = useMemo(
+    () => state.solutions.filter(h => h.state === 'fact').length,
+    [state.solutions]
+  );
+
+  const requirementsScore = useMemo(
+    () => state.requirements.filter(h => h.state === 'fact').length,
+    [state.requirements]
+  );
+
+  const canCreateDNA = useMemo(
+    () => validatedProblems.length >= 2 && validatedSolutions.length >= 2,
+    [validatedProblems.length, validatedSolutions.length]
+  );
+
+  // Sync toasts for real-time notifications
+  const syncToasts = useSyncToasts();
+
+  // WebSocket sync hook for real-time collaboration
+  const [syncEnabled, setSyncEnabled] = useState(false);
+  const sync = useSync({
+    enabled: syncEnabled,
+    wsUrl: 'ws://localhost:3001',
+    onHypothesisAdd: useCallback((hypothesis: Hypothesis, column: 'hypotheses' | 'solutions' | 'requirements') => {
+      setState(prev => ({
+        ...prev,
+        [column]: [...prev[column], hypothesis],
+      }));
+      syncToasts.showHypothesisAdded(column);
+    }, [syncToasts]),
+    onHypothesisUpdate: useCallback((hypothesis: Hypothesis, column: 'hypotheses' | 'solutions' | 'requirements') => {
+      setState(prev => ({
+        ...prev,
+        [column]: prev[column].map(h => h.id === hypothesis.id ? hypothesis : h),
+      }));
+      syncToasts.showHypothesisUpdated(column);
+    }, [syncToasts]),
+    onHypothesisDelete: useCallback((hypothesis: Hypothesis, column: 'hypotheses' | 'solutions' | 'requirements') => {
+      setState(prev => ({
+        ...prev,
+        [column]: prev[column].filter(h => h.id !== hypothesis.id),
+      }));
+    }, []),
+    onStateSync: useCallback((syncState: { hypotheses: Hypothesis[]; solutions: Hypothesis[]; requirements: Hypothesis[] }) => {
+      setState(prev => ({
+        ...prev,
+        hypotheses: syncState.hypotheses,
+        solutions: syncState.solutions,
+        requirements: syncState.requirements,
+      }));
+      syncToasts.showStateSynced();
+    }, [syncToasts]),
+    onUserJoin: useCallback((userId: string) => {
+      syncToasts.showUserJoined(userId);
+    }, [syncToasts]),
+    onUserLeave: useCallback((userId: string) => {
+      syncToasts.showUserLeft(userId);
+    }, [syncToasts]),
   });
 
   // Update running time
@@ -113,15 +209,12 @@ export default function Dashboard() {
     localStorage.setItem('curatos_total_spent', state.totalTokensSpent.toString());
   }, [state.totalTokensSpent]);
 
-  // Check for stored API key on mount
+  // Check for stored mode on mount and initialize services
   useEffect(() => {
-    const storedKey = getStoredApiKey();
-    if (storedKey) {
-      setApiKey(storedKey);
-      setApiConnected(true);
-      setHypothesisService(new HypothesisService(storedKey));
-      setStreamingService(new StreamingService(storedKey));
-    }
+    console.log('[Init] Initializing in live mode');
+    setAppMode('live');
+    setHypothesisService(new HypothesisService('live'));
+    setStreamingService(new StreamingService('live'));
   }, []);
 
   // Calculate scores and unlock status
@@ -139,9 +232,9 @@ export default function Dashboard() {
     const solutionsGreenFacts = state.solutions.filter(h => h.state === 'fact').length;
     const requirementsGreenFacts = state.requirements.filter(h => h.state === 'fact').length;
     
-    const solutionsUnlocked = problemsGreenFacts >= 3;
-    const requirementsUnlocked = problemsGreenFacts >= 3 && solutionsGreenFacts >= 3;
-    const dnaUnlocked = requirementsUnlocked && requirementsGreenFacts >= 3;
+    const solutionsUnlocked = problemsGreenFacts >= 2;
+    const requirementsUnlocked = problemsGreenFacts >= 2 && solutionsGreenFacts >= 2;
+    const dnaUnlocked = scoring.canCreateDNA;
     
     setState(prev => ({
       ...prev,
@@ -150,7 +243,7 @@ export default function Dashboard() {
       requirementsUnlocked,
       dnaUnlocked
     }));
-  }, [state.hypotheses, state.solutions, state.requirements]);
+  }, [state.hypotheses, state.solutions, state.requirements, scoring.canCreateDNA]);
 
   // Real streaming rationale updates
   useEffect(() => {
@@ -191,9 +284,12 @@ export default function Dashboard() {
 
   // Engine logic - generate and research hypotheses
   useEffect(() => {
+    console.log('[Engine] useEffect triggered:', { engineRunning, hypothesisService: !!hypothesisService });
     if (!engineRunning || !hypothesisService) return;
 
+    console.log('[Engine] Starting interval loop');
     const interval = setInterval(async () => {
+      console.log('[Engine] Interval tick');
       setState(prev => {
         // Update token usage
         const tokensUsed = Math.floor(Math.random() * 15) + 5;
@@ -215,6 +311,7 @@ export default function Dashboard() {
 
       // Generate new hypotheses occasionally
       if (Math.random() < 0.3) {
+        console.log('[Engine] Generating hypotheses');
         try {
           // Slider logic: higher value = more problems focus
           const focus = Math.random() < (state.slider / 100) ? 'problems' : 'solutions';
@@ -222,18 +319,23 @@ export default function Dashboard() {
           // Add rationale for hypothesis creation
           setState(prev => ({
             ...prev,
-            agentRationale: [...prev.agentRationale, `Created hypothesis: Analyzing ${focus} in ${state.niche}`].slice(-15)
+            agentRationale: [...prev.agentRationale, `[THINKING] Analyzing ${focus} in ${state.niche}`].slice(-15)
           }));
           
           const newHypotheses = await hypothesisService.generateHypotheses(state.niche, focus, 1);
+          console.log('[Engine] Generated hypotheses:', newHypotheses);
+          
+          // Broadcast new hypothesis to other users
+          const column = focus === 'problems' ? 'hypotheses' : 'solutions';
+          newHypotheses.forEach(h => sync.broadcastAdd(h, column));
           
           setState(prev => ({
             ...prev,
             [focus === 'problems' ? 'hypotheses' : 'solutions']: [
               ...prev[focus === 'problems' ? 'hypotheses' : 'solutions'],
-              ...newHypotheses
-            ].slice(0, 8), // Keep max 8 items
-            agentRationale: [...prev.agentRationale, `Generated: ${newHypotheses[0]?.text || 'New hypothesis'}`].slice(-15)
+              ...newHypotheses.map(h => ({ ...h, status: 'pending' as const }))
+            ].slice(0, 4), // Keep max 4 items
+            agentRationale: [...prev.agentRationale, `[HYPOTHESIS] ${newHypotheses[0]?.text || 'New hypothesis'}`].slice(-15)
           }));
         } catch (error) {
           console.error('Error generating hypotheses:', error);
@@ -246,7 +348,7 @@ export default function Dashboard() {
         const solutionsGreenFacts = prev.solutions.filter(h => h.state === 'fact').length;
         const requirementsCount = prev.requirements.length;
         
-        if (problemsGreenFacts >= 3 && solutionsGreenFacts >= 3 && requirementsCount < 8 && Math.random() < 0.2) {
+        if (problemsGreenFacts >= 2 && solutionsGreenFacts >= 2 && requirementsCount < 8 && Math.random() < 0.2) {
           // Generate requirement
           hypothesisService.generateHypotheses(prev.niche, 'problems', 1)
             .then(newReqs => {
@@ -256,9 +358,10 @@ export default function Dashboard() {
                 requirements: [...current.requirements, ...newReqs.map(req => ({ 
                   ...req, 
                   text: req.text,
-                  type: type as 'functional' | 'non-functional'
+                  type: type as 'functional' | 'non-functional',
+                  status: 'pending' as const
                 }))],
-                agentRationale: [...current.agentRationale, `Auto-generated requirement: ${type}`].slice(-15)
+                agentRationale: [...current.agentRationale, `[HYPOTHESIS] Auto-generated ${type} requirement`].slice(-15)
               }));
             })
             .catch(error => {
@@ -277,28 +380,50 @@ export default function Dashboard() {
         if (hypothesisItems.length > 0 && Math.random() < 0.3) {
           const itemToResearch = hypothesisItems[0];
           const isHypothesis = prev.hypotheses.some(h => h.id === itemToResearch.id);
+          const column = isHypothesis ? 'hypotheses' : 'solutions';
           
-          // Add rationale for research start
+          // Set status to downloading
           setState(current => ({
             ...current,
-            agentRationale: [...current.agentRationale, `Researching: ${itemToResearch.text}`].slice(-15)
+            [column]: current[column].map(h => h.id === itemToResearch.id ? { ...h, status: 'downloading' as const } : h),
+            agentRationale: [...current.agentRationale, `[SEARCHING] ${itemToResearch.text}`].slice(-15)
           }));
           
           // Simulate research completion
-          hypothesisService.researchHypothesis(itemToResearch, prev.niche)
+          hypothesisService.researchHypothesis(itemToResearch, prev.niche, isHypothesis)
             .then(result => {
+              // Set status to analyzing
               setState(current => ({
                 ...current,
-                [isHypothesis ? 'hypotheses' : 'solutions']: current[isHypothesis ? 'hypotheses' : 'solutions'].map(h =>
-                  h.id === itemToResearch.id
-                    ? { ...h, state: 'fact' as const, confidence: result.confidence, sources: result.sources }
-                    : h
+                [column]: current[column].map(h => h.id === itemToResearch.id ? { ...h, status: 'analyzing' as const } : h),
+                agentRationale: [...current.agentRationale, `[FOUND] ${result.sources.length} sources found`].slice(-15)
+              }));
+              
+              const updatedHypothesis = { 
+                ...itemToResearch, 
+                state: result.confidence >= 90 ? 'fact' as const : 'hypothesis' as const, 
+                confidence: result.confidence, 
+                sources: result.sources,
+                status: 'complete' as const
+              };
+              
+              // Broadcast update to other users
+              sync.broadcastUpdate(updatedHypothesis, column);
+              
+              setState(current => ({
+                ...current,
+                [column]: current[column].map(h =>
+                  h.id === itemToResearch.id ? updatedHypothesis : h
                 ),
-                agentRationale: [...current.agentRationale, `Validated with ${result.confidence}% confidence. ${result.sources.length} sources found.`].slice(-15)
+                agentRationale: [...current.agentRationale, result.confidence >= 90 ? `[VALIDATED] ${result.confidence}% confidence` : `[VALIDATING] ${result.confidence}% confidence`].slice(-15)
               }));
             })
             .catch(error => {
               console.error('Error researching hypothesis:', error);
+              setState(current => ({
+                ...current,
+                agentRationale: [...current.agentRationale, `[ERROR] Research failed`].slice(-15)
+              }));
             });
         }
 
@@ -309,63 +434,60 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [engineRunning, hypothesisService, state.slider, state.niche]);
 
-  const handleConnect = (key: string) => {
-    setApiKey(key);
-    setApiConnected(true);
-    
-    if (key === 'demo') {
-      throw new Error('Demo mode is disabled. Please provide a valid OpenRouter API key.');
-    } else {
-      setIsDemoMode(false);
-      setHypothesisService(new HypothesisService(key));
-      setStreamingService(new StreamingService(key));
-    }
-  };
-
-  const handleStartEngine = () => {
+  const handleStartEngine = useCallback(() => {
+    console.log('[StartEngine] Called with:', { niche: state.niche, hypothesisService: !!hypothesisService });
     if (!state.niche.trim()) {
       alert('Enter a niche first');
       return;
     }
+    console.log('[StartEngine] Setting engine running to true');
     setEngineRunning(true);
     setEngineStartTime(new Date());
-  };
+  }, [state.niche, hypothesisService]);
 
-  const handleStopEngine = () => {
+  const handleStopEngine = useCallback(() => {
     setEngineRunning(false);
     setEngineStartTime(null);
     setState(prev => ({ ...prev, tokenRate: 0 }));
-  };
+  }, []);
 
-  const handleEngineToggle = () => {
+  const handleEngineToggle = useCallback(() => {
     if (engineRunning) {
       handleStopEngine();
     } else {
       handleStartEngine();
     }
-  };
+  }, [engineRunning, handleStartEngine, handleStopEngine]);
 
-  const handleNicheChange = (niche: string) => {
+  const handleNicheChange = useCallback((niche: string) => {
     setState(prev => ({ ...prev, niche }));
-  };
+  }, []);
 
-  const handleNicheLockToggle = () => {
+  const handleNicheLockToggle = useCallback(() => {
     setState(prev => ({ ...prev, nicheLocked: !prev.nicheLocked }));
-  };
+  }, []);
 
-  const handleRegionsChange = (regions: string[]) => {
+  const handleRegionsChange = useCallback((regions: string[]) => {
     setState(prev => ({ ...prev, selectedRegions: regions }));
-  };
+  }, []);
 
-  const handleItemClick = (hypothesis: Hypothesis) => {
+  const handleItemClick = useCallback((hypothesis: Hypothesis) => {
     setSelectedHypothesis(hypothesis);
-  };
+  }, []);
 
-  const handleModalClose = () => {
+  const handleModalClose = useCallback(() => {
     setSelectedHypothesis(null);
-  };
+  }, []);
 
-  const handleItemRemove = (hypothesis: Hypothesis, columnType: 'hypotheses' | 'solutions' | 'requirements') => {
+  const removeHypothesis = useCallback((hypothesis: Hypothesis, columnType: 'hypotheses' | 'solutions' | 'requirements') => {
+    setState(prev => ({
+      ...prev,
+      [columnType]: prev[columnType].filter(h => h.id !== hypothesis.id),
+      avoidedThemes: [...prev.avoidedThemes, hypothesis.text]
+    }));
+  }, []);
+
+  const handleItemRemove = useCallback((hypothesis: Hypothesis, columnType: 'hypotheses' | 'solutions' | 'requirements') => {
     const skipConfirmation = localStorage.getItem('skipRemovalConfirmation') === 'true';
     
     if (skipConfirmation) {
@@ -377,17 +499,9 @@ export default function Dashboard() {
         columnType
       });
     }
-  };
+  }, [removeHypothesis]);
 
-  const removeHypothesis = (hypothesis: Hypothesis, columnType: 'hypotheses' | 'solutions' | 'requirements') => {
-    setState(prev => ({
-      ...prev,
-      [columnType]: prev[columnType].filter(h => h.id !== hypothesis.id),
-      avoidedThemes: [...prev.avoidedThemes, hypothesis.text]
-    }));
-  };
-
-  const handleConfirmRemoval = (skipFuture: boolean) => {
+  const handleConfirmRemoval = useCallback((skipFuture: boolean) => {
     if (skipFuture) {
       localStorage.setItem('skipRemovalConfirmation', 'true');
     }
@@ -397,11 +511,11 @@ export default function Dashboard() {
     }
     
     setConfirmationModal({ isOpen: false, hypothesis: null, columnType: 'hypotheses' });
-  };
+  }, [confirmationModal.hypothesis, confirmationModal.columnType, removeHypothesis]);
 
-  const handleCancelRemoval = () => {
+  const handleCancelRemoval = useCallback(() => {
     setConfirmationModal({ isOpen: false, hypothesis: null, columnType: 'hypotheses' });
-  };
+  }, []);
 
   const handleAutopilotToggle = () => {
     setState(prev => ({ ...prev, autopilotEnabled: !prev.autopilotEnabled }));
@@ -410,7 +524,7 @@ export default function Dashboard() {
       // Autopilot activated - start the magic
       setState(prev => ({
         ...prev,
-        agentRationale: [...prev.agentRationale, '✈ Autopilot engaged. AI is now flying your business...'].slice(-15)
+        agentRationale: [...prev.agentRationale, '[THINKING] Autopilot engaged. AI is now flying your business...'].slice(-15)
       }));
       
       // Auto-configure settings with animations
@@ -431,7 +545,7 @@ export default function Dashboard() {
     
     setState(prev => ({
       ...prev,
-      agentRationale: [...prev.agentRationale, `Analyzing market opportunities...`].slice(-15)
+      agentRationale: [...prev.agentRationale, `[THINKING] Analyzing market opportunities...`].slice(-15)
     }));
     
     let i = 0;
@@ -443,7 +557,7 @@ export default function Dashboard() {
         setState(prev => ({
           ...prev,
           nicheLocked: true,
-          agentRationale: [...prev.agentRationale, `Selected niche: ${selectedNiche}`].slice(-15)
+          agentRationale: [...prev.agentRationale, `[THINKING] Selected niche: ${selectedNiche}`].slice(-15)
         }));
       }
     }, 100);
@@ -453,7 +567,7 @@ export default function Dashboard() {
     const regions = ['US', 'GB', 'DE'];
     setState(prev => ({
       ...prev,
-      agentRationale: [...prev.agentRationale, 'Selecting optimal geographic markets...'].slice(-15)
+      agentRationale: [...prev.agentRationale, '[THINKING] Selecting optimal geographic markets...'].slice(-15)
     }));
     
     regions.forEach((region, index) => {
@@ -468,7 +582,7 @@ export default function Dashboard() {
     setTimeout(() => {
       setState(prev => ({
         ...prev,
-        agentRationale: [...prev.agentRationale, `Geographic focus: ${regions.join(', ')}`].slice(-15)
+        agentRationale: [...prev.agentRationale, `[THINKING] Geographic focus: ${regions.join(', ')}`].slice(-15)
       }));
     }, regions.length * 800);
   };
@@ -476,7 +590,7 @@ export default function Dashboard() {
   const animateSlider = () => {
     setState(prev => ({
       ...prev,
-      agentRationale: [...prev.agentRationale, 'Optimizing problem-solution balance...'].slice(-15)
+      agentRationale: [...prev.agentRationale, '[THINKING] Optimizing problem-solution balance...'].slice(-15)
     }));
     
     const targetValue = 70;
@@ -495,7 +609,7 @@ export default function Dashboard() {
         clearInterval(sliderInterval);
         setState(prev => ({
           ...prev,
-          agentRationale: [...prev.agentRationale, `Optimal balance achieved: ${targetValue}% problems focus`].slice(-15)
+          agentRationale: [...prev.agentRationale, `[THINKING] Optimal balance achieved: ${targetValue}% problems focus`].slice(-15)
         }));
       }
     }, 100);
@@ -508,10 +622,42 @@ export default function Dashboard() {
       const newHypotheses = await hypothesisService.generateHypotheses(state.niche, 'problems', 1);
       setState(prev => ({
         ...prev,
-        hypotheses: [...prev.hypotheses, ...newHypotheses]
+        hypotheses: [...prev.hypotheses, ...newHypotheses.map(h => ({ ...h, status: 'pending' as const }))],
+        agentRationale: [...prev.agentRationale, `[HYPOTHESIS] ${newHypotheses[0]?.text || 'New hypothesis'}`].slice(-15)
       }));
+      
+      // Auto-research each new hypothesis with API Machine Gun
+      for (const hypothesis of newHypotheses) {
+        setState(prev => ({
+          ...prev,
+          hypotheses: prev.hypotheses.map(h => h.id === hypothesis.id ? { ...h, status: 'downloading' as const } : h),
+          agentRationale: [...prev.agentRationale, `[SEARCHING] Firing API Machine Gun for: ${hypothesis.text}`].slice(-15)
+        }));
+        
+        const result = await hypothesisService.researchHypothesis(hypothesis, state.niche, true);
+        
+        setState(prev => ({
+          ...prev,
+          hypotheses: prev.hypotheses.map(h => h.id === hypothesis.id ? { ...h, status: 'analyzing' as const } : h),
+          agentRationale: [...prev.agentRationale, `[FOUND] ${result.sources.length} sources found`].slice(-15)
+        }));
+        
+        setState(prev => ({
+          ...prev,
+          hypotheses: prev.hypotheses.map(h =>
+            h.id === hypothesis.id
+              ? { ...h, state: result.confidence >= 90 ? 'fact' as const : 'hypothesis' as const, confidence: result.confidence, sources: result.sources, status: 'complete' as const }
+              : h
+          ),
+          agentRationale: [...prev.agentRationale, result.confidence >= 90 ? `[VALIDATED] ${result.confidence}% confidence` : `[VALIDATING] ${result.confidence}% confidence`].slice(-15)
+        }));
+      }
     } catch (error) {
       console.error('Error adding hypothesis:', error);
+      setState(prev => ({
+        ...prev,
+        agentRationale: [...prev.agentRationale, `[ERROR] ${error}`].slice(-15)
+      }));
     }
   };
 
@@ -522,10 +668,42 @@ export default function Dashboard() {
       const newSolutions = await hypothesisService.generateHypotheses(state.niche, 'solutions', 1);
       setState(prev => ({
         ...prev,
-        solutions: [...prev.solutions, ...newSolutions]
+        solutions: [...prev.solutions, ...newSolutions.map(s => ({ ...s, status: 'pending' as const }))],
+        agentRationale: [...prev.agentRationale, `[HYPOTHESIS] ${newSolutions[0]?.text || 'New solution'}`].slice(-15)
       }));
+      
+      // Auto-research each new solution with API Machine Gun
+      for (const solution of newSolutions) {
+        setState(prev => ({
+          ...prev,
+          solutions: prev.solutions.map(s => s.id === solution.id ? { ...s, status: 'downloading' as const } : s),
+          agentRationale: [...prev.agentRationale, `[SEARCHING] Firing API Machine Gun for: ${solution.text}`].slice(-15)
+        }));
+        
+        const result = await hypothesisService.researchHypothesis(solution, state.niche, false);
+        
+        setState(prev => ({
+          ...prev,
+          solutions: prev.solutions.map(s => s.id === solution.id ? { ...s, status: 'analyzing' as const } : s),
+          agentRationale: [...prev.agentRationale, `[FOUND] ${result.sources.length} sources found`].slice(-15)
+        }));
+        
+        setState(prev => ({
+          ...prev,
+          solutions: prev.solutions.map(s =>
+            s.id === solution.id
+              ? { ...s, state: result.confidence >= 90 ? 'fact' as const : 'hypothesis' as const, confidence: result.confidence, sources: result.sources, status: 'complete' as const }
+              : s
+          ),
+          agentRationale: [...prev.agentRationale, result.confidence >= 90 ? `[VALIDATED] ${result.confidence}% confidence` : `[VALIDATING] ${result.confidence}% confidence`].slice(-15)
+        }));
+      }
     } catch (error) {
       console.error('Error adding solution:', error);
+      setState(prev => ({
+        ...prev,
+        agentRationale: [...prev.agentRationale, `[ERROR] ${error}`].slice(-15)
+      }));
     }
   };
 
@@ -547,16 +725,51 @@ export default function Dashboard() {
     try {
       const type = Math.random() < 0.6 ? 'functional' : 'non-functional';
       const newReqs = await hypothesisService.generateHypotheses(state.niche, 'problems', 1);
+      const requirements = newReqs.map(req => ({ 
+        ...req, 
+        text: req.text,
+        type: type as 'functional' | 'non-functional',
+        status: 'pending' as const
+      }));
+      
       setState(prev => ({
         ...prev,
-        requirements: [...prev.requirements, ...newReqs.map(req => ({ 
-          ...req, 
-          text: req.text,
-          type: type as 'functional' | 'non-functional'
-        }))]
+        requirements: [...prev.requirements, ...requirements],
+        agentRationale: [...prev.agentRationale, `[HYPOTHESIS] ${requirements[0]?.text || 'New requirement'}`].slice(-15)
       }));
+      
+      // Auto-research each new requirement with API Machine Gun
+      for (const req of requirements) {
+        setState(prev => ({
+          ...prev,
+          requirements: prev.requirements.map(r => r.id === req.id ? { ...r, status: 'downloading' as const } : r),
+          agentRationale: [...prev.agentRationale, `[SEARCHING] Firing API Machine Gun for: ${req.text}`].slice(-15)
+        }));
+        
+        const result = await hypothesisService.researchHypothesis(req, state.niche, true);
+        
+        setState(prev => ({
+          ...prev,
+          requirements: prev.requirements.map(r => r.id === req.id ? { ...r, status: 'analyzing' as const } : r),
+          agentRationale: [...prev.agentRationale, `[FOUND] ${result.sources.length} sources found`].slice(-15)
+        }));
+        
+        setState(prev => ({
+          ...prev,
+          requirements: prev.requirements.map(r =>
+            r.id === req.id
+              ? { ...r, state: result.confidence >= 90 ? 'fact' as const : 'hypothesis' as const, confidence: result.confidence, sources: result.sources, status: 'complete' as const }
+              : r
+          ),
+          agentRationale: [...prev.agentRationale, result.confidence >= 90 ? `[VALIDATED] ${result.confidence}% confidence` : `[VALIDATING] ${result.confidence}% confidence`].slice(-15)
+        }));
+      }
     } catch (error) {
       console.error('Error adding requirement:', error);
+      setState(prev => ({
+        ...prev,
+        agentRationale: [...prev.agentRationale, `[ERROR] ${error}`].slice(-15)
+      }));
     }
   };
 
@@ -600,7 +813,7 @@ export default function Dashboard() {
     setState(prev => ({ 
       ...prev, 
       generatedDNA: dnaData,
-      agentRationale: [...prev.agentRationale, `✨ DNA generated with ${validatedProblems.length + validatedSolutions.length + validatedRequirements.length} validated hypotheses`].slice(-15)
+      agentRationale: [...prev.agentRationale, `[VALIDATED] DNA generated with ${validatedProblems.length + validatedSolutions.length + validatedRequirements.length} validated hypotheses`].slice(-15)
     }));
     localStorage.setItem('curatos_dna', JSON.stringify(dnaData));
     
@@ -614,7 +827,7 @@ export default function Dashboard() {
     setIsGeneratingLandingPage(true);
     setState(prev => ({
       ...prev,
-      agentRationale: [...prev.agentRationale, '🚀 Generating landing page...'].slice(-15)
+      agentRationale: [...prev.agentRationale, '[THINKING] Generating landing page...'].slice(-15)
     }));
 
     try {
@@ -633,12 +846,12 @@ export default function Dashboard() {
 
       setState(prev => ({
         ...prev,
-        agentRationale: [...prev.agentRationale, '✅ Landing page generated!'].slice(-15)
+        agentRationale: [...prev.agentRationale, '[VALIDATED] Landing page generated!'].slice(-15)
       }));
     } catch (error) {
       setState(prev => ({
         ...prev,
-        agentRationale: [...prev.agentRationale, '❌ Landing page generation failed'].slice(-15)
+        agentRationale: [...prev.agentRationale, '[ERROR] Landing page generation failed'].slice(-15)
       }));
     } finally {
       setIsGeneratingLandingPage(false);
@@ -651,7 +864,7 @@ export default function Dashboard() {
     setIsGeneratingPRD(true);
     setState(prev => ({
       ...prev,
-      agentRationale: [...prev.agentRationale, '📄 Generating PRD...'].slice(-15)
+      agentRationale: [...prev.agentRationale, '[THINKING] Generating PRD...'].slice(-15)
     }));
 
     try {
@@ -670,12 +883,12 @@ export default function Dashboard() {
 
       setState(prev => ({
         ...prev,
-        agentRationale: [...prev.agentRationale, '✅ PRD generated!'].slice(-15)
+        agentRationale: [...prev.agentRationale, '[VALIDATED] PRD generated!'].slice(-15)
       }));
     } catch (error) {
       setState(prev => ({
         ...prev,
-        agentRationale: [...prev.agentRationale, '❌ PRD generation failed'].slice(-15)
+        agentRationale: [...prev.agentRationale, '[ERROR] PRD generation failed'].slice(-15)
       }));
     } finally {
       setIsGeneratingPRD(false);
@@ -690,61 +903,6 @@ export default function Dashboard() {
     console.log('Starting build phase...');
     // TODO: Navigate to build phase
     setShowDNAModal(false);
-  };
-
-  const handleDemoMode = () => {
-    // Reinitialize StreamingService with demo API key
-    setStreamingService(new StreamingService('demo'));
-    
-    const now = new Date();
-    const DEMO_PROBLEMS = [
-      { id: 'p1', text: 'Developers struggle to understand repository health metrics', state: 'fact' as const, confidence: 92, sources: ['GitHub Survey 2024'], createdAt: now },
-      { id: 'p2', text: 'Code review processes lack intelligent insights', state: 'fact' as const, confidence: 88, sources: ['Stack Overflow Developer Survey'], createdAt: now },
-      { id: 'p3', text: 'Team productivity metrics are scattered across tools', state: 'fact' as const, confidence: 85, sources: ['DevOps Report 2024'], createdAt: now },
-      { id: 'p4', text: 'Pull request bottlenecks are hard to identify', state: 'hypothesis' as const, confidence: 0, sources: [], createdAt: now },
-      { id: 'p5', text: 'Security vulnerabilities detection is reactive', state: 'hypothesis' as const, confidence: 0, sources: [], createdAt: now },
-      { id: 'p6', text: 'Documentation quality assessment is manual', state: 'hypothesis' as const, confidence: 0, sources: [], createdAt: now },
-      { id: 'p7', text: 'Contributor onboarding lacks personalized guidance', state: 'hypothesis' as const, confidence: 0, sources: [], createdAt: now },
-      { id: 'p8', text: 'Technical debt accumulation goes unnoticed', state: 'hypothesis' as const, confidence: 0, sources: [], createdAt: now }
-    ];
-
-    const DEMO_SOLUTIONS = [
-      { id: 's1', text: 'AI-powered repository health dashboard', state: 'fact' as const, confidence: 89, sources: ['GitHub API Documentation'], createdAt: now },
-      { id: 's2', text: 'Intelligent code review assistant with ML insights', state: 'fact' as const, confidence: 91, sources: ['OpenAI Codex Research'], createdAt: now },
-      { id: 's3', text: 'Unified team analytics API with GitHub integration', state: 'fact' as const, confidence: 87, sources: ['GitHub Enterprise Features'], createdAt: now },
-      { id: 's4', text: 'Automated PR workflow optimization engine', state: 'hypothesis' as const, confidence: 0, sources: [], createdAt: now },
-      { id: 's5', text: 'Proactive security scanning with AI recommendations', state: 'hypothesis' as const, confidence: 0, sources: [], createdAt: now },
-      { id: 's6', text: 'Smart documentation quality scoring system', state: 'hypothesis' as const, confidence: 0, sources: [], createdAt: now },
-      { id: 's7', text: 'Personalized developer onboarding workflows', state: 'hypothesis' as const, confidence: 0, sources: [], createdAt: now },
-      { id: 's8', text: 'Technical debt tracking with refactoring suggestions', state: 'hypothesis' as const, confidence: 0, sources: [], createdAt: now }
-    ];
-
-    const DEMO_REQUIREMENTS = [
-      { id: 'r1', text: 'GitHub API integration with OAuth authentication', state: 'fact' as const, confidence: 95, sources: ['GitHub API Docs'], type: 'functional' as const, createdAt: now },
-      { id: 'r2', text: 'Real-time webhook processing for repository events', state: 'fact' as const, confidence: 93, sources: ['GitHub Webhooks Guide'], type: 'functional' as const, createdAt: now },
-      { id: 'r3', text: 'Machine learning pipeline for code analysis', state: 'fact' as const, confidence: 88, sources: ['ML Engineering Best Practices'], type: 'functional' as const, createdAt: now },
-      { id: 'r4', text: 'Sub-200ms API response time for dashboard queries', state: 'fact' as const, confidence: 90, sources: ['Performance Benchmarks'], type: 'non-functional' as const, createdAt: now },
-      { id: 'r5', text: 'GDPR compliant data processing and storage', state: 'fact' as const, confidence: 92, sources: ['GDPR Compliance Guide'], type: 'non-functional' as const, createdAt: now },
-      { id: 'r6', text: 'Horizontal scaling to 10k+ repositories', state: 'fact' as const, confidence: 86, sources: ['Scalability Patterns'], type: 'non-functional' as const, createdAt: now },
-      { id: 'r7', text: 'Multi-tenant architecture with role-based access', state: 'hypothesis' as const, confidence: 0, sources: [], type: 'functional' as const, createdAt: now },
-      { id: 'r8', text: '99.9% uptime SLA with automated failover', state: 'hypothesis' as const, confidence: 0, sources: [], type: 'non-functional' as const, createdAt: now }
-    ];
-
-    setState({
-      ...state,
-      niche: 'GitHub Intelligence API',
-      nicheLocked: true,
-      hypotheses: DEMO_PROBLEMS,
-      solutions: DEMO_SOLUTIONS,
-      requirements: DEMO_REQUIREMENTS,
-      requirementsUnlocked: true,
-      dnaUnlocked: true,
-      agentRationale: ['Demo mode activated', 'Loaded GitHub Intelligence API dataset', 'Ready for DNA generation']
-    });
-
-    setTimeout(() => {
-      setShowDNAModal(true);
-    }, 2000);
   };
 
   const handleExportDNA = () => {
@@ -822,26 +980,14 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
     return state.requirements.filter(h => h.state === 'fact').length;
   };
 
-  const getProvider = () => isDemoMode ? 'demo' : 'openrouter';
-  const getModel = () => isDemoMode ? 'mock' : 'deepseek-r1';
+  const getProvider = () => 'openrouter';
+  const getModel = () => 'deepseek-chat';
 
   const getActiveColumns = () => {
     const columns = ['problems', 'solutions'];
     if (state.requirementsUnlocked) columns.push('requirements');
     return columns;
   };
-
-  if (!apiConnected) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <APIConnector 
-          apiConnected={apiConnected}
-          apiKey={apiKey}
-          onConnect={handleConnect}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className={`min-h-screen bg-black relative ${state.autopilotEnabled ? 'autopilot-scan' : ''}`}>
@@ -866,12 +1012,35 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
         onAutopilotToggle={handleAutopilotToggle}
         onSliderChange={handleSliderChange}
         onEngineToggle={handleEngineToggle}
-        onDemoMode={handleDemoMode}
       />
       
-      <div className="flex">
+      {/* Stage Progress Bar with Sync Indicator */}
+      <div className="px-2 sm:px-4 py-2 border-b border-gray-800 bg-gray-900/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+        <StageProgressBar 
+          stages={scoring.stages} 
+          currentStage={scoring.currentStage} 
+        />
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
+          <button
+            onClick={() => setShowExportModal(true)}
+            disabled={state.hypotheses.length === 0 && state.solutions.length === 0}
+            className="px-2 sm:px-3 py-1.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-300 text-xs sm:text-sm rounded-lg transition-colors flex items-center gap-1.5 sm:gap-2 font-mono border border-gray-700 min-h-[36px] sm:min-h-[32px]"
+            aria-label="Export data"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span className="hidden xs:inline">Export</span>
+          </button>
+          <SyncIndicator 
+            status={sync.status}
+            connectedUsers={sync.connectedUsers.length}
+            lastSyncTime={sync.lastSyncTime}
+          />
+        </div>
+      </div>
+      
+      <div className="flex flex-col md:flex-row">
         {/* Left side: Agent rationale and chat */}
-        <div className="flex-1">
+        <div className="flex-1 order-2 md:order-1">
           <AgentRationale
             rationale={[...state.agentRationale, currentRationaleStream].filter(Boolean)}
             isActive={engineRunning}
@@ -885,8 +1054,8 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
           />
         </div>
         
-        {/* Right side: Radar equalizer */}
-        <div className="w-64 border-l border-gray-800">
+        {/* Right side: Radar equalizer - hidden on mobile */}
+        <div className="hidden md:block w-64 border-l border-gray-800">
           <div className="h-full p-4">
             <RadarEqualizer
               problems={countGreenFacts()}
@@ -898,7 +1067,8 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
         </div>
       </div>
       
-      <div className="flex">
+      {/* Hypothesis columns - stack on mobile, row on desktop */}
+      <div className="flex flex-col md:flex-row pb-24 md:pb-0">
         <HypothesisColumn
           title="problems"
           hypotheses={state.hypotheses}
@@ -911,7 +1081,8 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
           onAdd={handleAddHypothesis}
         />
         
-        <div className="w-px bg-gray-800" />
+        <div className="hidden md:block w-px bg-gray-800" />
+        <div className="md:hidden h-px bg-gray-800 mx-4" />
         
         <HypothesisColumn
           title="solutions"
@@ -926,7 +1097,8 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
           onAdd={handleAddSolution}
         />
         
-        <div className="w-px bg-gray-800" />
+        <div className="hidden md:block w-px bg-gray-800" />
+        <div className="md:hidden h-px bg-gray-800 mx-4" />
         
         <HypothesisColumn
           title="requirements"
@@ -940,6 +1112,7 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
         />
       </div>
       
+      {/* DNA Button - fixed on mobile */}
       <DNAButton
         unlocked={state.dnaUnlocked}
         validatedCount={countGreenFacts() + countSolutionsGreenFacts() + countRequirementsGreenFacts()}
@@ -952,34 +1125,61 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
         onClose={handleModalClose}
       />
       
-      <DNAModal
-        dna={showDNAModal ? state.generatedDNA : null}
-        onClose={handleDNAModalClose}
-        onStartBuild={handleStartBuild}
-        onExport={handleExportDNA}
-        onGenerateLandingPage={handleGenerateLandingPage}
-        onGeneratePRD={handleGeneratePRD}
-        isGeneratingLandingPage={isGeneratingLandingPage}
-        isGeneratingPRD={isGeneratingPRD}
-      />
+      {/* Lazy loaded modals with Suspense */}
+      <Suspense fallback={<ModalLoading message="Loading DNA Modal..." />}>
+        {showDNAModal && (
+          <DNAModal
+            dna={state.generatedDNA}
+            onClose={handleDNAModalClose}
+            onStartBuild={handleStartBuild}
+            onExport={handleExportDNA}
+            onGenerateLandingPage={handleGenerateLandingPage}
+            onGeneratePRD={handleGeneratePRD}
+            isGeneratingLandingPage={isGeneratingLandingPage}
+            isGeneratingPRD={isGeneratingPRD}
+          />
+        )}
+      </Suspense>
 
-      <LandingPageModal
-        isOpen={showLandingPageModal}
-        onClose={() => setShowLandingPageModal(false)}
-        problems={state.hypotheses.filter(h => h.state === 'fact')}
-        solutions={state.solutions.filter(h => h.state === 'fact')}
-        niche={state.niche}
-        html={landingPageHtml}
-      />
+      <Suspense fallback={<ModalLoading message="Loading Landing Page..." />}>
+        {showLandingPageModal && (
+          <LandingPageModal
+            isOpen={showLandingPageModal}
+            onClose={() => setShowLandingPageModal(false)}
+            problems={validatedProblems}
+            solutions={validatedSolutions}
+            niche={state.niche}
+            html={landingPageHtml}
+          />
+        )}
+      </Suspense>
 
-      <PRDModal
-        isOpen={showPRDModal}
-        onClose={() => setShowPRDModal(false)}
-        problems={state.hypotheses.filter(h => h.state === 'fact')}
-        solutions={state.solutions.filter(h => h.state === 'fact')}
-        niche={state.niche}
-        markdown={prdMarkdown}
-      />
+      <Suspense fallback={<ModalLoading message="Loading PRD..." />}>
+        {showPRDModal && (
+          <PRDModal
+            isOpen={showPRDModal}
+            onClose={() => setShowPRDModal(false)}
+            problems={validatedProblems}
+            solutions={validatedSolutions}
+            niche={state.niche}
+            markdown={prdMarkdown}
+          />
+        )}
+      </Suspense>
+
+      <Suspense fallback={<ModalLoading message="Loading Export..." />}>
+        {showExportModal && (
+          <ExportModal
+            isOpen={showExportModal}
+            onClose={() => setShowExportModal(false)}
+            niche={state.niche}
+            hypotheses={state.hypotheses}
+            solutions={state.solutions}
+            prdContent={prdMarkdown || undefined}
+            landingPageHTML={landingPageHtml || undefined}
+          />
+        )}
+      </Suspense>
       
       <ConfirmationModal
         isOpen={confirmationModal.isOpen}
@@ -987,6 +1187,11 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
         message="This hypothesis and related themes will be avoided in future AI generations"
         onConfirm={handleConfirmRemoval}
         onCancel={handleCancelRemoval}
+      />
+
+      {/* Keyboard Shortcuts */}
+      <KeyboardShortcuts
+        onExport={() => setShowExportModal(true)}
       />
       
       {/* Toast Notifications */}

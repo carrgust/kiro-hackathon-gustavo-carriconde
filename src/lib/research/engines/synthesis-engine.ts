@@ -45,7 +45,7 @@ Respond in JSON format:
       },
     ];
 
-    const response = await provider.chat(messages, 'google/gemini-2.0-flash-exp:free');
+    const response = await provider.chat(messages, 'deepseek/deepseek-chat');
 
     // Track tokens
     const tracker = getTokenTracker();

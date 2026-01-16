@@ -18,17 +18,17 @@ export function getProvider(type: ProviderType, apiKey: string): AIProvider {
 
 export function getStoredApiKey(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('curatos_api_key');
+  return localStorage.getItem('curatos_mode');
 }
 
-export function storeApiKey(apiKey: string): void {
+export function storeApiKey(key: string): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem('curatos_api_key', apiKey);
+  localStorage.setItem('curatos_mode', key);
 }
 
 export function clearApiKey(): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem('curatos_api_key');
+  localStorage.removeItem('curatos_mode');
 }
 
 export * from './types';

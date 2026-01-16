@@ -1,37 +1,118 @@
 # Product Overview
 
+## Vision Statement
+Curatos DNA transforms weeks of manual market research into minutes of AI-powered validation. It's the first autonomous SaaS research engine that generates, validates, and converts market hypotheses into production-ready deliverables.
+
 ## Product Purpose
-Curatos DNA is an autonomous AI system that researches market opportunities, validates business ideas against Ready State criteria (Market Demand + Willingness to Pay + Ability to Pay + Buildable), and then autonomously builds the validated SaaS product. It's a complete pipeline from idea discovery to working application.
+Curatos DNA is an autonomous AI system that:
+1. **Generates** problem and solution hypotheses for any market niche
+2. **Validates** each hypothesis against real web data using Exa.ai search
+3. **Scores** confidence levels using structured criteria (0-100%)
+4. **Produces** actionable outputs: HTML landing pages and comprehensive PRDs
 
 ## Target Users
-- Solo developers who want to find profitable SaaS opportunities without extensive market research
-- Indie hackers looking to validate and build ideas systematically
-- Entrepreneurs who need a data-driven approach to product development
-- Developers who want to focus on building rather than researching market fit
+
+### Primary: Solo Founders & Indie Hackers
+- Need rapid idea validation before building
+- Limited time/budget for market research
+- Want data-driven decisions, not gut feelings
+- Value speed-to-market over perfection
+
+### Secondary: Product Teams
+- Require structured requirements documentation
+- Need validated problem statements for roadmaps
+- Want to reduce time spent on discovery phases
+
+### Tertiary: Technical Entrepreneurs
+- Appreciate the terminal/hacker aesthetic
+- Comfortable with BYOK (Bring Your Own Key) model
+- Value transparency in AI reasoning
+
+## Value Proposition
+
+| Traditional Research | Curatos DNA |
+|---------------------|-------------|
+| 2-4 weeks manual research | 5-10 minutes automated |
+| Subjective confidence | Quantified 0-100% scores |
+| No source attribution | Real URLs from web search |
+| Separate tools for outputs | Integrated landing page + PRD |
+| High cost (consultants/tools) | Free tier AI models |
 
 ## Key Features
-- **Autonomous Market Research**: AI agents research market opportunities and trends
-- **Ready State Validation**: Systematic validation against 4 criteria (Market Demand + Willingness to Pay + Ability to Pay + Buildable)
-- **Autonomous Development**: AI agents build the validated SaaS product automatically
-- **End-to-End Pipeline**: Complete workflow from idea discovery to working application
-- **Agentic Orchestration**: Multiple specialized AI agents working together
 
-## Business Objectives
-- Reduce time from idea to validated product from months to days
-- Increase success rate of SaaS launches through systematic validation
-- Enable solo developers to compete with larger teams through AI assistance
-- Create a repeatable, scalable process for SaaS development
+### 🔍 Hypothesis Engine
+- AI-powered generation using DeepSeek R1
+- Dual columns: Problems | Solutions
+- Steering slider for focus balance (0-100%)
+- Real-time agent rationale streaming
+
+### ✅ Web Validation System
+- Exa.ai integration via OpenRouter `:online` suffix
+- Structured scoring criteria (4 dimensions per type)
+- Source attribution with clickable URLs
+- Visual confidence indicators (hypothesis → fact at 80%+)
+
+### 🏠 Landing Page Generator
+- Self-contained HTML with inline CSS
+- Preview and Code tabs
+- One-click download or clipboard copy
+- Mobile-responsive design
+
+### 📋 PRD Generator
+- Comprehensive markdown format
+- FR-001/NFR-001 requirement numbering
+- Compatible with Notion, GitHub, Confluence
+- Includes: Executive Summary, Requirements, Metrics, Risks
+
+### 🎯 Stage Progression System
+- 6-stage quality gates with thresholds
+- Visual progress bar
+- Unlocks outputs at validated milestones
 
 ## User Journey
-1. **Discovery Phase**: User initiates market research or provides seed ideas
-2. **Research Phase**: AI agents autonomously research market opportunities
-3. **Validation Phase**: System validates ideas against Ready State criteria
-4. **Selection Phase**: User reviews validated opportunities and selects one
-5. **Build Phase**: AI agents autonomously develop the SaaS product
-6. **Delivery Phase**: User receives working application ready for launch
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  1. CONNECT          2. CONFIGURE        3. GENERATE        │
+│  ───────────         ────────────        ──────────         │
+│  Enter OpenRouter    Set niche &         Click START        │
+│  API key             steering slider     ENGINE             │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  4. VALIDATE         5. UNLOCK           6. EXPORT          │
+│  ──────────          ────────            ────────           │
+│  Watch AI research   Reach 5+ facts      Generate landing   │
+│  each hypothesis     at 80%+ confidence  page or PRD        │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ## Success Criteria
-- Time to validated product under 7 days
-- Ready State validation accuracy > 80%
-- Generated products achieve product-market fit within 3 months
-- User satisfaction with autonomous development quality > 85%
+
+### MVP (Current State) ✅
+- [x] Hypothesis generation working
+- [x] Web validation with real sources
+- [x] Landing page generation
+- [x] PRD generation
+- [x] Demo mode for testing
+- [x] 0 TypeScript errors, 0 vulnerabilities
+
+### Post-Hackathon Goals
+- [ ] Streaming generation (real-time updates)
+- [ ] Multiple landing page templates
+- [ ] Export to Notion/Jira/Linear
+- [ ] User authentication & persistence
+- [ ] Team collaboration features
+
+## Business Model (Future)
+- **Free Tier**: BYOK model, unlimited usage with own API keys
+- **Pro Tier**: Managed API keys, saved projects, templates
+- **Team Tier**: Collaboration, shared research, analytics
+
+## Competitive Differentiation
+1. **Dual Output**: Only tool generating both landing pages AND PRDs
+2. **Real Validation**: Web search, not just AI hallucination
+3. **Transparent Scoring**: See exactly why confidence is high/low
+4. **Terminal Aesthetic**: Unique visual identity for technical users
+5. **Free Tier Models**: DeepSeek R1 + Gemini Flash = $0 cost

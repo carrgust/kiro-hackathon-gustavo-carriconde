@@ -1,5 +1,6 @@
+import { memo, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Plus } from 'lucide-react';
+import { Lock, Plus, Sparkles } from 'lucide-react';
 import { Hypothesis } from '@/types/project';
 import HypothesisItemEnhanced from './HypothesisItemEnhanced';
 
@@ -16,30 +17,95 @@ interface HypothesisColumnProps {
   onAdd: () => void;
 }
 
-export default function HypothesisColumn({ 
+// Stagger animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    scale: 1,
+    transition: {
+      type: 'spring' as const,
+      stiffness: 400,
+      damping: 25,
+    },
+  },
+};
+
+const HypothesisColumn = memo(function HypothesisColumn({ 
   title, hypotheses, score, percentage, locked = false, validatedCount = 0, requiredCount = 3, onItemClick, onItemRemove, onAdd 
 }: HypothesisColumnProps) {
-  const isUnlocked = validatedCount >= requiredCount;
+  const isUnlocked = useMemo(() => validatedCount >= requiredCount, [validatedCount, requiredCount]);
+  
+  // Memoize click handlers to prevent child re-renders
+  const handleItemClick = useCallback((hypothesis: Hypothesis) => {
+    onItemClick(hypothesis);
+  }, [onItemClick]);
+
+  const handleItemRemove = useCallback((hypothesis: Hypothesis) => {
+    onItemRemove(hypothesis);
+  }, [onItemRemove]);
+
+  const columnId = `column-${title.toLowerCase().replace(/\s+/g, '-')}`;
   
   return (
-    <motion.div 
-      className="flex-1 p-4 relative"
+    <motion.section 
+      className="flex-1 min-w-0 w-full md:w-auto p-2 sm:p-4 relative"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
+      aria-labelledby={`${columnId}-heading`}
+      role="region"
     >
       {/* Sticky Header with Glassmorphism */}
-      <div className="sticky top-0 z-10 glass rounded-lg p-3 mb-4 -mx-1">
+      <motion.header 
+        className="sticky top-0 z-10 glass rounded-lg p-2 sm:p-3 mb-3 sm:mb-4 -mx-1"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+      >
         <div className="flex items-center justify-between">
-          <div className="text-gray-400 text-xs font-mono uppercase tracking-wider">
-            {title}
+          <div className="text-gray-400 text-[10px] sm:text-xs font-mono uppercase tracking-wider">
+            <motion.h2
+              id={`${columnId}-heading`}
+              className="inline"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              {title}
+            </motion.h2>
             {percentage !== undefined && (
-              <span className="text-gradient-cyan ml-2 font-semibold">({percentage}%)</span>
+              <motion.span 
+                className="text-gradient-cyan ml-1 sm:ml-2 font-semibold"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                aria-label={`${percentage}% focus`}
+              >
+                ({percentage}%)
+              </motion.span>
             )}
             <motion.div 
-              className={`text-xs mt-1 font-medium ${isUnlocked ? 'text-gradient-green' : 'text-gray-600'}`}
-              animate={isUnlocked ? { scale: [1, 1.05, 1] } : {}}
-              transition={{ duration: 0.3 }}
+              className={`text-[10px] sm:text-xs mt-0.5 sm:mt-1 font-medium ${isUnlocked ? 'text-gradient-green' : 'text-gray-600'}`}
+              animate={isUnlocked ? { 
+                scale: [1, 1.05, 1],
+                textShadow: ['0 0 0px #4ade80', '0 0 10px #4ade80', '0 0 0px #4ade80']
+              } : {}}
+              transition={{ duration: 0.5 }}
+              role="status"
+              aria-live="polite"
             >
               {title === 'requirements' && !locked ? 
                 `${validatedCount} validated` : 
@@ -48,16 +114,24 @@ export default function HypothesisColumn({
             </motion.div>
           </div>
           <motion.div 
-            className="text-green-400 text-lg font-mono font-bold"
+            className="text-green-400 text-base sm:text-lg font-mono font-bold relative"
             key={score}
             initial={{ scale: 1.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
           >
-            {score}
+            {/* Glow effect on score change */}
+            <motion.div
+              className="absolute inset-0 bg-green-400/20 rounded-full blur-md"
+              initial={{ scale: 2, opacity: 0.8 }}
+              animate={{ scale: 1, opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              aria-hidden="true"
+            />
+            <span aria-label={`Score: ${score}`}>{score}</span>
           </motion.div>
         </div>
-      </div>
+      </motion.header>
       
       {locked ? (
         <motion.div 
@@ -65,6 +139,8 @@ export default function HypothesisColumn({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
+          role="status"
+          aria-label={`${title} column is locked`}
         >
           <div className="text-center">
             <motion.div
@@ -89,48 +165,103 @@ export default function HypothesisColumn({
           </div>
         </motion.div>
       ) : (
-        <div className="space-y-2 min-h-[300px]">
+        <motion.div 
+          className="space-y-1.5 sm:space-y-2 min-h-[200px] sm:min-h-[300px]"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           <AnimatePresence mode="popLayout">
             {hypotheses.map((hypothesis, index) => (
-              <HypothesisItemEnhanced
+              <motion.div
                 key={hypothesis.id}
-                hypothesis={hypothesis}
-                onClick={() => onItemClick(hypothesis)}
-                onRemove={() => onItemRemove(hypothesis)}
-                index={index}
-              />
+                variants={itemVariants}
+                layout
+              >
+                <HypothesisItemEnhanced
+                  hypothesis={hypothesis}
+                  onClick={() => handleItemClick(hypothesis)}
+                  onRemove={() => handleItemRemove(hypothesis)}
+                  index={index}
+                />
+              </motion.div>
             ))}
           </AnimatePresence>
           
+          {/* Add button with micro-interactions */}
           <motion.button
             onClick={onAdd}
-            className="flex items-center gap-2 py-2 px-3 text-gray-600 hover:text-cyan-400 transition-all w-full text-left font-mono text-sm rounded-lg hover:bg-gray-900/50"
-            whileHover={{ x: 4 }}
+            className="group flex items-center gap-2 py-2 px-3 text-gray-600 hover:text-cyan-400 transition-all w-full text-left font-mono text-xs sm:text-sm rounded-lg hover:bg-gray-900/50 relative overflow-hidden min-h-[44px]"
+            whileHover={{ x: 4, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
             whileTap={{ scale: 0.98 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
           >
-            <Plus size={14} />
-            <span>add hypothesis</span>
+            {/* Shimmer effect on hover */}
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-500/10 to-transparent"
+              initial={{ x: '-100%' }}
+              whileHover={{ x: '100%' }}
+              transition={{ duration: 0.6 }}
+            />
+            <motion.div
+              whileHover={{ rotate: 90 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Plus size={14} />
+            </motion.div>
+            <span className="relative">add hypothesis</span>
+            <motion.div
+              className="ml-auto opacity-0 group-hover:opacity-100"
+              initial={{ x: -10 }}
+              whileHover={{ x: 0 }}
+            >
+              <Sparkles size={12} className="text-cyan-400" />
+            </motion.div>
           </motion.button>
-        </div>
+        </motion.div>
       )}
       
       {!locked && (
         <motion.div 
           className="mt-4 pt-3 border-t border-gray-800/50 text-xs font-mono text-gray-600 flex items-center gap-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
         >
-          <div className="flex items-center gap-1.5">
-            <span className="text-orange-400 text-sm">◐</span>
+          <motion.div 
+            className="flex items-center gap-1.5"
+            whileHover={{ scale: 1.05 }}
+          >
+            <motion.span 
+              className="text-orange-400 text-sm"
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              ◐
+            </motion.span>
             <span>hypothesis</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-green-400 text-sm">●</span>
+          </motion.div>
+          <motion.div 
+            className="flex items-center gap-1.5"
+            whileHover={{ scale: 1.05 }}
+          >
+            <motion.span 
+              className="text-green-400 text-sm"
+              animate={{ 
+                boxShadow: ['0 0 0px #4ade80', '0 0 8px #4ade80', '0 0 0px #4ade80']
+              }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              ●
+            </motion.span>
             <span>fact</span>
-          </div>
+          </motion.div>
         </motion.div>
       )}
-    </motion.div>
+    </motion.section>
   );
-}
+});
+
+export default HypothesisColumn;
