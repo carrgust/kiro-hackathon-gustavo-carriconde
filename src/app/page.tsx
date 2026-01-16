@@ -21,6 +21,7 @@ import StageProgressBar from '@/components/dashboard/StageProgressBar';
 import SyncIndicator from '@/components/dashboard/SyncIndicator';
 import ModalLoading from '@/components/ui/ModalLoading';
 import { KeyboardShortcuts } from '@/components/ui/KeyboardShortcuts';
+import { APIStatusBanner } from '@/components/ui/APIStatusBanner';
 
 // Lazy load heavy modals
 const DNAModal = lazy(() => import('@/components/dashboard/DNAModal'));
@@ -53,7 +54,7 @@ export default function Dashboard() {
     chatHistory: []
   });
 
-  const [appMode, setAppMode] = useState<'live' | ''>('');
+  const [apiError, setApiError] = useState<string | null>(null);
   const [engineRunning, setEngineRunning] = useState(false);
   const [engineStartTime, setEngineStartTime] = useState<Date | null>(null);
   const [runningTime, setRunningTime] = useState('00:00');
@@ -209,12 +210,15 @@ export default function Dashboard() {
     localStorage.setItem('curatos_total_spent', state.totalTokensSpent.toString());
   }, [state.totalTokensSpent]);
 
-  // Check for stored mode on mount and initialize services
+  // Initialize services on mount
   useEffect(() => {
-    console.log('[Init] Initializing in live mode');
-    setAppMode('live');
+    console.log('[Init] Initializing services...');
     setHypothesisService(new HypothesisService('live'));
     setStreamingService(new StreamingService('live'));
+    setState(prev => ({
+      ...prev,
+      agentRationale: [...prev.agentRationale, '[VALIDATED] Services initialized'].slice(-15)
+    }));
   }, []);
 
   // Calculate scores and unlock status
@@ -616,7 +620,10 @@ export default function Dashboard() {
   };
 
   const handleAddHypothesis = async () => {
-    if (!hypothesisService) return;
+    if (!hypothesisService) {
+      toast.error('Service not initialized', { description: 'Please refresh the page' });
+      return;
+    }
     
     try {
       const newHypotheses = await hypothesisService.generateHypotheses(state.niche, 'problems', 1);
@@ -654,6 +661,7 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error('Error adding hypothesis:', error);
+      toast.error('Failed to generate hypothesis', { description: String(error) });
       setState(prev => ({
         ...prev,
         agentRationale: [...prev.agentRationale, `[ERROR] ${error}`].slice(-15)
@@ -662,7 +670,10 @@ export default function Dashboard() {
   };
 
   const handleAddSolution = async () => {
-    if (!hypothesisService) return;
+    if (!hypothesisService) {
+      toast.error('Service not initialized', { description: 'Please refresh the page' });
+      return;
+    }
     
     try {
       const newSolutions = await hypothesisService.generateHypotheses(state.niche, 'solutions', 1);
@@ -700,6 +711,7 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error('Error adding solution:', error);
+      toast.error('Failed to generate solution', { description: String(error) });
       setState(prev => ({
         ...prev,
         agentRationale: [...prev.agentRationale, `[ERROR] ${error}`].slice(-15)
@@ -720,7 +732,10 @@ export default function Dashboard() {
   };
 
   const handleAddRequirement = async () => {
-    if (!hypothesisService) return;
+    if (!hypothesisService) {
+      toast.error('Service not initialized', { description: 'Please refresh the page' });
+      return;
+    }
     
     try {
       const type = Math.random() < 0.6 ? 'functional' : 'non-functional';
@@ -766,6 +781,7 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error('Error adding requirement:', error);
+      toast.error('Failed to generate requirement', { description: String(error) });
       setState(prev => ({
         ...prev,
         agentRationale: [...prev.agentRationale, `[ERROR] ${error}`].slice(-15)
@@ -793,15 +809,13 @@ export default function Dashboard() {
   };
 
   const handleCreateDNA = async () => {
-    if (!streamingService) return;
-
     // Generate DNA from validated facts
     const validatedProblems = state.hypotheses.filter(h => h.state === 'fact');
     const validatedSolutions = state.solutions.filter(h => h.state === 'fact');
     const validatedRequirements = state.requirements.filter(h => h.state === 'fact');
 
     const dnaData: DNAData = {
-      niche: state.niche,
+      niche: state.niche || 'fintech payments',
       generatedAt: new Date(),
       problems: validatedProblems,
       solutions: validatedSolutions,
@@ -810,19 +824,27 @@ export default function Dashboard() {
     };
 
     // Store in state and localStorage
-    setState(prev => ({ 
-      ...prev, 
-      generatedDNA: dnaData,
-      agentRationale: [...prev.agentRationale, `[VALIDATED] DNA generated with ${validatedProblems.length + validatedSolutions.length + validatedRequirements.length} validated hypotheses`].slice(-15)
-    }));
-    localStorage.setItem('curatos_dna', JSON.stringify(dnaData));
+    try {
+      setState(prev => ({ 
+        ...prev, 
+        generatedDNA: dnaData,
+        agentRationale: [...prev.agentRationale, `[VALIDATED] DNA generated with ${validatedProblems.length + validatedSolutions.length + validatedRequirements.length} validated hypotheses`].slice(-15)
+      }));
+      localStorage.setItem('curatos_dna', JSON.stringify(dnaData));
+    } catch (error) {
+      console.error('Error saving DNA:', error);
+      toast.error('Failed to save DNA', { description: 'LocalStorage may be full' });
+    }
     
     // Open DNA modal first
     setShowDNAModal(true);
   };
 
   const handleGenerateLandingPage = async () => {
-    if (!streamingService) return;
+    if (!streamingService) {
+      toast.error('Service not initialized', { description: 'Please refresh the page' });
+      return;
+    }
 
     setIsGeneratingLandingPage(true);
     setState(prev => ({
@@ -849,6 +871,8 @@ export default function Dashboard() {
         agentRationale: [...prev.agentRationale, '[VALIDATED] Landing page generated!'].slice(-15)
       }));
     } catch (error) {
+      console.error('Landing page generation failed:', error);
+      toast.error('Landing page generation failed', { description: String(error) });
       setState(prev => ({
         ...prev,
         agentRationale: [...prev.agentRationale, '[ERROR] Landing page generation failed'].slice(-15)
@@ -859,7 +883,10 @@ export default function Dashboard() {
   };
 
   const handleGeneratePRD = async () => {
-    if (!streamingService) return;
+    if (!streamingService) {
+      toast.error('Service not initialized', { description: 'Please refresh the page' });
+      return;
+    }
 
     setIsGeneratingPRD(true);
     setState(prev => ({
@@ -886,6 +913,8 @@ export default function Dashboard() {
         agentRationale: [...prev.agentRationale, '[VALIDATED] PRD generated!'].slice(-15)
       }));
     } catch (error) {
+      console.error('PRD generation failed:', error);
+      toast.error('PRD generation failed', { description: String(error) });
       setState(prev => ({
         ...prev,
         agentRationale: [...prev.agentRationale, '[ERROR] PRD generation failed'].slice(-15)
@@ -991,6 +1020,9 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
 
   return (
     <div className={`min-h-screen bg-black relative ${state.autopilotEnabled ? 'autopilot-scan' : ''}`}>
+      {/* API Error Banner */}
+      <APIStatusBanner error={apiError} onDismiss={() => setApiError(null)} />
+      
       <div className={state.autopilotEnabled ? 'autopilot-border autopilot-glow' : ''}>
         <div className="bg-black rounded-md">
           <EnhancedHeader
