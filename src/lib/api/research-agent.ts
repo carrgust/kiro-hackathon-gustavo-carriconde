@@ -103,7 +103,7 @@ interface ResearchResult {
 export class ResearchAgent {
   private apiKey: string;
   private serperKey?: string;
-  private maxSteps = 2;  // Reduced from 4 for faster research
+  private maxSteps = 3;  // 3 steps for better diversity
   
   constructor(apiKey: string, serperKey?: string) {
     this.apiKey = apiKey;
@@ -228,9 +228,10 @@ OR if enough evidence:
       }));
 
     // Calculate confidence dynamically
-    let confidence = 50; // base
-    if (findings.length >= 5) confidence = 70;
-    else if (findings.length >= 3) confidence = 60;
+    let confidence = 55; // base
+    if (findings.length >= 8) confidence = 75;
+    else if (findings.length >= 5) confidence = 70;
+    else if (findings.length >= 3) confidence = 65;
     
     // Academic sources bonus
     const hasAcademic = findings.some(f => f.source === 'openAlex');
@@ -238,14 +239,15 @@ OR if enough evidence:
     
     // Diversity bonus (2+ different APIs)
     const uniqueSources = new Set(findings.map(f => f.source));
-    if (uniqueSources.size >= 2) confidence += 10;
+    if (uniqueSources.size >= 3) confidence += 15;
+    else if (uniqueSources.size >= 2) confidence += 10;
     
     // Relevance bonus - check if snippets/titles contain hypothesis keywords
     if (hypothesis) {
-      const keywords = hypothesis.toLowerCase().split(/\s+/).filter(w => w.length > 4);
+      const keywords = hypothesis.toLowerCase().split(/\s+/).filter(w => w.length > 3);
       const allText = findings.map(f => `${f.title} ${f.snippet}`.toLowerCase()).join(' ');
       const matchCount = keywords.filter(k => allText.includes(k)).length;
-      if (matchCount >= 3) confidence += 10;
+      if (matchCount >= 2) confidence += 10;
       else if (matchCount >= 1) confidence += 5;
     }
     

@@ -72,16 +72,20 @@ export class HypothesisService {
       
       if (response.ok) {
         const data = await response.json();
+        console.log('[Research] Agent returned:', data.confidence, 'confidence');
         return { 
           confidence: data.confidence || 50, 
           sources: data.sources?.map((s: { url: string }) => s.url) || [] 
         };
+      } else {
+        console.error('[Research] Agent response not ok:', response.status);
       }
     } catch (error) {
       console.error('[HypothesisService] Research agent failed:', error);
     }
     
     // Fallback to machine-gun if agent fails
+    console.log('[Research] Falling back to machine-gun');
     const searchQuery = `${hypothesis.text} ${niche} market research`;
     let sources: string[] = [];
     
