@@ -1,6 +1,7 @@
 import { getProvider, Message } from '@/lib/api';
 import { Hypothesis } from '@/types/project';
 import { getTokenTracker } from './token-tracker';
+import { calculateConfidence } from '../confidence';
 
 export class HypothesisService {
   private apiKey: string;
@@ -99,7 +100,6 @@ export class HypothesisService {
       console.error('[HypothesisService] Machine gun fallback failed:', error);
     }
     
-    const { calculateConfidence } = await import('../confidence');
     const confidence = calculateConfidence(sources, hypothesis.text);
     
     return { confidence, sources };

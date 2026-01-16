@@ -117,7 +117,7 @@ interface ResearchResult {
 export class ResearchAgent {
   private apiKey: string;
   private serperKey?: string;
-  private maxSteps = 4;
+  private maxSteps = 2;  // Reduced from 4 for faster research
   
   constructor(apiKey: string, serperKey?: string) {
     this.apiKey = apiKey;
