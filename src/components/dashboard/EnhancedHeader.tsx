@@ -54,7 +54,6 @@ export default function EnhancedHeader({
   return (
     <motion.div 
       className="metal-header-dark p-4 font-mono text-xs sticky top-0 z-20"
-      initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3 }}
     >

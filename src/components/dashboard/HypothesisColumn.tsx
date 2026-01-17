@@ -67,7 +67,6 @@ const HypothesisColumn = memo(function HypothesisColumn({
   return (
     <motion.section 
       className="flex-1 min-w-0 w-full md:w-auto p-2 sm:p-4 relative metal-panel"
-      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
       aria-labelledby={`${columnId}-heading`}
@@ -76,7 +75,6 @@ const HypothesisColumn = memo(function HypothesisColumn({
       {/* Metal Header */}
       <motion.header 
         className="sticky top-0 z-10 p-2 sm:p-3 mb-3 sm:mb-4 metal-header-dark"
-        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
