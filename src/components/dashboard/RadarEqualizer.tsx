@@ -1,213 +1,179 @@
+'use client';
+
 import { useEffect, useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+interface Source {
+  id: string;
+  url: string;
+  confidence?: number;
+}
 
 interface RadarEqualizerProps {
-  problems: number;
-  solutions: number;
-  requirements: number;
+  problemSources: Source[];
+  solutionSources: Source[];
+  requirementSources: Source[];
   isActive: boolean;
 }
 
-export default function RadarEqualizer({ problems, solutions, requirements, isActive }: RadarEqualizerProps) {
+interface Blip {
+  id: string;
+  angle: number;
+  distance: number;
+  section: 'problems' | 'solutions' | 'requirements';
+}
+
+export default function RadarEqualizer({ 
+  problemSources, 
+  solutionSources, 
+  requirementSources, 
+  isActive 
+}: RadarEqualizerProps) {
   const [sweepAngle, setSweepAngle] = useState(0);
-  const [pulseStates, setPulseStates] = useState<boolean[]>([]);
-  const prevCounts = useRef({ problems: 0, solutions: 0, requirements: 0 });
-  const [hasActivity, setHasActivity] = useState(false);
+  const [blips, setBlips] = useState<Blip[]>([]);
+  const prevSourcesRef = useRef({ problems: 0, solutions: 0, requirements: 0 });
 
-  // Detect activity when counts change or isActive
-  const totalCount = problems + solutions + requirements;
-  const shouldAnimate = isActive || totalCount > 0;
-
-  // Detect new activity (count changes)
+  // Convert sources to blips with positions
   useEffect(() => {
-    const prev = prevCounts.current;
-    if (problems !== prev.problems || solutions !== prev.solutions || requirements !== prev.requirements) {
-      setHasActivity(true);
-      prevCounts.current = { problems, solutions, requirements };
-      // Keep activity indicator on for 3 seconds after last change
-      const timer = setTimeout(() => setHasActivity(false), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [problems, solutions, requirements]);
+    const newBlips: Blip[] = [];
 
-  // Animation effects - run when there's any data or activity
+    // PROBLEMS section: 0° to 120° (top)
+    problemSources.forEach((source, i) => {
+      const angle = 0 + (i * 120 / Math.max(problemSources.length, 1));
+      const distance = 40 + (source.confidence || 50) * 0.4; // 40-80% radius
+      newBlips.push({ id: `p-${source.id}`, angle, distance, section: 'problems' });
+    });
+
+    // SOLUTIONS section: 120° to 240° (bottom-left)
+    solutionSources.forEach((source, i) => {
+      const angle = 120 + (i * 120 / Math.max(solutionSources.length, 1));
+      const distance = 40 + (source.confidence || 50) * 0.4;
+      newBlips.push({ id: `s-${source.id}`, angle, distance, section: 'solutions' });
+    });
+
+    // REQUIREMENTS section: 240° to 360° (bottom-right)
+    requirementSources.forEach((source, i) => {
+      const angle = 240 + (i * 120 / Math.max(requirementSources.length, 1));
+      const distance = 40 + (source.confidence || 50) * 0.4;
+      newBlips.push({ id: `r-${source.id}`, angle, distance, section: 'requirements' });
+    });
+
+    setBlips(newBlips);
+  }, [problemSources, solutionSources, requirementSources]);
+
+  // Radar sweep animation
   useEffect(() => {
-    if (!shouldAnimate) return;
-
-    const sweepInterval = setInterval(() => {
-      setSweepAngle(prev => (prev + 3) % 360);
-    }, 30);
-
-    const pulseInterval = setInterval(() => {
-      setPulseStates(prev => prev.map(() => Math.random() > 0.6));
-    }, 150);
-
-    return () => {
-      clearInterval(sweepInterval);
-      clearInterval(pulseInterval);
-    };
-  }, [shouldAnimate]);
-
-  // Initialize pulse states
-  useEffect(() => {
-    setPulseStates(new Array(108).fill(false));
-  }, []);
-
-  const renderSection = (
-    startAngle: number,
-    endAngle: number,
-    count: number,
-    colorClass: string,
-    sectionIndex: number
-  ) => {
-    if (count === 0) return [];
+    if (!isActive) return;
     
-    const tiles = [];
-    const maxRings = 6;
-    const tilesPerRing = 6;
-    const activeRings = Math.min(Math.ceil(count / 4), maxRings);
-    const sectionSpan = endAngle - startAngle;
+    const interval = setInterval(() => {
+      setSweepAngle(prev => (prev + 0.5) % 360);
+    }, 30); // 10 seconds per revolution
 
-    for (let ring = 0; ring < activeRings; ring++) {
-      const radius = 25 + ring * 12;
-      
-      for (let tile = 0; tile < tilesPerRing; tile++) {
-        const padding = sectionSpan * 0.1;
-        const usableSpan = sectionSpan - 2 * padding;
-        const angle = startAngle + padding + (tile / (tilesPerRing - 1)) * usableSpan;
-        const x = Math.cos(angle * Math.PI / 180) * radius;
-        const y = Math.sin(angle * Math.PI / 180) * radius;
-        
-        const tileIndex = sectionIndex * 36 + ring * 6 + tile;
-        const isPulsing = shouldAnimate && pulseStates[tileIndex];
-        const opacity = isPulsing ? 1 : 0.6;
-        
-        tiles.push(
-          <rect
-            key={`${ring}-${tile}`}
-            x={x - 2}
-            y={y - 2}
-            width="4"
-            height="4"
-            rx="0.5"
-            className={`${colorClass} transition-opacity duration-200`}
-            style={{ opacity }}
-          />
-        );
-      }
-    }
-    return tiles;
-  };
+    return () => clearInterval(interval);
+  }, [isActive]);
 
-  // Always render sweep line when there's data
-  const renderSweepLine = () => {
-    if (!shouldAnimate) return null;
-    
-    const x = Math.cos(sweepAngle * Math.PI / 180) * 105;
-    const y = Math.sin(sweepAngle * Math.PI / 180) * 105;
-    
-    // Brighter color when actively processing
-    const baseColor = hasActivity || isActive ? '0, 255, 150' : '0, 200, 150';
-    const glowIntensity = hasActivity || isActive ? '12px' : '6px';
-    
-    return (
-      <g>
-        {/* Trailing fade effect - render first so main line is on top */}
-        {[5, 4, 3, 2, 1].map(i => {
-          const trailAngle = (sweepAngle - i * 10 + 360) % 360;
-          const tx = Math.cos(trailAngle * Math.PI / 180) * 105;
-          const ty = Math.sin(trailAngle * Math.PI / 180) * 105;
-          return (
-            <line
-              key={`trail-${i}`}
-              x1="0"
-              y1="0"
-              x2={tx}
-              y2={ty}
-              stroke={`rgba(${baseColor}, ${0.4 - i * 0.07})`}
-              strokeWidth={2 - i * 0.2}
-            />
-          );
-        })}
-        {/* Main sweep line with glow */}
-        <line
-          x1="0"
-          y1="0"
-          x2={x}
-          y2={y}
-          stroke={`rgba(${baseColor}, 0.95)`}
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          style={{ 
-            filter: `drop-shadow(0 0 ${glowIntensity} rgba(${baseColor}, 0.9))`,
-          }}
-        />
-        {/* Bright tip */}
-        <circle
-          cx={x}
-          cy={y}
-          r="3"
-          fill={`rgba(${baseColor}, 1)`}
-          style={{ filter: `drop-shadow(0 0 8px rgba(${baseColor}, 1))` }}
-        />
-      </g>
-    );
-  };
+  const size = 240;
+  const center = size / 2;
 
   return (
-    <div className="w-full h-full flex items-center justify-center bg-gray-900/20 rounded-lg border border-gray-700">
-      <svg width="100%" height="100%" viewBox="-120 -120 240 240" className="overflow-visible">
-        {/* Section dividers */}
-        <g stroke="rgba(75, 85, 99, 0.3)" strokeWidth="1">
-          <line x1="0" y1="0" x2="0" y2="-100" />
-          <line x1="0" y1="0" x2="87" y2="50" />
-          <line x1="0" y1="0" x2="-87" y2="50" />
-        </g>
-        
-        {/* Concentric rings */}
-        <g stroke="rgba(75, 85, 99, 0.4)" strokeWidth="1" fill="none">
-          {[30, 45, 60, 75, 90, 105].map(r => (
-            <circle key={r} cx="0" cy="0" r={r} />
+    <div className="p-4 flex items-center justify-center">
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="absolute inset-0">
+          {/* Concentric circles */}
+          {[0.25, 0.5, 0.75, 1].map((scale, i) => (
+            <circle
+              key={i}
+              cx={center}
+              cy={center}
+              r={center * scale}
+              fill="none"
+              stroke="rgba(255,255,255,0.05)"
+              strokeWidth="1"
+            />
           ))}
-        </g>
-        
-        {/* Problems section (top, 210-330°) */}
-        <g>
-          {renderSection(210, 330, problems, "fill-white", 0)}
-        </g>
-        
-        {/* Solutions section (bottom-left, 330-90°) */}
-        <g>
-          {renderSection(330, 450, solutions, "fill-white", 1)}
-        </g>
-        
-        {/* Requirements section (bottom-right, 90-210°) */}
-        <g>
-          {renderSection(90, 210, requirements, "fill-white", 2)}
-        </g>
-        
-        {/* Sweep line */}
-        {renderSweepLine()}
-        
-        {/* Center dot */}
-        <circle 
-          cx="0" 
-          cy="0" 
-          r="4" 
-          fill={shouldAnimate ? "rgba(0, 255, 150, 0.8)" : "rgba(255, 255, 255, 0.5)"} 
-          style={shouldAnimate ? { filter: 'drop-shadow(0 0 6px rgba(0, 255, 150, 0.8))' } : {}}
-        />
-        
-        {/* Section labels */}
-        <text x="0" y="-115" textAnchor="middle" className="fill-white text-xs font-mono">
-          PROBLEMS
-        </text>
-        <text x="-75" y="70" textAnchor="middle" className="fill-white text-xs font-mono">
-          SOLUTIONS
-        </text>
-        <text x="75" y="70" textAnchor="middle" className="fill-white text-xs font-mono">
-          REQUIREMENTS
-        </text>
-      </svg>
+
+          {/* Section divider lines */}
+          <line x1={center} y1={center} x2={center} y2={0} stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="2,4" />
+          <line x1={center} y1={center} x2={center + center * Math.cos(Math.PI * 2/3)} y2={center + center * Math.sin(Math.PI * 2/3)} stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="2,4" />
+          <line x1={center} y1={center} x2={center + center * Math.cos(Math.PI * 4/3)} y2={center + center * Math.sin(Math.PI * 4/3)} stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="2,4" />
+
+          {/* Radar sweep line with glow */}
+          <defs>
+            <linearGradient id="sweepGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="rgba(255,255,255,0)" />
+              <stop offset="100%" stopColor="rgba(255,255,255,0.6)" />
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+
+          {isActive && (
+            <line
+              x1={center}
+              y1={center}
+              x2={center + center * Math.cos((sweepAngle - 90) * Math.PI / 180)}
+              y2={center + center * Math.sin((sweepAngle - 90) * Math.PI / 180)}
+              stroke="url(#sweepGradient)"
+              strokeWidth="2"
+              filter="url(#glow)"
+            />
+          )}
+
+          {/* Blips */}
+          <AnimatePresence>
+            {blips.map((blip) => {
+              const x = center + (center * blip.distance / 100) * Math.cos((blip.angle - 90) * Math.PI / 180);
+              const y = center + (center * blip.distance / 100) * Math.sin((blip.angle - 90) * Math.PI / 180);
+              
+              return (
+                <motion.g
+                  key={blip.id}
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <motion.circle
+                    cx={x}
+                    cy={y}
+                    r="3"
+                    fill="white"
+                    filter="url(#glow)"
+                    animate={{
+                      opacity: [0.6, 1, 0.6],
+                      scale: [1, 1.2, 1],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                    }}
+                  />
+                </motion.g>
+              );
+            })}
+          </AnimatePresence>
+        </svg>
+
+        {/* Labels */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-6">
+          <span className="text-white text-[9px] font-mono opacity-60">PROBLEMS</span>
+          <span className="text-white text-[9px] font-mono ml-1 opacity-40">{problemSources.length}</span>
+        </div>
+        <div className="absolute bottom-0 left-0 -translate-x-2 translate-y-6">
+          <span className="text-white text-[9px] font-mono opacity-60">SOLUTIONS</span>
+          <span className="text-white text-[9px] font-mono ml-1 opacity-40">{solutionSources.length}</span>
+        </div>
+        <div className="absolute bottom-0 right-0 translate-x-2 translate-y-6">
+          <span className="text-white text-[9px] font-mono opacity-60">REQUIREMENTS</span>
+          <span className="text-white text-[9px] font-mono ml-1 opacity-40">{requirementSources.length}</span>
+        </div>
+      </div>
     </div>
   );
 }

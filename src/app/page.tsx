@@ -1099,9 +1099,30 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
         <div className="hidden md:block w-64 border-l border-gray-800">
           <div className="h-full p-4">
             <RadarEqualizer
-              problems={countGreenFacts()}
-              solutions={countSolutionsGreenFacts()}
-              requirements={countRequirementsGreenFacts()}
+              problemSources={state.hypotheses
+                .filter(h => h.sources && h.sources.length > 0)
+                .flatMap(h => (h.sources || []).map((url, i) => ({ 
+                  id: `${h.id}-${i}`, 
+                  url, 
+                  confidence: h.confidence 
+                })))
+              }
+              solutionSources={state.solutions
+                .filter(h => h.sources && h.sources.length > 0)
+                .flatMap(h => (h.sources || []).map((url, i) => ({ 
+                  id: `${h.id}-${i}`, 
+                  url, 
+                  confidence: h.confidence 
+                })))
+              }
+              requirementSources={state.requirements
+                .filter(h => h.sources && h.sources.length > 0)
+                .flatMap(h => (h.sources || []).map((url, i) => ({ 
+                  id: `${h.id}-${i}`, 
+                  url, 
+                  confidence: h.confidence 
+                })))
+              }
               isActive={engineRunning}
             />
           </div>
