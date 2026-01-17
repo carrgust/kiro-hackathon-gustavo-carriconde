@@ -158,13 +158,13 @@ function SourceCard({ source, onRemove }: SourceCardProps) {
   return (
     <div
       onClick={handleCardClick}
-      className="relative flex items-start gap-3 p-3 bg-gray-800/50 border border-gray-700/50 rounded-lg hover:bg-gray-800 hover:border-gray-600 transition-all group cursor-pointer"
+      className="relative flex items-start gap-3 p-3 metal-card-dark rounded-lg hover:border-gray-600 transition-all group cursor-pointer"
     >
       {/* Remove button - show on hover */}
       <button
         onClick={handleRemove}
         onMouseDown={(e) => e.stopPropagation()}
-        className="absolute top-2 right-2 w-5 h-5 rounded-full bg-gray-900 border border-gray-600 flex items-center justify-center text-gray-400 hover:text-red-400 hover:border-red-400 transition-all z-10 opacity-0 group-hover:opacity-100"
+        className="absolute top-2 right-2 w-5 h-5 rounded-full metal-btn flex items-center justify-center text-gray-400 hover:text-red-400 transition-all z-10 opacity-0 group-hover:opacity-100"
         type="button"
       >
         <X className="w-3 h-3" />
@@ -215,9 +215,9 @@ export default function HypothesisModal({ hypothesis, onClose, onUpdateSources }
       className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-gray-900 border border-gray-700 rounded-lg max-w-lg w-full font-mono max-h-[80vh] flex flex-col overflow-hidden">
+      <div className="metal-container-dark rounded-lg max-w-lg w-full font-mono max-h-[80vh] flex flex-col overflow-hidden">
         {/* Header - fixed, no overflow */}
-        <div className="p-4 border-b border-gray-800 flex-shrink-0">
+        <div className="p-4 border-b metal-header-dark flex-shrink-0">
           <div className="flex items-start justify-between gap-3">
             <div className="text-white text-sm flex-1 pr-2">{hypothesis.text}</div>
             <div className="flex items-center gap-3 flex-shrink-0">
@@ -226,7 +226,7 @@ export default function HypothesisModal({ hypothesis, onClose, onUpdateSources }
                   {hypothesis.confidence}%
                 </span>
               )}
-              <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors text-xl leading-none w-6 h-6 flex items-center justify-center">×</button>
+              <button onClick={onClose} className="metal-btn text-gray-400 hover:text-white transition-colors text-xl leading-none w-8 h-8 flex items-center justify-center rounded">×</button>
             </div>
           </div>
         </div>
