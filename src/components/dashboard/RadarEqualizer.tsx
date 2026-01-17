@@ -153,23 +153,20 @@ export default function RadarEqualizer({
         <path d={createSlicePath(120, 240)} fill="rgba(255,255,255,0.01)" />
         <path d={createSlicePath(240, 360)} fill="rgba(255,255,255,0.015)" />
 
-        {/* Concentric circles */}
-        {[0.25, 0.5, 0.75, 1].map((scale, i) => (
-          <circle
-            key={i}
-            cx={center}
-            cy={center}
-            r={center * scale}
-            fill="none"
-            stroke="rgba(255,255,255,0.05)"
-            strokeWidth="1"
-          />
-        ))}
+        {/* OUTER CIRCLE ONLY - the pizza edge */}
+        <circle
+          cx={center}
+          cy={center}
+          r={center}
+          fill="none"
+          stroke="rgba(255,255,255,0.2)"
+          strokeWidth="1.5"
+        />
 
-        {/* Section divider lines - SOLID and BRIGHT */}
-        <line x1={center} y1={center} x2={center} y2={0} stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
-        <line x1={center} y1={center} x2={center + center * Math.cos(Math.PI * 2/3)} y2={center + center * Math.sin(Math.PI * 2/3)} stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
-        <line x1={center} y1={center} x2={center + center * Math.cos(Math.PI * 4/3)} y2={center + center * Math.sin(Math.PI * 4/3)} stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
+        {/* Section divider lines - 3 pizza slices */}
+        <line x1={center} y1={center} x2={center} y2={0} stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" />
+        <line x1={center} y1={center} x2={center + center * Math.cos(Math.PI * 2/3)} y2={center + center * Math.sin(Math.PI * 2/3)} stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" />
+        <line x1={center} y1={center} x2={center + center * Math.cos(Math.PI * 4/3)} y2={center + center * Math.sin(Math.PI * 4/3)} stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" />
 
         {/* Radar sweep line with glow */}
         <defs>
