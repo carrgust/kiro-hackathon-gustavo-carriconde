@@ -25,6 +25,7 @@ interface Blip {
   section: 'problems' | 'solutions' | 'requirements';
   createdAt: number;
   isValidated: boolean;
+  revealed: boolean;
 }
 
 export default function RadarEqualizer({ 
@@ -55,7 +56,8 @@ export default function RadarEqualizer({
           currentDistance: 10, // Start at center
           section: 'problems',
           createdAt: Date.now(),
-          isValidated: source.isValidated || false
+          isValidated: source.isValidated || false,
+          revealed: false
         });
       }
     });
@@ -73,7 +75,8 @@ export default function RadarEqualizer({
           currentDistance: 10,
           section: 'solutions',
           createdAt: Date.now(),
-          isValidated: source.isValidated || false
+          isValidated: source.isValidated || false,
+          revealed: false
         });
       }
     });
@@ -91,7 +94,8 @@ export default function RadarEqualizer({
           currentDistance: 10,
           section: 'requirements',
           createdAt: Date.now(),
-          isValidated: source.isValidated || false
+          isValidated: source.isValidated || false,
+          revealed: false
         });
       }
     });
@@ -109,19 +113,28 @@ export default function RadarEqualizer({
     const interval = setInterval(() => {
       setSweepAngle(prev => (prev + 0.5) % 360);
       
-      // Expand blips that haven't reached target
+      // Reveal blips when sweep passes over them and expand revealed blips
       setBlips(prevBlips => {
         const updated = prevBlips.map(blip => {
-          if (blip.currentDistance < blip.targetDistance) {
-            return {
-              ...blip,
-              currentDistance: Math.min(
-                blip.currentDistance + 2, // Expand by 2% per sweep tick
-                blip.targetDistance
-              )
-            };
-          }
-          return blip;
+          const normalizedSweep = sweepAngle < 0 ? sweepAngle + 360 : sweepAngle;
+          const normalizedBlip = blip.angle < 0 ? blip.angle + 360 : blip.angle;
+          
+          // Check if sweep has passed this blip (with 5° tolerance)
+          const hasPassed = normalizedSweep >= normalizedBlip - 5;
+          
+          // Reveal if sweep passed
+          const nowRevealed = blip.revealed || hasPassed;
+          
+          // Expand if revealed and not at target
+          const newDistance = nowRevealed && blip.currentDistance < blip.targetDistance
+            ? Math.min(blip.currentDistance + 2, blip.targetDistance)
+            : blip.currentDistance;
+          
+          return {
+            ...blip,
+            revealed: nowRevealed,
+            currentDistance: newDistance
+          };
         });
         blipsRef.current = updated;
         return updated;
@@ -129,7 +142,7 @@ export default function RadarEqualizer({
     }, 30);
 
     return () => clearInterval(interval);
-  }, [isActive]);
+  }, [isActive, sweepAngle]);
 
   const size = 240;
   const center = size / 2;
@@ -220,15 +233,15 @@ export default function RadarEqualizer({
           />
         )}
 
-        {/* Blips */}
+        {/* Blips - only show revealed ones */}
         <AnimatePresence>
-          {blips.map((blip) => {
+          {blips.filter(b => b.revealed).map((blip) => {
             const x = center + (center * blip.currentDistance / 100) * Math.cos(blip.angle * Math.PI / 180);
             const y = center + (center * blip.currentDistance / 100) * Math.sin(blip.angle * Math.PI / 180);
             const progress = blip.currentDistance / blip.targetDistance;
             const opacity = 0.4 + (progress * 0.6); // Fade in as it expands
             const radius = 1.5 + (progress * 0.5); // Grow from 1.5 to 2px
-            const color = blip.isValidated ? '#22c55e' : '#fbbf24'; // Green if validated, yellow if pending
+            const color = blip.isValidated ? '#22c55e' : '#f97316'; // Green if validated, orange if pending
             
             return (
               <motion.g
@@ -259,21 +272,41 @@ export default function RadarEqualizer({
             );
           })}
         </AnimatePresence>
-      </svg>
 
-      {/* Labels - positioned INSIDE each slice */}
-      <div className="absolute top-8 left-1/2 -translate-x-1/2">
-        <span className="text-white text-[10px] font-mono opacity-70">PROBLEMS</span>
-        <span className="text-white text-[10px] font-mono ml-1 opacity-50">{problemSources.length}</span>
-      </div>
-      <div className="absolute bottom-8 left-8">
-        <span className="text-white text-[10px] font-mono opacity-70">SOLUTIONS</span>
-        <span className="text-white text-[10px] font-mono ml-1 opacity-50">{solutionSources.length}</span>
-      </div>
-      <div className="absolute bottom-8 right-8">
-        <span className="text-white text-[10px] font-mono opacity-70">REQUIREMENTS</span>
-        <span className="text-white text-[10px] font-mono ml-1 opacity-50">{requirementSources.length}</span>
-      </div>
+        {/* Labels - centered in each slice using polar coordinates */}
+        {/* PROBLEMS: angle=-90° (up), distance=60% */}
+        <text
+          x={center + (center * 0.6) * Math.cos(-90 * Math.PI / 180)}
+          y={center + (center * 0.6) * Math.sin(-90 * Math.PI / 180)}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          className="text-[10px] font-mono fill-white opacity-70"
+        >
+          PROBLEMS {problemSources.length}
+        </text>
+
+        {/* SOLUTIONS: angle=90° (bottom), distance=60% */}
+        <text
+          x={center + (center * 0.6) * Math.cos(90 * Math.PI / 180)}
+          y={center + (center * 0.6) * Math.sin(90 * Math.PI / 180)}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          className="text-[10px] font-mono fill-white opacity-70"
+        >
+          SOLUTIONS {solutionSources.length}
+        </text>
+
+        {/* REQUIREMENTS: angle=210° (bottom-left), distance=60% */}
+        <text
+          x={center + (center * 0.6) * Math.cos(210 * Math.PI / 180)}
+          y={center + (center * 0.6) * Math.sin(210 * Math.PI / 180)}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          className="text-[10px] font-mono fill-white opacity-70"
+        >
+          REQUIREMENTS {requirementSources.length}
+        </text>
+      </svg>
     </div>
   );
 }
