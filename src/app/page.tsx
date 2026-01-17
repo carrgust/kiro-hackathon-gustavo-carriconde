@@ -990,7 +990,7 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
   };
 
   return (
-    <div className={`min-h-screen relative ${state.autopilotEnabled ? 'autopilot-scan' : ''}`} style={{ background: '#0a0a0a' }}>
+    <div className={`min-h-screen relative ${state.autopilotEnabled ? 'autopilot-scan' : ''}`} style={{ background: '#1a1a1a' }}>
       {/* API Error Banner */}
       <APIStatusBanner error={apiError} onDismiss={() => setApiError(null)} />
       
