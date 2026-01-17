@@ -134,9 +134,25 @@ export default function RadarEqualizer({
   const size = 240;
   const center = size / 2;
 
+  // Helper to create pie slice path
+  const createSlicePath = (startAngle: number, endAngle: number) => {
+    const start = (startAngle - 90) * Math.PI / 180;
+    const end = (endAngle - 90) * Math.PI / 180;
+    const x1 = center + center * Math.cos(start);
+    const y1 = center + center * Math.sin(start);
+    const x2 = center + center * Math.cos(end);
+    const y2 = center + center * Math.sin(end);
+    return `M ${center} ${center} L ${x1} ${y1} A ${center} ${center} 0 0 1 ${x2} ${y2} Z`;
+  };
+
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="absolute inset-0">
+        {/* Section backgrounds - subtle fills */}
+        <path d={createSlicePath(0, 120)} fill="rgba(255,255,255,0.02)" />
+        <path d={createSlicePath(120, 240)} fill="rgba(255,255,255,0.01)" />
+        <path d={createSlicePath(240, 360)} fill="rgba(255,255,255,0.015)" />
+
         {/* Concentric circles */}
         {[0.25, 0.5, 0.75, 1].map((scale, i) => (
           <circle
@@ -150,10 +166,10 @@ export default function RadarEqualizer({
           />
         ))}
 
-        {/* Section divider lines */}
-        <line x1={center} y1={center} x2={center} y2={0} stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="2,4" />
-        <line x1={center} y1={center} x2={center + center * Math.cos(Math.PI * 2/3)} y2={center + center * Math.sin(Math.PI * 2/3)} stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="2,4" />
-        <line x1={center} y1={center} x2={center + center * Math.cos(Math.PI * 4/3)} y2={center + center * Math.sin(Math.PI * 4/3)} stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="2,4" />
+        {/* Section divider lines - SOLID and BRIGHT */}
+        <line x1={center} y1={center} x2={center} y2={0} stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
+        <line x1={center} y1={center} x2={center + center * Math.cos(Math.PI * 2/3)} y2={center + center * Math.sin(Math.PI * 2/3)} stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
+        <line x1={center} y1={center} x2={center + center * Math.cos(Math.PI * 4/3)} y2={center + center * Math.sin(Math.PI * 4/3)} stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
 
         {/* Radar sweep line with glow */}
         <defs>
@@ -224,18 +240,18 @@ export default function RadarEqualizer({
         </AnimatePresence>
       </svg>
 
-      {/* Labels */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-6">
-        <span className="text-white text-[9px] font-mono opacity-60">PROBLEMS</span>
-        <span className="text-white text-[9px] font-mono ml-1 opacity-40">{problemSources.length}</span>
+      {/* Labels - positioned INSIDE each slice */}
+      <div className="absolute top-8 left-1/2 -translate-x-1/2">
+        <span className="text-white text-[10px] font-mono opacity-70">PROBLEMS</span>
+        <span className="text-white text-[10px] font-mono ml-1 opacity-50">{problemSources.length}</span>
       </div>
-      <div className="absolute bottom-0 left-0 -translate-x-2 translate-y-6">
-        <span className="text-white text-[9px] font-mono opacity-60">SOLUTIONS</span>
-        <span className="text-white text-[9px] font-mono ml-1 opacity-40">{solutionSources.length}</span>
+      <div className="absolute bottom-8 left-8">
+        <span className="text-white text-[10px] font-mono opacity-70">SOLUTIONS</span>
+        <span className="text-white text-[10px] font-mono ml-1 opacity-50">{solutionSources.length}</span>
       </div>
-      <div className="absolute bottom-0 right-0 translate-x-2 translate-y-6">
-        <span className="text-white text-[9px] font-mono opacity-60">REQUIREMENTS</span>
-        <span className="text-white text-[9px] font-mono ml-1 opacity-40">{requirementSources.length}</span>
+      <div className="absolute bottom-8 right-8">
+        <span className="text-white text-[10px] font-mono opacity-70">REQUIREMENTS</span>
+        <span className="text-white text-[10px] font-mono ml-1 opacity-50">{requirementSources.length}</span>
       </div>
     </div>
   );
