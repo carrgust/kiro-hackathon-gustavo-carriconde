@@ -85,7 +85,7 @@ export default function NicheDropdown({ niche, locked, onNicheChange, onLockTogg
         <button
           onClick={onLockToggle}
           disabled={disabled}
-          className="text-gray-500 hover:text-cyan-400 transition-colors font-mono text-sm"
+          className="text-gray-500 hover:text-white transition-colors font-mono text-sm"
         >
           {locked ? '🔒' : '🔓'}
         </button>

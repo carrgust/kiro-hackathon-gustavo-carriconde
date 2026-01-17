@@ -9,8 +9,8 @@ interface AgentRationaleProps {
 const TAG_COLORS: Record<string, string> = {
   'THINKING': 'text-purple-500',
   'HYPOTHESIS': 'text-yellow-500',
-  'SEARCHING': 'text-blue-500',
-  'FOUND': 'text-cyan-400',
+  'SEARCHING': 'text-white',
+  'FOUND': 'text-white',
   'VALIDATING': 'text-orange-500',
   'VALIDATED': 'text-green-500',
   'ERROR': 'text-red-500',

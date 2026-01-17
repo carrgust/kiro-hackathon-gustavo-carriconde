@@ -90,7 +90,7 @@ export default function PRDModal({
         return html;
       })
       .replace(/^## (.*$)/gim, (_, title) => {
-        const html = `<h2 data-section="${sectionIndex}" class="text-lg font-semibold text-cyan-400 mt-6 mb-3 scroll-mt-4 flex items-center gap-2"><span class="w-1 h-5 bg-cyan-400 rounded"></span>${title}</h2>`;
+        const html = `<h2 data-section="${sectionIndex}" class="text-lg font-semibold text-white mt-6 mb-3 scroll-mt-4 flex items-center gap-2"><span class="w-1 h-5 bg-white rounded"></span>${title}</h2>`;
         sectionIndex++;
         return html;
       })
@@ -104,7 +104,7 @@ export default function PRDModal({
       .replace(/^\* (.*$)/gim, '<li class="ml-4 text-gray-300 text-sm">• $1</li>')
       .replace(/^- (.*$)/gim, '<li class="ml-4 text-gray-300 text-sm">• $1</li>')
       .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
-      .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 bg-gray-800 text-cyan-300 rounded text-xs">$1</code>')
+      .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 bg-gray-800 text-white rounded text-xs">$1</code>')
       .replace(/\n\n/g, '<div class="h-3"></div>')
       .replace(/\n/g, '<br/>');
   };
@@ -149,7 +149,7 @@ export default function PRDModal({
                 onClick={() => setActiveTab('preview')}
                 className={`flex items-center gap-2 px-3 sm:px-4 py-3 text-sm transition-colors ${
                   activeTab === 'preview'
-                    ? 'text-cyan-400 border-b-2 border-cyan-400'
+                    ? 'text-white border-b-2 border-white'
                     : 'text-gray-500 hover:text-gray-300'
                 }`}
               >
@@ -160,7 +160,7 @@ export default function PRDModal({
                 onClick={() => setActiveTab('raw')}
                 className={`flex items-center gap-2 px-3 sm:px-4 py-3 text-sm transition-colors ${
                   activeTab === 'raw'
-                    ? 'text-cyan-400 border-b-2 border-cyan-400'
+                    ? 'text-white border-b-2 border-white'
                     : 'text-gray-500 hover:text-gray-300'
                 }`}
               >
@@ -171,7 +171,7 @@ export default function PRDModal({
             {activeTab === 'preview' && sections.length > 0 && (
               <button
                 onClick={() => setShowSidebar(!showSidebar)}
-                className={`p-2 rounded-lg transition-colors ${showSidebar ? 'bg-gray-800 text-cyan-400' : 'text-gray-500 hover:text-gray-300'}`}
+                className={`p-2 rounded-lg transition-colors ${showSidebar ? 'bg-gray-800 text-white' : 'text-gray-500 hover:text-gray-300'}`}
               >
                 <List size={16} />
               </button>
@@ -198,7 +198,7 @@ export default function PRDModal({
                           onClick={() => scrollToSection(section.id)}
                           className={`w-full text-left px-2 py-1.5 rounded text-xs hover:bg-gray-800 transition-colors flex items-center gap-1 group ${
                             section.level === 1 ? 'text-white font-semibold' :
-                            section.level === 2 ? 'text-cyan-400 pl-3' :
+                            section.level === 2 ? 'text-white pl-3' :
                             'text-gray-400 pl-5'
                           }`}
                         >

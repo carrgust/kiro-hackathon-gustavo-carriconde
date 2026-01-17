@@ -12,7 +12,7 @@ interface AnimatedButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'
 }
 
 const variants = {
-  primary: 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500',
+  primary: 'bg-gradient-to-r from-white to-white text-white hover:from-gray-100 hover:to-gray-100',
   secondary: 'bg-gray-800 text-gray-200 hover:bg-gray-700 border border-gray-700',
   ghost: 'bg-transparent text-gray-400 hover:text-white hover:bg-gray-800/50',
   danger: 'bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30',
@@ -64,7 +64,7 @@ export default function AnimatedButton({
       {/* Glow pulse for primary buttons */}
       {glow && variant === 'primary' && (
         <motion.div
-          className="absolute inset-0 bg-cyan-500/20 rounded-lg"
+          className="absolute inset-0 bg-white/10 rounded-lg"
           animate={{
             boxShadow: [
               '0 0 20px rgba(6,182,212,0.3)',

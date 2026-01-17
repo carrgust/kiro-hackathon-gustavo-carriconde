@@ -19,7 +19,7 @@ export default function SyncIndicator({ status, connectedUsers, lastSyncTime, us
     switch (status) {
       case 'connected': return 'text-green-400';
       case 'connecting': return 'text-yellow-400';
-      case 'syncing': return 'text-cyan-400';
+      case 'syncing': return 'text-white';
       default: return 'text-gray-500';
     }
   };
@@ -50,7 +50,7 @@ export default function SyncIndicator({ status, connectedUsers, lastSyncTime, us
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const colors = ['bg-cyan-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500'];
+  const colors = ['bg-white', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500'];
 
   return (
     <div className="relative flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 bg-gray-900/50 rounded-lg border border-gray-700">
@@ -129,7 +129,7 @@ export default function SyncIndicator({ status, connectedUsers, lastSyncTime, us
             }}
             exit={{ scale: 0, opacity: 0 }}
             transition={{ duration: 1, repeat: Infinity }}
-            className="w-2 h-2 bg-cyan-400 rounded-full"
+            className="w-2 h-2 bg-white rounded-full"
           />
         )}
       </AnimatePresence>

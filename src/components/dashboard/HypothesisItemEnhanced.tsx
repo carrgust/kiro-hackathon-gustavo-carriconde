@@ -346,7 +346,7 @@ const HypothesisItemEnhanced = memo(function HypothesisItemEnhanced({
           className={`absolute inset-0 border-2 rounded-lg ${
             stallState === 'critical' ? 'border-red-400/50' :
             stallState === 'warning' ? 'border-yellow-400/50' :
-            'border-cyan-400/50'
+            'border-white/50'
           }`}
           animate={{ opacity: [0.5, 0, 0.5], scale: [1, 1.05, 1] }}
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}

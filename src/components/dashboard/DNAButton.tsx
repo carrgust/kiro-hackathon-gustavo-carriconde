@@ -83,7 +83,7 @@ export default function DNAButton({ unlocked, validatedCount, requiredCount, onC
                 <span>{validatedCount}/{requiredCount} validated</span>
                 <motion.span
                   key={progress}
-                  initial={{ scale: 1.2, color: '#22d3ee' }}
+                  initial={{ scale: 1.2, color: '#ffffff' }}
                   animate={{ scale: 1, color: '#6b7280' }}
                 >
                   {progress.toFixed(0)}%

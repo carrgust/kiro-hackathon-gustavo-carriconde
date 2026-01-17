@@ -62,13 +62,13 @@ export default function AutoCoderPanel({ generatedDNA }: AutoCoderPanelProps) {
     <div className="bg-black border border-green-500 rounded-lg p-6 font-mono text-green-400 shadow-lg shadow-green-500/20">
       {/* Header */}
       <div className="border-b border-green-500 pb-4 mb-6">
-        <h2 className="text-xl font-bold text-cyan-400 mb-2">
+        <h2 className="text-xl font-bold text-white mb-2">
           ╔═══════════════════════════════════════╗
         </h2>
-        <h2 className="text-xl font-bold text-cyan-400 text-center">
+        <h2 className="text-xl font-bold text-white text-center">
           ║         AUTO-CODER PANEL            ║
         </h2>
-        <h2 className="text-xl font-bold text-cyan-400">
+        <h2 className="text-xl font-bold text-white">
           ╚═══════════════════════════════════════╝
         </h2>
       </div>
@@ -76,10 +76,10 @@ export default function AutoCoderPanel({ generatedDNA }: AutoCoderPanelProps) {
       {/* Status */}
       <div className="mb-6">
         <div className="text-green-300 mb-2">
-          &gt; SYSTEM STATUS: <span className="text-cyan-400">READY</span>
+          &gt; SYSTEM STATUS: <span className="text-white">READY</span>
         </div>
         <div className="text-green-300">
-          &gt; REQUIREMENTS LOADED: <span className="text-cyan-400">{generatedDNA.requirements.length}</span>
+          &gt; REQUIREMENTS LOADED: <span className="text-white">{generatedDNA.requirements.length}</span>
         </div>
       </div>
 
@@ -93,7 +93,7 @@ export default function AutoCoderPanel({ generatedDNA }: AutoCoderPanelProps) {
             </div>
           ))}
           {generatedDNA.requirements.length > 3 && (
-            <div className="text-cyan-400 text-sm">
+            <div className="text-white text-sm">
               ... and {generatedDNA.requirements.length - 3} more features
             </div>
           )}

@@ -96,7 +96,7 @@ export default function LandingPageModal({
                 onClick={() => setActiveTab('preview')}
                 className={`flex items-center gap-2 px-3 sm:px-4 py-3 text-sm transition-colors ${
                   activeTab === 'preview'
-                    ? 'text-cyan-400 border-b-2 border-cyan-400'
+                    ? 'text-white border-b-2 border-white'
                     : 'text-gray-500 hover:text-gray-300'
                 }`}
               >
@@ -107,7 +107,7 @@ export default function LandingPageModal({
                 onClick={() => setActiveTab('code')}
                 className={`flex items-center gap-2 px-3 sm:px-4 py-3 text-sm transition-colors ${
                   activeTab === 'code'
-                    ? 'text-cyan-400 border-b-2 border-cyan-400'
+                    ? 'text-white border-b-2 border-white'
                     : 'text-gray-500 hover:text-gray-300'
                 }`}
               >
@@ -128,7 +128,7 @@ export default function LandingPageModal({
                     key={mode}
                     onClick={() => setViewMode(mode)}
                     className={`p-1.5 rounded transition-colors ${
-                      viewMode === mode ? 'bg-gray-700 text-cyan-400' : 'text-gray-500 hover:text-gray-300'
+                      viewMode === mode ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-gray-300'
                     }`}
                   >
                     <Icon size={16} />

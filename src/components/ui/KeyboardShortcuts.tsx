@@ -63,7 +63,7 @@ export function KeyboardShortcuts({ onExport }: KeyboardShortcutsProps) {
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2 text-cyan-400">
+              <div className="flex items-center gap-2 text-white">
                 <Keyboard size={20} />
                 <h2 className="font-bold">Keyboard Shortcuts</h2>
               </div>

@@ -35,7 +35,7 @@ export default function HypothesisItem({ hypothesis, onClick, onRemove }: Hypoth
       </span>
       {hypothesis.type && (
         <span className={`text-xs px-1 rounded ${
-          hypothesis.type === 'functional' ? 'bg-blue-900 text-blue-300' : 'bg-purple-900 text-purple-300'
+          hypothesis.type === 'functional' ? 'bg-gray-800 text-white' : 'bg-purple-900 text-purple-300'
         }`}>
           [{hypothesis.type === 'functional' ? 'F' : 'NF'}]
         </span>

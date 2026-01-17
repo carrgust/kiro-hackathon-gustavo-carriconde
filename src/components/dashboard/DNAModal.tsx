@@ -122,7 +122,7 @@ export default function DNAModal({
                 ref={closeButtonRef}
                 onClick={onClose}
                 aria-label="Close DNA modal"
-                className="text-gray-500 hover:text-gray-300 p-2 hover:bg-gray-800/50 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                className="text-gray-500 hover:text-gray-300 p-2 hover:bg-gray-800/50 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-white"
                 whileHover={{ scale: 1.1, rotate: 90 }}
                 whileTap={{ scale: 0.9 }}
               >
@@ -144,7 +144,7 @@ export default function DNAModal({
                 aria-controls={`${tab.id}-panel`}
                 id={`${tab.id}-tab`}
                 onClick={() => setActiveTab(tab.id as 'dna' | 'autocoder')}
-                className={`px-6 py-3 font-mono text-sm transition-all relative focus:outline-none focus:ring-2 focus:ring-inset focus:ring-cyan-500 ${
+                className={`px-6 py-3 font-mono text-sm transition-all relative focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white ${
                   activeTab === tab.id
                     ? `text-${tab.color}-400`
                     : 'text-gray-500 hover:text-gray-300'
@@ -204,7 +204,7 @@ export default function DNAModal({
                       {dna.requirements.map((req, i) => (
                         <motion.li
                           key={req.id}
-                          className="flex items-center gap-3 p-3 bg-gray-900/50 rounded-lg border border-gray-700/50 hover:border-cyan-500/30 transition-all"
+                          className="flex items-center gap-3 p-3 bg-gray-900/50 rounded-lg border border-gray-700/50 hover:border-white/30 transition-all"
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: i * 0.05 }}
@@ -214,7 +214,7 @@ export default function DNAModal({
                           <span className="text-gray-300 flex-1 text-sm">{req.text}</span>
                           <span className={`text-xs px-2 py-1 rounded font-mono ${
                             req.type === 'functional' 
-                              ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' 
+                              ? 'bg-white/10 text-white border border-white/30' 
                               : 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
                           }`}>
                             {req.type === 'functional' ? 'FUNC' : 'NON-FUNC'}
@@ -266,7 +266,7 @@ export default function DNAModal({
                   disabled={isGeneratingLandingPage}
                   aria-busy={isGeneratingLandingPage}
                   aria-label={isGeneratingLandingPage ? 'Generating landing page' : 'Generate landing page'}
-                  className="flex-1 metal-btn-primary py-3 px-6 rounded-lg font-mono font-semibold transition-all shadow-lg disabled:cursor-not-allowed flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50"
+                  className="flex-1 metal-btn-primary py-3 px-6 rounded-lg font-mono font-semibold transition-all shadow-lg disabled:cursor-not-allowed flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -283,7 +283,7 @@ export default function DNAModal({
                   disabled={isGeneratingPRD}
                   aria-busy={isGeneratingPRD}
                   aria-label={isGeneratingPRD ? 'Generating PRD' : 'Generate Product Requirements Document'}
-                  className="flex-1 border-2 border-cyan-500 hover:bg-cyan-500/10 disabled:border-gray-700 text-cyan-400 py-3 px-6 rounded-lg font-mono font-semibold transition-all flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                  className="flex-1 border-2 border-white hover:bg-white/10 disabled:border-gray-700 text-white py-3 px-6 rounded-lg font-mono font-semibold transition-all flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-900"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -332,7 +332,7 @@ function Section({ title, count, delay, children }: { title: string; count: numb
     >
       <h2 
         id={`section-${title.toLowerCase().replace(/\s+/g, '-')}`}
-        className="text-lg font-semibold text-cyan-400 mb-3 font-mono flex items-center gap-2"
+        className="text-lg font-semibold text-white mb-3 font-mono flex items-center gap-2"
       >
         {title} <span className="text-sm text-gray-500" aria-label={`${count} items`}>({count})</span>
       </h2>

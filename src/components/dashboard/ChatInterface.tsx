@@ -27,7 +27,7 @@ export default function ChatInterface({ chatHistory, onSendMessage, disabled }: 
         <div className="h-8 overflow-y-auto font-mono text-xs mb-2 space-y-1">
           {chatHistory.slice(-3).map((msg, index) => (
             <div key={index} className="leading-relaxed">
-              <span className={msg.role === 'user' ? 'text-cyan-400' : 'text-green-400'}>
+              <span className={msg.role === 'user' ? 'text-white' : 'text-green-400'}>
                 {msg.role}:
               </span>
               <span className="text-gray-300 ml-2">{msg.message}</span>
@@ -49,7 +49,7 @@ export default function ChatInterface({ chatHistory, onSendMessage, disabled }: 
           <button
             type="submit"
             disabled={!input.trim() || disabled}
-            className="text-gray-500 hover:text-cyan-400 transition-colors font-mono text-xs disabled:opacity-50"
+            className="text-gray-500 hover:text-white transition-colors font-mono text-xs disabled:opacity-50"
           >
             send
           </button>

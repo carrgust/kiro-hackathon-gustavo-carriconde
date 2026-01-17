@@ -22,7 +22,7 @@ export default function ScoreBreakdown({ isVisible, scores, total }: ScoreBreakd
                 <span className="text-gray-400">{label}</span>
                 <div className="flex items-center gap-2">
                   <div className="w-16 h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-cyan-500" style={{ width: `${(value / max) * 100}%` }} />
+                    <div className="h-full bg-white" style={{ width: `${(value / max) * 100}%` }} />
                   </div>
                   <span className="text-gray-300 w-8 text-right">{value}</span>
                 </div>

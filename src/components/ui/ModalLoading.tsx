@@ -17,7 +17,7 @@ export default function ModalLoading({ message = 'Loading...' }: ModalLoadingPro
       >
         {/* Spinner */}
         <motion.div
-          className="w-10 h-10 border-3 border-cyan-500 border-t-transparent rounded-full"
+          className="w-10 h-10 border-3 border-white border-t-transparent rounded-full"
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
         />

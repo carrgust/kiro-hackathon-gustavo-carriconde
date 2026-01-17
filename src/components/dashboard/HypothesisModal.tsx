@@ -175,7 +175,7 @@ function SourceCard({ source, onRemove }: SourceCardProps) {
           {faviconUrl ? <img src={faviconUrl} alt="" className="w-4 h-4 object-contain" /> : <Globe className="w-3 h-3 text-gray-400" />}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-white text-[11px] font-medium line-clamp-2 group-hover:text-cyan-300 transition-colors leading-tight pr-6">
+          <div className="text-white text-[11px] font-medium line-clamp-2 group-hover:text-white transition-colors leading-tight pr-6">
             {title}
           </div>
           {snippet && <div className="text-gray-400 text-[10px] font-medium line-clamp-2 mt-1 leading-snug">{snippet}</div>}
