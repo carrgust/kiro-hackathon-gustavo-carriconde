@@ -990,12 +990,12 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
   };
 
   return (
-    <div className={`min-h-screen bg-black relative ${state.autopilotEnabled ? 'autopilot-scan' : ''}`}>
+    <div className={`min-h-screen relative ${state.autopilotEnabled ? 'autopilot-scan' : ''}`} style={{ background: '#0a0a0a' }}>
       {/* API Error Banner */}
       <APIStatusBanner error={apiError} onDismiss={() => setApiError(null)} />
       
       <div className={state.autopilotEnabled ? 'autopilot-border autopilot-glow' : ''}>
-        <div className="bg-black rounded-md">
+        <div className="rounded-md">
           <EnhancedHeader
             provider={getProvider()}
             model={getModel()}
@@ -1018,12 +1018,12 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
       />
       
       {/* Stage Progress Bar with Sync Indicator */}
-      <div className="px-2 sm:px-4 py-2 border-b border-gray-800 bg-gray-900/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+      <div className="px-2 sm:px-4 py-2 border-b metal-panel flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
         <StageProgressBar 
           stages={scoring.stages} 
           currentStage={scoring.currentStage} 
         />
-        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end relative z-10">
           <button
             onClick={() => setShowExportModal(true)}
             disabled={state.hypotheses.length === 0 && state.solutions.length === 0}
