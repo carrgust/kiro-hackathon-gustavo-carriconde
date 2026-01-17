@@ -46,6 +46,13 @@ const itemVariants = {
 const HypothesisColumn = memo(function HypothesisColumn({ 
   title, hypotheses, score, percentage, locked = false, validatedCount = 0, onItemClick, onItemRemove, onAdd 
 }: HypothesisColumnProps) {
+  console.log(`[HypothesisColumn ${title}] Props:`, { 
+    hypothesesCount: hypotheses.length, 
+    locked, 
+    validatedCount,
+    firstHypothesis: hypotheses[0]?.text?.substring(0, 30)
+  });
+  
   // Memoize click handlers to prevent child re-renders
   const handleItemClick = useCallback((hypothesis: Hypothesis) => {
     onItemClick(hypothesis);
@@ -162,25 +169,27 @@ const HypothesisColumn = memo(function HypothesisColumn({
       ) : (
         <motion.div 
           className="space-y-1.5 sm:space-y-2 min-h-[200px] sm:min-h-[300px]"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
+          style={{ opacity: 1 }}
         >
           <AnimatePresence mode="popLayout">
-            {hypotheses.map((hypothesis, index) => (
-              <motion.div
-                key={hypothesis.id}
-                variants={itemVariants}
-                layout
-              >
-                <HypothesisItemEnhanced
-                  hypothesis={hypothesis}
-                  onClick={() => handleItemClick(hypothesis)}
-                  onRemove={() => handleItemRemove(hypothesis)}
-                  index={index}
-                />
-              </motion.div>
-            ))}
+            {hypotheses.map((hypothesis, index) => {
+              console.log(`[${title}] Rendering card:`, hypothesis.id, hypothesis.text.substring(0, 30));
+              return (
+                <motion.div
+                  key={hypothesis.id}
+                  initial={{ opacity: 1 }}
+                  animate={{ opacity: 1 }}
+                  style={{ opacity: 1 }}
+                >
+                  <HypothesisItemEnhanced
+                    hypothesis={hypothesis}
+                    onClick={() => handleItemClick(hypothesis)}
+                    onRemove={() => handleItemRemove(hypothesis)}
+                    index={index}
+                  />
+                </motion.div>
+              );
+            })}
           </AnimatePresence>
           
           {/* Add button - only show if onAdd provided */}
