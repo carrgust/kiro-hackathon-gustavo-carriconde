@@ -172,17 +172,17 @@ export default function RadarEqualizer({ problems, solutions, requirements, isAc
         
         {/* Problems section (top, 210-330°) */}
         <g>
-          {renderSection(210, 330, problems, "fill-blue-400", 0)}
+          {renderSection(210, 330, problems, "fill-white", 0)}
         </g>
         
         {/* Solutions section (bottom-left, 330-90°) */}
         <g>
-          {renderSection(330, 450, solutions, "fill-cyan-400", 1)}
+          {renderSection(330, 450, solutions, "fill-white", 1)}
         </g>
         
         {/* Requirements section (bottom-right, 90-210°) */}
         <g>
-          {renderSection(90, 210, requirements, "fill-purple-400", 2)}
+          {renderSection(90, 210, requirements, "fill-white", 2)}
         </g>
         
         {/* Sweep line */}

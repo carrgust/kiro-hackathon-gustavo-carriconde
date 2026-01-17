@@ -71,8 +71,8 @@ export default function StageProgressBar({ stages, currentStage }: StageProgress
               <motion.span 
                 className="relative text-[9px] sm:text-[10px]"
                 key={info.score}
-                initial={{ scale: 1.2, color: '#22d3ee' }}
-                animate={{ scale: 1, color: isPassed ? '#4ade80' : isActive ? '#22d3ee' : '#6b7280' }}
+                initial={{ scale: 1.2, color: '#ffffff' }}
+                animate={{ scale: 1, color: isPassed ? '#ffffff' : isActive ? '#ffffff' : '#6b7280' }}
                 transition={{ duration: 0.3 }}
               >
                 {info.score.toFixed(0)}%
