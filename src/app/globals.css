@@ -625,3 +625,68 @@
     flex-direction: row;
   }
 }
+
+
+/* ============================================
+   TERMINAL BRUTALISM DESIGN SYSTEM
+   ============================================ */
+
+:root {
+  --tb-border: 2px;
+  --tb-border-color: #22d3ee; /* cyan */
+  --tb-shadow: 3px 3px 0px 0px;
+  --tb-bg: #0a0a0a;
+  --tb-card: #111111;
+  --tb-text: #ffffff;
+  --tb-accent: #22d3ee;
+  --tb-success: #22c55e;
+  --tb-warning: #eab308;
+  --tb-danger: #ef4444;
+}
+
+/* Brutalist Container - only outer containers get borders */
+.tb-container {
+  border: var(--tb-border) solid var(--tb-border-color);
+  background: var(--tb-card);
+}
+
+/* Brutalist Header - bold uppercase */
+.tb-header {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: var(--tb-border) solid var(--tb-border-color);
+  padding-bottom: 0.5rem;
+}
+
+/* Brutalist Button */
+.tb-btn {
+  border: var(--tb-border) solid var(--tb-border-color);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  box-shadow: var(--tb-shadow) var(--tb-border-color);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.tb-btn:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0px 0px var(--tb-border-color);
+}
+
+/* Brutalist Card - minimal internal styling */
+.tb-card {
+  background: var(--tb-card);
+  border-left: var(--tb-border) solid var(--tb-border-color);
+  padding-left: 0.75rem;
+}
+
+/* Brutalist Badge */
+.tb-badge {
+  border: 1px solid currentColor;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  padding: 0.125rem 0.375rem;
+}

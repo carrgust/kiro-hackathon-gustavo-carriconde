@@ -66,22 +66,22 @@ const HypothesisColumn = memo(function HypothesisColumn({
   
   return (
     <motion.section 
-      className="flex-1 min-w-0 w-full md:w-auto p-2 sm:p-4 relative"
+      className="flex-1 min-w-0 w-full md:w-auto p-2 sm:p-4 relative tb-container"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
       aria-labelledby={`${columnId}-heading`}
       role="region"
     >
-      {/* Sticky Header with Glassmorphism */}
+      {/* Sticky Header with Terminal Brutalism */}
       <motion.header 
-        className="sticky top-0 z-10 glass rounded-lg p-2 sm:p-3 mb-3 sm:mb-4 -mx-1"
+        className="sticky top-0 z-10 p-2 sm:p-3 mb-3 sm:mb-4 tb-header"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
         <div className="flex items-center justify-between">
-          <div className="text-gray-400 text-[10px] sm:text-xs font-mono uppercase tracking-wider">
+          <div className="text-cyan-400 text-[10px] sm:text-xs font-mono">
             <motion.h2
               id={`${columnId}-heading`}
               className="inline"
