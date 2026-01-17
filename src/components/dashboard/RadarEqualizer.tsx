@@ -273,11 +273,11 @@ export default function RadarEqualizer({
           })}
         </AnimatePresence>
 
-        {/* Labels - centered in each slice using polar coordinates */}
-        {/* PROBLEMS: angle=-90° (up), distance=60% */}
+        {/* Labels - hardcoded positions for clarity */}
+        {/* PROBLEMS: top center */}
         <text
-          x={center + (center * 0.6) * Math.cos(-90 * Math.PI / 180)}
-          y={center + (center * 0.6) * Math.sin(-90 * Math.PI / 180)}
+          x={center}
+          y={center - 70}
           textAnchor="middle"
           dominantBaseline="middle"
           className="text-[10px] font-mono fill-white opacity-70"
@@ -285,10 +285,10 @@ export default function RadarEqualizer({
           PROBLEMS {problemSources.length}
         </text>
 
-        {/* SOLUTIONS: angle=90° (bottom), distance=60% */}
+        {/* SOLUTIONS: bottom-left */}
         <text
-          x={center + (center * 0.6) * Math.cos(90 * Math.PI / 180)}
-          y={center + (center * 0.6) * Math.sin(90 * Math.PI / 180)}
+          x={center - 60}
+          y={center + 50}
           textAnchor="middle"
           dominantBaseline="middle"
           className="text-[10px] font-mono fill-white opacity-70"
@@ -296,10 +296,10 @@ export default function RadarEqualizer({
           SOLUTIONS {solutionSources.length}
         </text>
 
-        {/* REQUIREMENTS: angle=210° (bottom-left), distance=60% */}
+        {/* REQUIREMENTS: bottom-right */}
         <text
-          x={center + (center * 0.6) * Math.cos(210 * Math.PI / 180)}
-          y={center + (center * 0.6) * Math.sin(210 * Math.PI / 180)}
+          x={center + 60}
+          y={center + 50}
           textAnchor="middle"
           dominantBaseline="middle"
           className="text-[10px] font-mono fill-white opacity-70"
