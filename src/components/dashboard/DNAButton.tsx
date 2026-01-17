@@ -17,10 +17,10 @@ export default function DNAButton({ unlocked, validatedCount, requiredCount, onC
       <motion.button
         onClick={onClick}
         disabled={!unlocked}
-        className={`tb-btn relative px-6 sm:px-8 py-3 rounded-lg font-bold text-sm tracking-wide transition-all overflow-hidden min-h-[48px] sm:min-h-[44px] ${
+        className={`relative px-6 sm:px-8 py-3 rounded-lg font-bold text-sm tracking-wide transition-all overflow-hidden min-h-[48px] sm:min-h-[44px] ${
           unlocked 
             ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white' 
-            : 'bg-gray-900 text-gray-600 cursor-not-allowed'
+            : 'bg-gray-900 text-gray-600 cursor-not-allowed border border-gray-800'
         }`}
         whileHover={unlocked ? { scale: 1.05, y: -2 } : {}}
         whileTap={unlocked ? { scale: 0.95 } : {}}

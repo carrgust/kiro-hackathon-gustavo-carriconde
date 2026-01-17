@@ -198,13 +198,21 @@ export default function EnhancedHeader({
           
           <motion.button
             onClick={onEngineToggle}
-            className={`tb-btn flex items-center gap-2 px-4 py-1.5 rounded-lg font-semibold transition-all ${
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg font-semibold transition-all ${
               engineRunning 
-                ? 'bg-red-600 hover:bg-red-700 text-white' 
-                : 'bg-green-600 hover:bg-green-700 text-white'
+                ? 'bg-red-600 hover:bg-red-700 text-white shadow-[0_0_20px_rgba(239,68,68,0.3)]' 
+                : 'bg-green-600 hover:bg-green-700 text-white shadow-[0_0_20px_rgba(34,197,94,0.3)]'
             }`}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            animate={engineRunning ? { 
+              boxShadow: [
+                '0 0 20px rgba(239,68,68,0.3)',
+                '0 0 30px rgba(239,68,68,0.5)',
+                '0 0 20px rgba(239,68,68,0.3)'
+              ]
+            } : {}}
+            transition={{ duration: 1.5, repeat: Infinity }}
           >
             {engineRunning ? <Square size={14} /> : <Play size={14} />}
             <span>{engineRunning ? 'STOP' : 'START'}</span>
