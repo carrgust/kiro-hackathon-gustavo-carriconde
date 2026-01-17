@@ -13,109 +13,30 @@ export default function DNAButton({ unlocked, validatedCount, requiredCount, onC
   const progress = (validatedCount / requiredCount) * 100;
 
   return (
-    <div className="text-center py-4 sm:py-6 border-t border-gray-800/50 font-mono px-4 sm:px-0 md:relative fixed bottom-0 left-0 right-0 bg-[#0a0a0f] md:bg-transparent z-40 md:z-auto safe-area-bottom">
+    <div className="text-center py-4 sm:py-6 linear-divider border-t font-mono px-4 sm:px-0 md:relative fixed bottom-0 left-0 right-0 bg-[#0a0a0f] md:bg-transparent z-40 md:z-auto safe-area-bottom">
       <motion.button
         onClick={onClick}
         disabled={!unlocked}
-        className={`relative px-6 sm:px-8 py-3 rounded-lg font-bold text-sm tracking-wide transition-all overflow-hidden min-h-[48px] sm:min-h-[44px] ${
+        className={`relative px-6 sm:px-8 py-3 font-bold text-sm tracking-wide transition-all overflow-hidden min-h-[48px] sm:min-h-[44px] ${
           unlocked 
-            ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white' 
-            : 'bg-gray-900 text-gray-600 cursor-not-allowed border border-gray-800'
+            ? 'linear-btn-primary' 
+            : 'linear-btn text-gray-600 cursor-not-allowed'
         }`}
-        whileHover={unlocked ? { scale: 1.05, y: -2 } : {}}
-        whileTap={unlocked ? { scale: 0.95 } : {}}
+        whileHover={unlocked ? { scale: 1.02 } : {}}
+        whileTap={unlocked ? { scale: 0.98 } : {}}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        {/* Multi-layer glow effect when unlocked */}
-        <AnimatePresence>
-          {unlocked && (
-            <>
-              {/* Outer glow pulse */}
-              <motion.div
-                className="absolute inset-0 rounded-lg"
-                initial={{ opacity: 0 }}
-                animate={{
-                  opacity: [0.3, 0.6, 0.3],
-                  boxShadow: [
-                    '0 0 20px rgba(6,182,212,0.4), 0 0 40px rgba(6,182,212,0.2)',
-                    '0 0 30px rgba(6,182,212,0.6), 0 0 60px rgba(6,182,212,0.3)',
-                    '0 0 20px rgba(6,182,212,0.4), 0 0 40px rgba(6,182,212,0.2)',
-                  ],
-                }}
-                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-              />
-              
-              {/* Inner shimmer */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                animate={{ x: ['-100%', '200%'] }}
-                transition={{ duration: 2, repeat: Infinity, ease: 'linear', repeatDelay: 1 }}
-              />
-              
-              {/* Sparkle particles */}
-              {[...Array(3)].map((_, i) => (
-                <motion.div
-                  key={i}
-                  className="absolute w-1 h-1 bg-white rounded-full"
-                  style={{
-                    left: `${20 + i * 30}%`,
-                    top: '50%',
-                  }}
-                  animate={{
-                    y: [0, -20, 0],
-                    opacity: [0, 1, 0],
-                    scale: [0, 1, 0],
-                  }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    delay: i * 0.3,
-                    ease: 'easeOut',
-                  }}
-                />
-              ))}
-            </>
-          )}
-        </AnimatePresence>
-        
         <div className="relative flex items-center gap-2 justify-center">
           {unlocked ? (
             <>
-              <motion.div
-                animate={{ 
-                  rotate: 360,
-                  scale: [1, 1.1, 1],
-                }}
-                transition={{ 
-                  rotate: { duration: 3, repeat: Infinity, ease: 'linear' },
-                  scale: { duration: 1, repeat: Infinity, ease: 'easeInOut' },
-                }}
-              >
-                <Dna size={18} />
-              </motion.div>
+              <Dna size={18} />
               <span>CREATE DNA</span>
-              <motion.div
-                animate={{ 
-                  rotate: [0, 15, -15, 0],
-                  scale: [1, 1.2, 1],
-                }}
-                transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
-              >
-                <Sparkles size={14} className="text-yellow-300" />
-              </motion.div>
             </>
           ) : (
             <>
-              <motion.div
-                animate={{ 
-                  rotate: [0, -5, 5, 0],
-                }}
-                transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 3 }}
-              >
-                <Lock size={16} />
-              </motion.div>
+              <Lock size={16} />
               <span>CREATE DNA</span>
             </>
           )}

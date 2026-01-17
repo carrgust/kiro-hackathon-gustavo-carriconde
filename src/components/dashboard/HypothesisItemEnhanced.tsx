@@ -253,9 +253,9 @@ const HypothesisItemEnhanced = memo(function HypothesisItemEnhanced({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
       transition={{ type: 'spring', stiffness: 500, damping: 30, delay: index * 0.05 }}
-      whileHover={{ y: -4, scale: 1.02, transition: { duration: 0.2 } }}
+      whileHover={{ y: -2, transition: { duration: 0.15 } }}
       whileTap={{ scale: 0.98 }}
-      className={`group relative overflow-hidden bg-gradient-to-br ${config.bgGradient} backdrop-blur-sm border ${config.borderColor} rounded-lg ${config.glow} transition-all duration-300 cursor-pointer focus-within:ring-2 focus-within:ring-cyan-500`}
+      className="group relative overflow-hidden linear-card cursor-pointer focus-within:ring-1 focus-within:ring-cyan-500/50"
       onClick={onClick}
       onKeyDown={handleKeyDown}
       onMouseEnter={handleMouseEnter}
@@ -264,14 +264,6 @@ const HypothesisItemEnhanced = memo(function HypothesisItemEnhanced({
       aria-label={`${config.stateLabel}: ${hypothesis.text}${effectiveConfidence > 0 ? `, ${effectiveConfidence}% confidence` : ''}`}
       tabIndex={0}
     >
-      <motion.div
-        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
-        initial={{ x: '-100%' }}
-        whileHover={{ x: '100%' }}
-        transition={{ duration: 0.6 }}
-        aria-hidden="true"
-      />
-
       <div className="relative p-3 flex items-start gap-3">
         <motion.div
           animate={isAnimating ? { rotate: 360 } : {}}
