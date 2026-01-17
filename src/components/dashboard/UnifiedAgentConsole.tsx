@@ -14,11 +14,19 @@ export default function UnifiedAgentConsole({ rationale, onSendMessage, disabled
   const [input, setInput] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
+  const logsContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const prevRationaleLength = useRef(0);
 
-  // Auto-scroll to bottom when new rationale added
+  // Auto-scroll to bottom when new rationale added (not on stream updates)
   useEffect(() => {
-    logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Only scroll if a new complete message was added (length changed)
+    if (rationale.length !== prevRationaleLength.current) {
+      if (logsContainerRef.current) {
+        logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight;
+      }
+      prevRationaleLength.current = rationale.length;
+    }
   }, [rationale]);
 
   const handleSend = () => {
@@ -54,7 +62,11 @@ export default function UnifiedAgentConsole({ rationale, onSendMessage, disabled
       </div>
 
       {/* Logs Area */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1 relative min-h-0" style={{ background: 'linear-gradient(180deg, rgba(26,26,26,0.5) 0%, rgba(26,26,26,0) 10%, rgba(26,26,26,0) 100%)' }}>
+      <div 
+        ref={logsContainerRef}
+        className="flex-1 overflow-y-auto px-4 py-3 space-y-1 relative min-h-0" 
+        style={{ background: 'linear-gradient(180deg, rgba(26,26,26,0.5) 0%, rgba(26,26,26,0) 10%, rgba(26,26,26,0) 100%)' }}
+      >
         <AnimatePresence initial={false}>
           {rationale.map((line, i) => {
             const isSuccess = line.includes('✓');
