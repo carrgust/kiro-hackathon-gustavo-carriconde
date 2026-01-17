@@ -625,3 +625,75 @@
     flex-direction: row;
   }
 }
+
+
+/* ============================================
+   LINEAR-STYLE DESIGN SYSTEM
+   ============================================ */
+
+:root {
+  --linear-bg: #0A0A0B;
+  --linear-surface: #111113;
+  --linear-surface-hover: #18181B;
+  --linear-border: rgba(255,255,255,0.06);
+  --linear-border-subtle: rgba(255,255,255,0.04);
+  --linear-text: #FAFAFA;
+  --linear-text-secondary: #A1A1AA;
+  --linear-text-muted: #71717A;
+  --linear-accent: #22d3ee;
+  --linear-accent-subtle: rgba(34,211,238,0.1);
+  --linear-radius: 8px;
+  --linear-radius-sm: 6px;
+}
+
+.linear-surface { 
+  background: var(--linear-surface); 
+  border: 1px solid var(--linear-border); 
+  border-radius: var(--linear-radius); 
+}
+
+.linear-card { 
+  background: var(--linear-surface); 
+  border: 1px solid var(--linear-border-subtle); 
+  border-radius: var(--linear-radius-sm); 
+  transition: all 150ms ease; 
+}
+
+.linear-card:hover { 
+  background: var(--linear-surface-hover); 
+  border-color: var(--linear-border); 
+}
+
+.linear-header { 
+  font-weight: 500; 
+  color: var(--linear-text-secondary); 
+  font-size: 11px; 
+  text-transform: uppercase; 
+  letter-spacing: 0.5px; 
+}
+
+.linear-btn { 
+  background: var(--linear-surface); 
+  border: 1px solid var(--linear-border); 
+  border-radius: var(--linear-radius-sm); 
+  font-weight: 500; 
+  transition: all 150ms ease; 
+}
+
+.linear-btn:hover { 
+  background: var(--linear-surface-hover); 
+}
+
+.linear-btn-primary { 
+  background: var(--linear-accent); 
+  border-color: var(--linear-accent); 
+  color: #000; 
+}
+
+.linear-btn-primary:hover { 
+  opacity: 0.9; 
+}
+
+.linear-divider { 
+  border-color: var(--linear-border); 
+}
