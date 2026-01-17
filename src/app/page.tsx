@@ -357,6 +357,13 @@ Respond ONLY with valid JSON, no other text.`;
             const type = missingReq.startsWith('NFR:') ? 'non-functional' : 'functional';
             const text = missingReq.replace(/^(FR:|NFR:)\s*/, '');
             
+            // Check for duplicates
+            const isDuplicate = stateRef.current.requirements.some(r => 
+              r.text.toLowerCase().trim() === text.toLowerCase().trim()
+            );
+            
+            if (isDuplicate) continue;
+            
             const newReq: Hypothesis = {
               id: `req-${Date.now()}-${Math.random()}`,
               text,
@@ -485,11 +492,19 @@ Respond ONLY with valid JSON, no other text.`;
             const text = newReqs[0].text;
             const type = text.startsWith('NFR:') ? 'non-functional' : 'functional';
             const newReq = { ...newReqs[0], type: type as 'functional' | 'non-functional', status: 'pending' as const };
-            setState(prev => ({
-              ...prev,
-              requirements: [...prev.requirements, newReq].slice(0, 20)
-            }));
-            setTimeout(() => researchHypothesisRef.current?.(newReq, 'requirements'), 200);
+            
+            // Check for duplicates
+            const isDuplicate = stateRef.current.requirements.some(r => 
+              r.text.toLowerCase().trim() === newReq.text.toLowerCase().trim()
+            );
+            
+            if (!isDuplicate) {
+              setState(prev => ({
+                ...prev,
+                requirements: [...prev.requirements, newReq].slice(0, 20)
+              }));
+              setTimeout(() => researchHypothesisRef.current?.(newReq, 'requirements'), 200);
+            }
           } catch (e) { console.error('Auto-requirement error:', e); }
         }, 100);
       }
@@ -580,13 +595,20 @@ Respond ONLY with valid JSON, no other text.`;
             const type = text.startsWith('NFR:') ? 'non-functional' : 'functional';
             const newReq = { ...newReqs[0], type: type as 'functional' | 'non-functional', status: 'pending' as const };
             
-            setState(prev => ({
-              ...prev,
-              requirements: [...prev.requirements, newReq].slice(0, 20)
-            }));
-            addRationale(`+ Requirement: ${type}`);
+            // Check for duplicates
+            const isDuplicate = stateRef.current.requirements.some(r => 
+              r.text.toLowerCase().trim() === newReq.text.toLowerCase().trim()
+            );
             
-            setTimeout(() => researchHypothesisRef.current?.(newReq, 'requirements' as any), 300);
+            if (!isDuplicate) {
+              setState(prev => ({
+                ...prev,
+                requirements: [...prev.requirements, newReq].slice(0, 20)
+              }));
+              addRationale(`+ Requirement: ${type}`);
+              
+              setTimeout(() => researchHypothesisRef.current?.(newReq, 'requirements' as any), 300);
+            }
           }
         } catch (error) {
           console.error('Generation error:', error);
