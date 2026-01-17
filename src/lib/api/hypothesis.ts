@@ -10,14 +10,26 @@ export class HypothesisService {
     this.apiKey = apiKey;
   }
 
-  async generateHypotheses(niche: string, focus: 'problems' | 'solutions', count: number = 3): Promise<Hypothesis[]> {
+  async generateHypotheses(niche: string, focus: 'problems' | 'solutions' | 'requirements', count: number = 3): Promise<Hypothesis[]> {
     const provider = getProvider('openrouter', this.apiKey);
     
-    const systemPrompt = focus === 'problems' 
-      ? `You are a market research expert. Generate specific, actionable problem hypotheses for the ${niche} niche. Each hypothesis should be a clear problem statement that could be validated through research.`
-      : `You are a solution architect. Generate specific, buildable solution hypotheses for the ${niche} niche. Each solution should be technically feasible and address real market needs.`;
-
-    const userPrompt = `Generate ${count} ${focus} hypotheses for the ${niche} market. Format as a JSON array with objects containing "text" field only. Keep each hypothesis under 50 characters. Be specific and actionable.`;
+    let systemPrompt: string;
+    let userPrompt: string;
+    
+    if (focus === 'problems') {
+      systemPrompt = `You are a market research expert. Generate specific, actionable problem hypotheses for the ${niche} niche. Each hypothesis should be a clear problem statement that could be validated through research.`;
+      userPrompt = `Generate ${count} problem hypotheses for the ${niche} market. Format as a JSON array with objects containing "text" field only. Keep each hypothesis under 50 characters. Be specific and actionable.`;
+    } else if (focus === 'solutions') {
+      systemPrompt = `You are a solution architect. Generate specific, buildable solution hypotheses for the ${niche} niche. Each solution should be technically feasible and address real market needs.`;
+      userPrompt = `Generate ${count} solution hypotheses for the ${niche} market. Format as a JSON array with objects containing "text" field only. Keep each hypothesis under 50 characters. Be specific and actionable.`;
+    } else {
+      // requirements
+      systemPrompt = `You are a software requirements engineer. Generate specific, testable requirements for a ${niche} application. Use standard FR (Functional Requirement) and NFR (Non-Functional Requirement) format.`;
+      userPrompt = `Generate ${count} requirements for a ${niche} app. Mix of FR and NFR. Format as JSON array with objects containing "text" field. Each requirement must start with "FR:" or "NFR:" followed by "The system shall [action]". Examples:
+- "FR: The system shall allow users to export data"
+- "NFR: The system shall respond within 200ms"
+Keep under 60 characters.`;
+    }
 
     const messages: Message[] = [
       { role: 'system', content: systemPrompt },

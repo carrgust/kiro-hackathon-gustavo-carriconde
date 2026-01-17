@@ -481,8 +481,9 @@ Respond ONLY with valid JSON, no other text.`;
       if (isFact && column === 'solutions' && stateRef.current.requirements.length < 20) {
         setTimeout(async () => {
           try {
-            const type = Math.random() < 0.6 ? 'functional' : 'non-functional';
-            const newReqs = await hypothesisService.generateHypotheses(stateRef.current.niche, 'problems', 1);
+            const newReqs = await hypothesisService.generateHypotheses(stateRef.current.niche, 'requirements', 1);
+            const text = newReqs[0].text;
+            const type = text.startsWith('NFR:') ? 'non-functional' : 'functional';
             const newReq = { ...newReqs[0], type: type as 'functional' | 'non-functional', status: 'pending' as const };
             setState(prev => ({
               ...prev,
@@ -574,8 +575,9 @@ Respond ONLY with valid JSON, no other text.`;
           }
           
           if (shouldGenerateRequirement) {
-            const type = Math.random() < 0.6 ? 'functional' : 'non-functional';
-            const newReqs = await hypothesisService.generateHypotheses(currentNiche, 'problems', 1);
+            const newReqs = await hypothesisService.generateHypotheses(currentNiche, 'requirements', 1);
+            const text = newReqs[0].text;
+            const type = text.startsWith('NFR:') ? 'non-functional' : 'functional';
             const newReq = { ...newReqs[0], type: type as 'functional' | 'non-functional', status: 'pending' as const };
             
             setState(prev => ({
@@ -961,15 +963,21 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
   };
 
   const countGreenFacts = () => {
-    return state.hypotheses.filter(h => h.state === 'fact').length;
+    const count = state.hypotheses.filter(h => h.state === 'fact').length;
+    console.log('[DEBUG] countGreenFacts:', count);
+    return count;
   };
 
   const countSolutionsGreenFacts = () => {
-    return state.solutions.filter(h => h.state === 'fact').length;
+    const count = state.solutions.filter(h => h.state === 'fact').length;
+    console.log('[DEBUG] countSolutionsGreenFacts:', count);
+    return count;
   };
 
   const countRequirementsGreenFacts = () => {
-    return state.requirements.filter(h => h.state === 'fact').length;
+    const count = state.requirements.filter(h => h.state === 'fact').length;
+    console.log('[DEBUG] countRequirementsGreenFacts:', count);
+    return count;
   };
 
   const getProvider = () => 'openrouter';
@@ -1083,7 +1091,11 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
           hypotheses={state.solutions}
           score={state.solutionsScore}
           percentage={100 - state.slider}
-          locked={countGreenFacts() < 2}
+          locked={(() => {
+            const isLocked = countGreenFacts() < 2;
+            console.log('[DEBUG] Solutions locked:', isLocked, 'greenFacts:', countGreenFacts());
+            return isLocked;
+          })()}
           validatedCount={countSolutionsGreenFacts()}
           requiredCount={2}
           onItemClick={handleItemClick}
@@ -1097,7 +1109,11 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
           title="requirements"
           hypotheses={state.requirements}
           score={state.requirements.filter(h => h.state === 'fact').reduce((sum, h) => sum + h.confidence, 0)}
-          locked={!(countGreenFacts() >= 2 && countSolutionsGreenFacts() >= 2)}
+          locked={(() => {
+            const isLocked = !(countGreenFacts() >= 2 && countSolutionsGreenFacts() >= 2);
+            console.log('[DEBUG] Requirements locked:', isLocked, 'greenFacts:', countGreenFacts(), 'solutionsFacts:', countSolutionsGreenFacts());
+            return isLocked;
+          })()}
           validatedCount={countRequirementsGreenFacts()}
           requiredCount={2}
           onItemClick={handleItemClick}
