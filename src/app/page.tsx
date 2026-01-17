@@ -12,7 +12,7 @@ import { useSyncToasts } from '@/hooks/useSyncToasts';
 import ConfirmationModal from '@/components/dashboard/ConfirmationModal';
 import EnhancedHeader from '@/components/dashboard/EnhancedHeader';
 import AgentRationale from '@/components/dashboard/AgentRationale';
-import ChatInterface from '@/components/dashboard/ChatInterface';
+import UnifiedAgentConsole from '@/components/dashboard/UnifiedAgentConsole';
 import RadarEqualizer from '@/components/dashboard/RadarEqualizer';
 import HypothesisModal from '@/components/dashboard/HypothesisModal';
 import HypothesisColumn from '@/components/dashboard/HypothesisColumn';
@@ -1086,16 +1086,10 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
       </div>
       
       <div className="flex flex-col md:flex-row">
-        {/* Left side: Agent rationale and chat */}
-        <div className="flex-1 order-2 md:order-1">
-          <AgentRationale
+        {/* Left side: Unified Agent Console */}
+        <div className="flex-1 order-2 md:order-1 h-[400px]">
+          <UnifiedAgentConsole
             rationale={[...state.agentRationale, currentRationaleStream].filter(Boolean)}
-            isActive={engineRunning}
-            autopilotEnabled={state.autopilotEnabled}
-          />
-          
-          <ChatInterface
-            chatHistory={state.chatHistory}
             onSendMessage={handleSendMessage}
             disabled={!engineRunning}
           />
