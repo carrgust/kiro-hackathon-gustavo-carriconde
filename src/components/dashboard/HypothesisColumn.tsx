@@ -66,16 +66,16 @@ const HypothesisColumn = memo(function HypothesisColumn({
   
   return (
     <motion.section 
-      className="flex-1 min-w-0 w-full md:w-auto p-2 sm:p-4 relative linear-surface"
+      className="flex-1 min-w-0 w-full md:w-auto p-2 sm:p-4 relative metal-panel"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
       aria-labelledby={`${columnId}-heading`}
       role="region"
     >
-      {/* Linear-style Header */}
+      {/* Metal Header */}
       <motion.header 
-        className="sticky top-0 z-10 p-2 sm:p-3 mb-3 sm:mb-4 linear-header"
+        className="sticky top-0 z-10 p-2 sm:p-3 mb-3 sm:mb-4 metal-header-dark"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
@@ -84,7 +84,7 @@ const HypothesisColumn = memo(function HypothesisColumn({
           <div className="text-[10px] sm:text-xs font-mono">
             <motion.h2
               id={`${columnId}-heading`}
-              className="inline"
+              className="inline metal-label text-white"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
@@ -93,7 +93,8 @@ const HypothesisColumn = memo(function HypothesisColumn({
             </motion.h2>
             {percentage !== undefined && (
               <motion.span 
-                className="text-gradient-cyan ml-1 sm:ml-2 font-semibold"
+                className="ml-1 sm:ml-2 font-semibold"
+                style={{ color: 'var(--metal-accent)' }}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
@@ -103,10 +104,9 @@ const HypothesisColumn = memo(function HypothesisColumn({
               </motion.span>
             )}
             <motion.div 
-              className={`text-[10px] sm:text-xs mt-0.5 sm:mt-1 font-medium ${validatedCount > 0 ? 'text-gradient-green' : 'text-gray-600'}`}
+              className={`text-[10px] sm:text-xs mt-0.5 sm:mt-1 font-medium ${validatedCount > 0 ? 'text-cyan-400' : 'text-gray-600'}`}
               animate={validatedCount > 0 ? { 
-                scale: [1, 1.05, 1],
-                textShadow: ['0 0 0px #4ade80', '0 0 10px #4ade80', '0 0 0px #4ade80']
+                scale: [1, 1.05, 1]
               } : {}}
               transition={{ duration: 0.5 }}
               role="status"

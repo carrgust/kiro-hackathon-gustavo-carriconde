@@ -53,7 +53,7 @@ export default function EnhancedHeader({
 
   return (
     <motion.div 
-      className="glass border-b border-gray-800/50 p-4 font-mono text-xs sticky top-0 z-20"
+      className="metal-header-dark p-4 font-mono text-xs sticky top-0 z-20"
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3 }}
@@ -62,7 +62,8 @@ export default function EnhancedHeader({
         {/* Left: Branding + System Info */}
         <div className="flex items-center gap-6">
           <motion.div 
-            className="text-gradient-cyan text-lg font-bold tracking-tight"
+            className="text-lg font-bold tracking-tight"
+            style={{ color: 'var(--metal-accent)' }}
             whileHover={{ scale: 1.05 }}
           >
             CURATOS DNA
@@ -79,7 +80,7 @@ export default function EnhancedHeader({
                 type="number"
                 value={tokenBudget}
                 onChange={(e) => onTokenBudgetChange(Number(e.target.value))}
-                className="bg-gray-900/50 border border-gray-700 rounded px-2 py-0.5 w-20 text-white focus:border-cyan-500 focus:outline-none transition-colors"
+                className="metal-input px-2 py-0.5 w-20 text-white"
                 disabled={engineRunning}
               />
             </div>
@@ -122,15 +123,15 @@ export default function EnhancedHeader({
                 onKeyPress={(e) => e.key === 'Enter' && handleNicheSubmit()}
                 placeholder="select your niche"
                 disabled={nicheLocked || engineRunning}
-                className={`bg-gray-900/50 border rounded-lg px-3 py-1.5 w-52 text-xs transition-all ${
+                className={`metal-input px-3 py-1.5 w-52 text-xs transition-all ${
                   nicheLocked 
-                    ? 'text-gray-500 border-gray-700' 
-                    : 'text-white border-gray-700 hover:border-cyan-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20'
+                    ? 'text-gray-500 opacity-50' 
+                    : 'text-white'
                 }`}
               />
               {showNicheDropdown && !nicheLocked && filteredSuggestions.length > 0 && (
                 <motion.div 
-                  className="absolute top-full left-0 mt-2 glass rounded-lg text-xs z-30 w-full overflow-hidden"
+                  className="absolute top-full left-0 mt-2 metal-container-dark rounded-lg text-xs z-30 w-full overflow-hidden"
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
@@ -138,7 +139,7 @@ export default function EnhancedHeader({
                     <motion.div
                       key={suggestion}
                       onClick={() => handleNicheSelect(suggestion)}
-                      className="px-3 py-2 hover:bg-cyan-500/10 cursor-pointer text-gray-300 hover:text-cyan-400 transition-colors"
+                      className="px-3 py-2 hover:bg-cyan-500/10 cursor-pointer text-gray-300 hover:text-cyan-400 transition-colors relative z-10"
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.05 }}
@@ -198,7 +199,7 @@ export default function EnhancedHeader({
           
           <motion.button
             onClick={onEngineToggle}
-            className={`linear-btn-primary flex items-center gap-2 px-4 py-1.5 font-semibold ${
+            className={`metal-btn-primary flex items-center gap-2 px-4 py-1.5 font-semibold ${
               engineRunning 
                 ? 'bg-red-600 hover:bg-red-700 text-white' 
                 : ''

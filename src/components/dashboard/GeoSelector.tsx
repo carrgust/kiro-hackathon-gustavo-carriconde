@@ -68,23 +68,23 @@ export default function GeoSelector({ selectedRegions, onRegionsChange }: GeoSel
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 px-2 py-1 bg-gray-800 border border-gray-600 rounded text-xs text-cyan-400 hover:border-cyan-400 transition-colors"
+        className="flex items-center gap-1 px-2 py-1 metal-btn text-xs text-cyan-400 hover:border-cyan-400 transition-colors"
       >
         {getDisplayText()}
         <span className="text-gray-400">▼</span>
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-64 bg-gray-800 border border-gray-600 rounded shadow-lg z-50 max-h-64 overflow-hidden">
+        <div className="absolute top-full left-0 mt-1 w-64 metal-container-dark rounded shadow-lg z-50 max-h-64 overflow-hidden">
           <input
             type="text"
             placeholder="Search countries..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-3 py-2 bg-gray-700 border-b border-gray-600 text-white text-xs placeholder-gray-400 focus:outline-none"
+            className="w-full px-3 py-2 metal-input border-b text-white text-xs placeholder-gray-400 relative z-10"
           />
           
-          <div className="overflow-y-auto max-h-48">
+          <div className="overflow-y-auto max-h-48 relative z-10">
             {filteredCountries.map((country) => (
               <label
                 key={country.code}

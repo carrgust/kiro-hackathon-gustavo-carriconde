@@ -13,14 +13,14 @@ export default function DNAButton({ unlocked, validatedCount, requiredCount, onC
   const progress = (validatedCount / requiredCount) * 100;
 
   return (
-    <div className="text-center py-4 sm:py-6 linear-divider border-t font-mono px-4 sm:px-0 md:relative fixed bottom-0 left-0 right-0 bg-[#0a0a0f] md:bg-transparent z-40 md:z-auto safe-area-bottom">
+    <div className="text-center py-4 sm:py-6 metal-divider border-t font-mono px-4 sm:px-0 md:relative fixed bottom-0 left-0 right-0 bg-[#0a0a0f] md:bg-transparent z-40 md:z-auto safe-area-bottom">
       <motion.button
         onClick={onClick}
         disabled={!unlocked}
         className={`relative px-6 sm:px-8 py-3 font-bold text-sm tracking-wide transition-all overflow-hidden min-h-[48px] sm:min-h-[44px] ${
           unlocked 
-            ? 'linear-btn-primary' 
-            : 'linear-btn text-gray-600 cursor-not-allowed'
+            ? 'metal-btn-primary' 
+            : 'metal-btn text-gray-600 cursor-not-allowed'
         }`}
         whileHover={unlocked ? { scale: 1.02 } : {}}
         whileTap={unlocked ? { scale: 0.98 } : {}}

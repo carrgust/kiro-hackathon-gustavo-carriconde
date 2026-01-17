@@ -38,21 +38,21 @@ export default function AgentRationale({
   }, [rationale]);
 
   return (
-    <div className="border-b border-gray-800 bg-gray-950 relative">
-      <div className="p-3">
-        <div className="text-gray-500 text-xs font-mono mb-2 flex items-center">
+    <div className="metal-panel border-b relative">
+      <div className="p-3 relative z-10">
+        <div className="metal-label text-xs font-mono mb-2 flex items-center">
           <span>agent rationale</span>
           {autopilotEnabled && (
             <span className="ml-2 px-1 text-green-500 text-xs">[AP]</span>
           )}
           {isActive && (
-            <span className="ml-2 w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+            <span className="ml-2 metal-status active"></span>
           )}
         </div>
         
         <div 
           ref={scrollRef}
-          className="h-48 overflow-y-auto font-mono text-xs text-gray-300 space-y-0.5"
+          className="h-48 overflow-y-auto font-mono text-xs text-gray-300 space-y-0.5 metal-scrollbar"
         >
           {rationale.length === 0 ? (
             <div className="text-gray-600">Waiting for engine to start...</div>
