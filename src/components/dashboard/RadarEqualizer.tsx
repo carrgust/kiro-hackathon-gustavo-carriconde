@@ -273,11 +273,11 @@ export default function RadarEqualizer({
           })}
         </AnimatePresence>
 
-        {/* Labels - hardcoded positions for clarity */}
-        {/* PROBLEMS: top center */}
+        {/* Labels - centered IN THE MIDDLE of each slice */}
+        {/* PROBLEMS: top slice center */}
         <text
-          x={center}
-          y={center - 70}
+          x={120}
+          y={60}
           textAnchor="middle"
           dominantBaseline="middle"
           className="text-[10px] font-mono fill-white opacity-70"
@@ -285,10 +285,10 @@ export default function RadarEqualizer({
           PROBLEMS {problemSources.length}
         </text>
 
-        {/* SOLUTIONS: bottom-left */}
+        {/* SOLUTIONS: bottom-left slice center */}
         <text
-          x={center - 60}
-          y={center + 50}
+          x={60}
+          y={160}
           textAnchor="middle"
           dominantBaseline="middle"
           className="text-[10px] font-mono fill-white opacity-70"
@@ -296,10 +296,10 @@ export default function RadarEqualizer({
           SOLUTIONS {solutionSources.length}
         </text>
 
-        {/* REQUIREMENTS: bottom-right */}
+        {/* REQUIREMENTS: bottom-right slice center */}
         <text
-          x={center + 60}
-          y={center + 50}
+          x={180}
+          y={160}
           textAnchor="middle"
           dominantBaseline="middle"
           className="text-[10px] font-mono fill-white opacity-70"
