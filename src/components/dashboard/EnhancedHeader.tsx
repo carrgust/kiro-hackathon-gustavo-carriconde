@@ -53,44 +53,45 @@ export default function EnhancedHeader({
 
   return (
     <motion.div 
-      className="metal-header-dark p-4 font-mono sticky top-0 z-20"
+      className="metal-header-dark p-3 md:p-4 font-mono sticky top-0 z-20"
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2 md:gap-3">
         {/* Logo */}
         <motion.div 
-          className="text-lg font-bold tracking-tight pr-6 border-r border-gray-700"
-          style={{ color: 'var(--metal-accent)' }}
+          className="text-base md:text-lg font-bold tracking-tight pr-3 md:pr-6 border-r border-gray-700"
+          style={{ color: '#ffffff' }}
           whileHover={{ scale: 1.05 }}
         >
           CURATOS DNA
         </motion.div>
         
-        {/* System Info */}
-        <div className="header-section">
+        {/* System Info - Hide on mobile */}
+        <div className="header-section header-hide-mobile">
           <span className="header-label">SYSTEM</span>
-          <span className="text-[11px] text-gray-500">{provider} • {model}</span>
+          <span className="text-[10px] md:text-[11px] text-gray-500">{provider} • {model}</span>
         </div>
         
         {/* Budget Section */}
         <div className="header-section">
-          <div className="flex items-center gap-3 px-2 py-1 rounded metal-input">
-            <div className="flex items-center gap-1.5">
-              <span className="header-label">BUDGET</span>
+          <div className="flex items-center gap-2 md:gap-3 px-2 py-1 rounded metal-input">
+            <div className="flex items-center gap-1">
+              <span className="header-label text-[9px] md:text-[10px]">BUDGET</span>
               <input
                 type="number"
                 value={tokenBudget}
                 onChange={(e) => onTokenBudgetChange(Number(e.target.value))}
-                className="bg-transparent border-none outline-none w-16 text-white text-xs"
+                className="bg-transparent border-none outline-none w-12 md:w-16 text-white text-[10px] md:text-xs"
                 disabled={engineRunning}
               />
             </div>
-            <div className="w-px h-4 bg-gray-700"></div>
-            <div className="flex items-center gap-1.5">
-              <span className="header-label">SPENT</span>
+            <div className="w-px h-3 md:h-4 bg-gray-700"></div>
+            <div className="flex items-center gap-1">
+              <span className="header-label text-[9px] md:text-[10px]">SPENT</span>
               <motion.span 
-                className="text-red-400 font-semibold text-xs"
+                className="font-semibold text-[10px] md:text-xs"
+                style={{ color: totalTokensSpent > tokenBudget * 0.8 ? '#ef4444' : '#888888' }}
                 key={totalTokensSpent}
                 initial={{ scale: 1.2 }}
                 animate={{ scale: 1 }}
@@ -98,11 +99,11 @@ export default function EnhancedHeader({
                 {totalTokensSpent.toLocaleString()}
               </motion.span>
             </div>
-            <div className="w-px h-4 bg-gray-700"></div>
-            <div className="flex items-center gap-1.5">
-              <span className="header-label">TIME</span>
+            <div className="w-px h-3 md:h-4 bg-gray-700 header-hide-mobile"></div>
+            <div className="flex items-center gap-1 header-hide-mobile">
+              <span className="header-label text-[9px] md:text-[10px]">TIME</span>
               <motion.span 
-                className="text-cyan-400 text-xs"
+                className="text-white text-[10px] md:text-xs"
                 animate={engineRunning ? { opacity: [1, 0.5, 1] } : {}}
                 transition={{ duration: 1.5, repeat: Infinity }}
               >
@@ -114,7 +115,7 @@ export default function EnhancedHeader({
         
         {/* Niche Section */}
         <div className="header-section">
-          <span className="header-label">NICHE</span>
+          <span className="header-label hidden md:inline">NICHE</span>
           <div className="relative">
             <input
               type="text"
@@ -127,9 +128,9 @@ export default function EnhancedHeader({
               onFocus={() => !nicheLocked && setShowNicheDropdown(true)}
               onBlur={() => setTimeout(() => setShowNicheDropdown(false), 200)}
               onKeyPress={(e) => e.key === 'Enter' && handleNicheSubmit()}
-              placeholder="select your niche"
+              placeholder="niche"
               disabled={nicheLocked || engineRunning}
-              className={`metal-input px-3 py-1 w-40 text-xs transition-all ${
+              className={`metal-input px-2 md:px-3 py-1 w-28 md:w-40 text-[10px] md:text-xs transition-all ${
                 nicheLocked 
                   ? 'text-gray-500 opacity-50' 
                   : 'text-white'
@@ -145,7 +146,7 @@ export default function EnhancedHeader({
                   <motion.div
                     key={suggestion}
                     onClick={() => handleNicheSelect(suggestion)}
-                    className="px-3 py-2 hover:bg-cyan-500/10 cursor-pointer text-gray-300 hover:text-cyan-400 transition-colors relative z-10"
+                    className="px-3 py-2 hover:bg-white/5 cursor-pointer text-gray-300 hover:text-white transition-colors relative z-10"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.05 }}
@@ -160,16 +161,16 @@ export default function EnhancedHeader({
           <motion.button
             onClick={onNicheLockToggle}
             disabled={engineRunning}
-            className="text-gray-500 hover:text-cyan-400 transition-colors"
+            className="text-gray-500 hover:text-white transition-colors"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            {nicheLocked ? <Lock size={14} /> : <Unlock size={14} />}
+            {nicheLocked ? <Lock size={12} className="md:w-[14px] md:h-[14px]" /> : <Unlock size={12} className="md:w-[14px] md:h-[14px]" />}
           </motion.button>
         </div>
         
-        {/* Geo Section */}
-        <div className="header-section">
+        {/* Geo Section - Hide on mobile */}
+        <div className="header-section header-hide-mobile">
           <span className="header-label">GEO</span>
           <GeoSelector
             selectedRegions={selectedRegions}
@@ -177,8 +178,8 @@ export default function EnhancedHeader({
           />
         </div>
         
-        {/* Focus Balance */}
-        <div className="header-section">
+        {/* Focus Balance - Hide on tablet and mobile */}
+        <div className="header-section header-hide-tablet">
           <span className="header-label">FOCUS</span>
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-gray-500">Problems {sliderValue}%</span>
@@ -196,7 +197,7 @@ export default function EnhancedHeader({
         </div>
         
         {/* Actions */}
-        <div className="header-section ml-auto">
+        <div className="header-section ml-auto border-l-0">
           <AutopilotToggle
             enabled={autopilotEnabled}
             onToggle={onAutopilotToggle}
@@ -205,15 +206,15 @@ export default function EnhancedHeader({
           
           <motion.button
             onClick={onEngineToggle}
-            className={`metal-btn-primary flex items-center gap-2 px-4 py-1.5 font-semibold ${
+            className={`metal-btn-primary flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 font-semibold text-[10px] md:text-xs ${
               engineRunning 
-                ? 'bg-red-600 hover:bg-red-700 text-white' 
+                ? 'bg-red-600 hover:bg-red-700 text-white border-red-600' 
                 : ''
             }`}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            {engineRunning ? <Square size={14} /> : <Play size={14} />}
+            {engineRunning ? <Square size={12} className="md:w-[14px] md:h-[14px]" /> : <Play size={12} className="md:w-[14px] md:h-[14px]" />}
             <span>{engineRunning ? 'STOP' : 'START'}</span>
           </motion.button>
         </div>
