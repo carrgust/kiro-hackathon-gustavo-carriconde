@@ -684,23 +684,6 @@
   position: relative;
 }
 
-/* Brushed Metal Texture Overlay */
-.metal-container::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: repeating-linear-gradient(
-    90deg,
-    transparent 0px, transparent 8px,
-    rgba(255,255,255,0.08) 8px, rgba(255,255,255,0.08) 9px,
-    transparent 9px, transparent 17px,
-    rgba(0,0,0,0.03) 17px, rgba(0,0,0,0.03) 18px
-  );
-  border-radius: 12px;
-  pointer-events: none;
-  z-index: 0;
-}
-
 /* Dark Metal Container (for dark mode) */
 .metal-container-dark {
   background: linear-gradient(145deg, 
@@ -712,22 +695,6 @@
     inset 0 1px 0 rgba(255,255,255,0.15),
     inset 0 -1px 0 rgba(0,0,0,0.3);
   position: relative;
-}
-
-.metal-container-dark::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: repeating-linear-gradient(
-    90deg,
-    transparent 0px, transparent 8px,
-    rgba(255,255,255,0.03) 8px, rgba(255,255,255,0.03) 9px,
-    transparent 9px, transparent 17px,
-    rgba(0,0,0,0.05) 17px, rgba(0,0,0,0.05) 18px
-  );
-  border-radius: 12px;
-  pointer-events: none;
-  z-index: 0;
 }
 
 /* Metal Header */
@@ -906,22 +873,6 @@
     inset 0 1px 0 rgba(255,255,255,0.08),
     inset 0 -1px 0 rgba(0,0,0,0.3);
   position: relative;
-}
-
-.metal-panel::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: repeating-linear-gradient(
-    90deg,
-    transparent 0px, transparent 10px,
-    rgba(255,255,255,0.02) 10px, rgba(255,255,255,0.02) 11px,
-    transparent 11px, transparent 21px,
-    rgba(0,0,0,0.03) 21px, rgba(0,0,0,0.03) 22px
-  );
-  border-radius: 12px;
-  pointer-events: none;
-  z-index: 0;
 }
 
 /* Metal Animations */
