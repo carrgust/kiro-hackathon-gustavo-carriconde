@@ -84,7 +84,7 @@ export default function DNAModal({
   return (
     <AnimatePresence>
       <motion.div 
-        className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -95,7 +95,7 @@ export default function DNAModal({
       >
         <motion.div 
           ref={modalRef}
-          className="glass border border-gray-700/50 rounded-xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+          className="metal-container-dark border rounded-xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
           initial={{ scale: 0.9, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -110,7 +110,7 @@ export default function DNAModal({
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.1 }}
               >
-                <h1 id="dna-modal-title" className="text-2xl font-bold text-gradient-green font-mono flex items-center gap-2">
+                <h1 id="dna-modal-title" className="text-2xl font-bold font-mono flex items-center gap-2" style={{ color: 'var(--metal-accent)' }}>
                   <CheckCircle2 size={28} className="text-green-400" aria-hidden="true" />
                   DNA GENERATED
                 </h1>
@@ -229,7 +229,7 @@ export default function DNAModal({
 
                   {/* Token Cost */}
                   <motion.div 
-                    className="p-4 glass rounded-lg border border-yellow-500/20"
+                    className="p-4 metal-card-dark rounded-lg border border-yellow-500/20"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
@@ -258,15 +258,15 @@ export default function DNAModal({
           </main>
 
           {/* Footer Actions */}
-          <footer className="p-6 border-t border-gray-800/50 glass">
-            <div className="flex gap-3" role="group" aria-label="DNA actions">
+          <footer className="p-6 border-t border-gray-800/50 metal-panel">
+            <div className="flex gap-3 relative z-10" role="group" aria-label="DNA actions">
               {onGenerateLandingPage && (
                 <motion.button
                   onClick={onGenerateLandingPage}
                   disabled={isGeneratingLandingPage}
                   aria-busy={isGeneratingLandingPage}
                   aria-label={isGeneratingLandingPage ? 'Generating landing page' : 'Generate landing page'}
-                  className="flex-1 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 disabled:from-gray-700 disabled:to-gray-700 text-white py-3 px-6 rounded-lg font-mono font-semibold transition-all shadow-lg disabled:cursor-not-allowed flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                  className="flex-1 metal-btn-primary py-3 px-6 rounded-lg font-mono font-semibold transition-all shadow-lg disabled:cursor-not-allowed flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >

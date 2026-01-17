@@ -203,13 +203,6 @@ const HypothesisColumn = memo(function HypothesisColumn({
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
-              {/* Shimmer effect on hover */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-500/10 to-transparent"
-                initial={{ x: '-100%' }}
-                whileHover={{ x: '100%' }}
-              transition={{ duration: 0.6 }}
-            />
             <motion.div
               whileHover={{ rotate: 90 }}
               transition={{ duration: 0.2 }}

@@ -66,13 +66,6 @@ function ConfidenceGauge({
           animate={{ width: `${effectiveConfidence}%` }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
         />
-        {isProcessing && stallState === 'ok' && (
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-            animate={{ x: ['-100%', '100%'] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-          />
-        )}
       </div>
       <div className="flex justify-between mt-0.5">
         <span className="text-[8px] text-gray-600 font-mono">0</span>

@@ -112,14 +112,14 @@ export default function PRDModal({
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4"
+        className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-2 sm:p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={(e) => e.target === e.currentTarget && onClose()}
       >
         <motion.div
-          className="bg-gray-900 border border-gray-700 rounded-xl w-full max-w-6xl h-[95vh] sm:h-[90vh] flex flex-col font-mono overflow-hidden"
+          className="metal-container-dark rounded-xl w-full max-w-6xl h-[95vh] sm:h-[90vh] flex flex-col font-mono overflow-hidden"
           initial={{ scale: 0.95, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.95, y: 20 }}
@@ -259,7 +259,7 @@ export default function PRDModal({
               </motion.button>
               <motion.button
                 onClick={handleDownload}
-                className="flex-1 sm:flex-none px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm rounded-lg transition-colors font-medium flex items-center justify-center gap-2 min-h-[44px]"
+                className="flex-1 sm:flex-none px-4 py-2.5 metal-btn-primary text-sm rounded-lg transition-colors font-medium flex items-center justify-center gap-2 min-h-[44px]"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >

@@ -85,7 +85,7 @@ export default function StageProgressBar({ stages, currentStage }: StageProgress
                 <div className={`absolute inset-0 ${isPassed ? 'bg-green-500' : 'bg-gray-700'}`} />
                 {isPassed && (
                   <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-green-400 to-green-500"
+                    className="absolute inset-0 bg-green-500"
                     initial={{ scaleX: 0 }}
                     animate={{ scaleX: 1 }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}

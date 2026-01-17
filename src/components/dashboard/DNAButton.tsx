@@ -64,27 +64,14 @@ export default function DNAButton({ unlocked, validatedCount, requiredCount, onC
             {/* Animated progress bar */}
             <div className="max-w-xs mx-auto">
               <div className="h-2 bg-gray-900 rounded-full overflow-hidden relative">
-                {/* Background glow */}
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-blue-500/20"
-                  animate={{ opacity: [0.3, 0.6, 0.3] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-                
                 {/* Progress fill */}
                 <motion.div
-                  className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 relative"
+                  className="h-full relative"
+                  style={{ background: 'var(--metal-accent)' }}
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
                   transition={{ duration: 0.8, ease: 'easeOut' }}
-                >
-                  {/* Shimmer on progress bar */}
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
-                    animate={{ x: ['-100%', '100%'] }}
-                    transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-                  />
-                </motion.div>
+                />
               </div>
               
               <motion.div 
