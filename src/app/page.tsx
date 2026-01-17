@@ -475,11 +475,19 @@ Respond ONLY with valid JSON, no other text.`;
           try {
             const newSolutions = await hypothesisService.generateHypotheses(stateRef.current.niche, 'solutions', 1);
             const newSolution = { ...newSolutions[0], status: 'pending' as const };
-            setState(prev => ({
-              ...prev,
-              solutions: [...prev.solutions, newSolution].slice(0, 4)
-            }));
-            setTimeout(() => researchHypothesisRef.current?.(newSolution, 'solutions'), 200);
+            
+            // Check for duplicates
+            const isSolutionDup = stateRef.current.solutions.some(s =>
+              s.text.toLowerCase().trim() === newSolution.text.toLowerCase().trim()
+            );
+            
+            if (!isSolutionDup) {
+              setState(prev => ({
+                ...prev,
+                solutions: [...prev.solutions, newSolution].slice(0, 4)
+              }));
+              setTimeout(() => researchHypothesisRef.current?.(newSolution, 'solutions'), 200);
+            }
           } catch (e) { console.error('Auto-solution error:', e); }
         }, 100);
       }
@@ -567,26 +575,40 @@ Respond ONLY with valid JSON, no other text.`;
             const newProblems = await hypothesisService.generateHypotheses(currentNiche, 'problems', 1);
             const newProblem = { ...newProblems[0], status: 'pending' as const };
             
-            setState(prev => ({
-              ...prev,
-              hypotheses: [...prev.hypotheses, newProblem].slice(0, 4)
-            }));
-            addRationale(`+ Problem: "${newProblem.text.substring(0, 35)}..."`);
+            // Check for duplicates
+            const isDuplicate = stateRef.current.hypotheses.some(h =>
+              h.text.toLowerCase().trim() === newProblem.text.toLowerCase().trim()
+            );
             
-            setTimeout(() => researchHypothesisRef.current?.(newProblem, 'hypotheses'), 300);
+            if (!isDuplicate) {
+              setState(prev => ({
+                ...prev,
+                hypotheses: [...prev.hypotheses, newProblem].slice(0, 4)
+              }));
+              addRationale(`+ Problem: "${newProblem.text.substring(0, 35)}..."`);
+              
+              setTimeout(() => researchHypothesisRef.current?.(newProblem, 'hypotheses'), 300);
+            }
           }
           
           if (shouldGenerateSolution) {
             const newSolutions = await hypothesisService.generateHypotheses(currentNiche, 'solutions', 1);
             const newSolution = { ...newSolutions[0], status: 'pending' as const };
             
-            setState(prev => ({
-              ...prev,
-              solutions: [...prev.solutions, newSolution].slice(0, 4)
-            }));
-            addRationale(`+ Solution: "${newSolution.text.substring(0, 35)}..."`);
+            // Check for duplicates
+            const isSolutionDup = stateRef.current.solutions.some(s =>
+              s.text.toLowerCase().trim() === newSolution.text.toLowerCase().trim()
+            );
             
-            setTimeout(() => researchHypothesisRef.current?.(newSolution, 'solutions'), 300);
+            if (!isSolutionDup) {
+              setState(prev => ({
+                ...prev,
+                solutions: [...prev.solutions, newSolution].slice(0, 4)
+              }));
+              addRationale(`+ Solution: "${newSolution.text.substring(0, 35)}..."`);
+              
+              setTimeout(() => researchHypothesisRef.current?.(newSolution, 'solutions'), 300);
+            }
           }
           
           if (shouldGenerateRequirement) {
@@ -762,7 +784,7 @@ Respond ONLY with valid JSON, no other text.`;
       setTimeout(() => {
         setState(prev => ({
           ...prev,
-          selectedRegions: [...prev.selectedRegions, region]
+          selectedRegions: Array.from(new Set([...prev.selectedRegions, region]))
         }));
       }, index * 800);
     });
