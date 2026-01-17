@@ -1085,19 +1085,10 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
         </div>
       </div>
       
-      <div className="flex flex-col md:flex-row">
-        {/* Left side: Unified Agent Console */}
-        <div className="flex-1 order-2 md:order-1 h-[400px]">
-          <UnifiedAgentConsole
-            rationale={[...state.agentRationale, currentRationaleStream].filter(Boolean)}
-            onSendMessage={handleSendMessage}
-            disabled={!engineRunning}
-          />
-        </div>
-        
-        {/* Right side: Radar equalizer - hidden on mobile */}
-        <div className="hidden md:block w-64 border-l border-gray-800">
-          <div className="h-full p-4">
+      <div className="flex flex-col md:flex-row gap-4">
+        {/* Left side: Radar equalizer - hidden on mobile */}
+        <div className="hidden md:block w-64 flex-shrink-0">
+          <div className="h-[400px] flex items-center justify-center border border-gray-800 rounded-lg">
             <RadarEqualizer
               problemSources={state.hypotheses
                 .filter(h => h.sources && h.sources.length > 0)
@@ -1126,6 +1117,15 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
               isActive={engineRunning}
             />
           </div>
+        </div>
+        
+        {/* Right side: Unified Agent Console */}
+        <div className="flex-1 h-[400px]">
+          <UnifiedAgentConsole
+            rationale={[...state.agentRationale, currentRationaleStream].filter(Boolean)}
+            onSendMessage={handleSendMessage}
+            disabled={!engineRunning}
+          />
         </div>
       </div>
       

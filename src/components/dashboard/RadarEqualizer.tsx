@@ -19,8 +19,10 @@ interface RadarEqualizerProps {
 interface Blip {
   id: string;
   angle: number;
-  distance: number;
+  targetDistance: number;
+  currentDistance: number;
   section: 'problems' | 'solutions' | 'requirements';
+  createdAt: number;
 }
 
 export default function RadarEqualizer({ 
@@ -31,43 +33,95 @@ export default function RadarEqualizer({
 }: RadarEqualizerProps) {
   const [sweepAngle, setSweepAngle] = useState(0);
   const [blips, setBlips] = useState<Blip[]>([]);
-  const prevSourcesRef = useRef({ problems: 0, solutions: 0, requirements: 0 });
+  const blipsRef = useRef<Blip[]>([]);
 
-  // Convert sources to blips with positions
+  // Convert sources to blips with initial center position
   useEffect(() => {
+    const existingIds = new Set(blipsRef.current.map(b => b.id));
     const newBlips: Blip[] = [];
 
     // PROBLEMS section: 0° to 120° (top)
     problemSources.forEach((source, i) => {
-      const angle = 0 + (i * 120 / Math.max(problemSources.length, 1));
-      const distance = 40 + (source.confidence || 50) * 0.4; // 40-80% radius
-      newBlips.push({ id: `p-${source.id}`, angle, distance, section: 'problems' });
+      const id = `p-${source.id}`;
+      if (!existingIds.has(id)) {
+        const angle = 10 + (i * 100 / Math.max(problemSources.length, 1));
+        const targetDistance = 30 + Math.random() * 60; // 30-90%
+        newBlips.push({ 
+          id, 
+          angle, 
+          targetDistance, 
+          currentDistance: 10, // Start at center
+          section: 'problems',
+          createdAt: Date.now()
+        });
+      }
     });
 
     // SOLUTIONS section: 120° to 240° (bottom-left)
     solutionSources.forEach((source, i) => {
-      const angle = 120 + (i * 120 / Math.max(solutionSources.length, 1));
-      const distance = 40 + (source.confidence || 50) * 0.4;
-      newBlips.push({ id: `s-${source.id}`, angle, distance, section: 'solutions' });
+      const id = `s-${source.id}`;
+      if (!existingIds.has(id)) {
+        const angle = 130 + (i * 100 / Math.max(solutionSources.length, 1));
+        const targetDistance = 30 + Math.random() * 60;
+        newBlips.push({ 
+          id, 
+          angle, 
+          targetDistance, 
+          currentDistance: 10,
+          section: 'solutions',
+          createdAt: Date.now()
+        });
+      }
     });
 
     // REQUIREMENTS section: 240° to 360° (bottom-right)
     requirementSources.forEach((source, i) => {
-      const angle = 240 + (i * 120 / Math.max(requirementSources.length, 1));
-      const distance = 40 + (source.confidence || 50) * 0.4;
-      newBlips.push({ id: `r-${source.id}`, angle, distance, section: 'requirements' });
+      const id = `r-${source.id}`;
+      if (!existingIds.has(id)) {
+        const angle = 250 + (i * 100 / Math.max(requirementSources.length, 1));
+        const targetDistance = 30 + Math.random() * 60;
+        newBlips.push({ 
+          id, 
+          angle, 
+          targetDistance, 
+          currentDistance: 10,
+          section: 'requirements',
+          createdAt: Date.now()
+        });
+      }
     });
 
-    setBlips(newBlips);
+    if (newBlips.length > 0) {
+      blipsRef.current = [...blipsRef.current, ...newBlips];
+      setBlips(blipsRef.current);
+    }
   }, [problemSources, solutionSources, requirementSources]);
 
-  // Radar sweep animation
+  // Radar sweep animation and blip expansion
   useEffect(() => {
     if (!isActive) return;
     
     const interval = setInterval(() => {
       setSweepAngle(prev => (prev + 0.5) % 360);
-    }, 30); // 10 seconds per revolution
+      
+      // Expand blips that haven't reached target
+      setBlips(prevBlips => {
+        const updated = prevBlips.map(blip => {
+          if (blip.currentDistance < blip.targetDistance) {
+            return {
+              ...blip,
+              currentDistance: Math.min(
+                blip.currentDistance + 2, // Expand by 2% per sweep tick
+                blip.targetDistance
+              )
+            };
+          }
+          return blip;
+        });
+        blipsRef.current = updated;
+        return updated;
+      });
+    }, 30);
 
     return () => clearInterval(interval);
   }, [isActive]);
@@ -76,103 +130,106 @@ export default function RadarEqualizer({
   const center = size / 2;
 
   return (
-    <div className="p-4 flex items-center justify-center">
-      <div className="relative" style={{ width: size, height: size }}>
-        <svg width={size} height={size} className="absolute inset-0">
-          {/* Concentric circles */}
-          {[0.25, 0.5, 0.75, 1].map((scale, i) => (
-            <circle
-              key={i}
-              cx={center}
-              cy={center}
-              r={center * scale}
-              fill="none"
-              stroke="rgba(255,255,255,0.05)"
-              strokeWidth="1"
-            />
-          ))}
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="absolute inset-0">
+        {/* Concentric circles */}
+        {[0.25, 0.5, 0.75, 1].map((scale, i) => (
+          <circle
+            key={i}
+            cx={center}
+            cy={center}
+            r={center * scale}
+            fill="none"
+            stroke="rgba(255,255,255,0.05)"
+            strokeWidth="1"
+          />
+        ))}
 
-          {/* Section divider lines */}
-          <line x1={center} y1={center} x2={center} y2={0} stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="2,4" />
-          <line x1={center} y1={center} x2={center + center * Math.cos(Math.PI * 2/3)} y2={center + center * Math.sin(Math.PI * 2/3)} stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="2,4" />
-          <line x1={center} y1={center} x2={center + center * Math.cos(Math.PI * 4/3)} y2={center + center * Math.sin(Math.PI * 4/3)} stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="2,4" />
+        {/* Section divider lines */}
+        <line x1={center} y1={center} x2={center} y2={0} stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="2,4" />
+        <line x1={center} y1={center} x2={center + center * Math.cos(Math.PI * 2/3)} y2={center + center * Math.sin(Math.PI * 2/3)} stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="2,4" />
+        <line x1={center} y1={center} x2={center + center * Math.cos(Math.PI * 4/3)} y2={center + center * Math.sin(Math.PI * 4/3)} stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="2,4" />
 
-          {/* Radar sweep line with glow */}
-          <defs>
-            <linearGradient id="sweepGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="rgba(255,255,255,0)" />
-              <stop offset="100%" stopColor="rgba(255,255,255,0.6)" />
-            </linearGradient>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-              <feMerge>
-                <feMergeNode in="coloredBlur"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
-            </filter>
-          </defs>
+        {/* Radar sweep line with glow */}
+        <defs>
+          <linearGradient id="sweepGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="rgba(255,255,255,0)" />
+            <stop offset="80%" stopColor="rgba(255,255,255,0.3)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0.8)" />
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
 
-          {isActive && (
-            <line
-              x1={center}
-              y1={center}
-              x2={center + center * Math.cos((sweepAngle - 90) * Math.PI / 180)}
-              y2={center + center * Math.sin((sweepAngle - 90) * Math.PI / 180)}
-              stroke="url(#sweepGradient)"
-              strokeWidth="2"
-              filter="url(#glow)"
-            />
-          )}
+        {isActive && (
+          <line
+            x1={center}
+            y1={center}
+            x2={center + center * Math.cos((sweepAngle - 90) * Math.PI / 180)}
+            y2={center + center * Math.sin((sweepAngle - 90) * Math.PI / 180)}
+            stroke="url(#sweepGradient)"
+            strokeWidth="2"
+            filter="url(#glow)"
+          />
+        )}
 
-          {/* Blips */}
-          <AnimatePresence>
-            {blips.map((blip) => {
-              const x = center + (center * blip.distance / 100) * Math.cos((blip.angle - 90) * Math.PI / 180);
-              const y = center + (center * blip.distance / 100) * Math.sin((blip.angle - 90) * Math.PI / 180);
-              
-              return (
-                <motion.g
-                  key={blip.id}
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <motion.circle
-                    cx={x}
-                    cy={y}
-                    r="3"
-                    fill="white"
-                    filter="url(#glow)"
-                    animate={{
-                      opacity: [0.6, 1, 0.6],
-                      scale: [1, 1.2, 1],
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: 'easeInOut',
-                    }}
-                  />
-                </motion.g>
-              );
-            })}
-          </AnimatePresence>
-        </svg>
+        {/* Blips */}
+        <AnimatePresence>
+          {blips.map((blip) => {
+            const x = center + (center * blip.currentDistance / 100) * Math.cos((blip.angle - 90) * Math.PI / 180);
+            const y = center + (center * blip.currentDistance / 100) * Math.sin((blip.angle - 90) * Math.PI / 180);
+            const progress = blip.currentDistance / blip.targetDistance;
+            const opacity = 0.3 + (progress * 0.7); // Fade in as it expands
+            const radius = 2 + (progress * 2); // Grow from 2 to 4
+            
+            return (
+              <motion.g
+                key={blip.id}
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <motion.circle
+                  cx={x}
+                  cy={y}
+                  r={radius}
+                  fill="white"
+                  opacity={opacity}
+                  filter="url(#glow)"
+                  animate={{
+                    opacity: [opacity * 0.8, opacity, opacity * 0.8],
+                    scale: [1, 1.15, 1],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                  }}
+                />
+              </motion.g>
+            );
+          })}
+        </AnimatePresence>
+      </svg>
 
-        {/* Labels */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-6">
-          <span className="text-white text-[9px] font-mono opacity-60">PROBLEMS</span>
-          <span className="text-white text-[9px] font-mono ml-1 opacity-40">{problemSources.length}</span>
-        </div>
-        <div className="absolute bottom-0 left-0 -translate-x-2 translate-y-6">
-          <span className="text-white text-[9px] font-mono opacity-60">SOLUTIONS</span>
-          <span className="text-white text-[9px] font-mono ml-1 opacity-40">{solutionSources.length}</span>
-        </div>
-        <div className="absolute bottom-0 right-0 translate-x-2 translate-y-6">
-          <span className="text-white text-[9px] font-mono opacity-60">REQUIREMENTS</span>
-          <span className="text-white text-[9px] font-mono ml-1 opacity-40">{requirementSources.length}</span>
-        </div>
+      {/* Labels */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-6">
+        <span className="text-white text-[9px] font-mono opacity-60">PROBLEMS</span>
+        <span className="text-white text-[9px] font-mono ml-1 opacity-40">{problemSources.length}</span>
+      </div>
+      <div className="absolute bottom-0 left-0 -translate-x-2 translate-y-6">
+        <span className="text-white text-[9px] font-mono opacity-60">SOLUTIONS</span>
+        <span className="text-white text-[9px] font-mono ml-1 opacity-40">{solutionSources.length}</span>
+      </div>
+      <div className="absolute bottom-0 right-0 translate-x-2 translate-y-6">
+        <span className="text-white text-[9px] font-mono opacity-60">REQUIREMENTS</span>
+        <span className="text-white text-[9px] font-mono ml-1 opacity-40">{requirementSources.length}</span>
       </div>
     </div>
   );
