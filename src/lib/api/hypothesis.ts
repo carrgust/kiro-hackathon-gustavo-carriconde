@@ -71,6 +71,9 @@ Keep under 60 characters.`;
   }
 
   async researchHypothesis(hypothesis: Hypothesis, niche: string, isProblemParam?: boolean): Promise<{ confidence: number; sources: string[] }> {
+    let confidence = 50;
+    let sources: string[] = [];
+    
     // Use intelligent research agent
     try {
       const response = await fetch('/api/research/agent', {
@@ -85,14 +88,11 @@ Keep under 60 characters.`;
       if (response.ok) {
         const data = await response.json();
         console.log('[Research] Agent returned:', data.confidence, 'confidence');
+        confidence = data.confidence || 50;
         // Format sources as "[Domain] Title ||| Snippet ||| URL" for consistency
-        const formattedSources = data.sources?.map((s: { title: string; snippet: string; url: string; domain: string }) => 
+        sources = data.sources?.map((s: { title: string; snippet: string; url: string; domain: string }) => 
           `[${s.domain || 'Web'}] ${s.title} ||| ${s.snippet || ''} ||| ${s.url}`
         ) || [];
-        return { 
-          confidence: data.confidence || 50, 
-          sources: formattedSources
-        };
       } else {
         console.error('[Research] Agent response not ok:', response.status);
       }
@@ -100,27 +100,63 @@ Keep under 60 characters.`;
       console.error('[HypothesisService] Research agent failed:', error);
     }
     
-    // Fallback to machine-gun if agent fails
-    console.log('[Research] Falling back to machine-gun');
-    const searchQuery = `${hypothesis.text} ${niche} market research`;
-    let sources: string[] = [];
-    
-    try {
-      const response = await fetch('/api/research/machine-gun', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: searchQuery }),
-      });
+    // If agent failed, fallback to machine-gun
+    if (sources.length === 0) {
+      console.log('[Research] Falling back to machine-gun');
+      const searchQuery = `${hypothesis.text} ${niche} market research`;
       
-      if (response.ok) {
-        const data = await response.json();
-        sources = data.sources || [];
+      try {
+        const response = await fetch('/api/research/machine-gun', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: searchQuery }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          sources = data.sources || [];
+        }
+      } catch (error) {
+        console.error('[HypothesisService] Machine gun fallback failed:', error);
       }
-    } catch (error) {
-      console.error('[HypothesisService] Machine gun fallback failed:', error);
     }
     
-    const confidence = calculateConfidence(sources, hypothesis.text);
+    // PRODUCT HUNT INTEGRATION: Search for related products
+    try {
+      const phResponse = await fetch('/api/research/producthunt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          query: `${hypothesis.text} ${niche}`,
+        }),
+      });
+      
+      if (phResponse.ok) {
+        const phData = await phResponse.json();
+        const products = phData.products || [];
+        
+        if (products.length > 0) {
+          console.log('[Research] Product Hunt found:', products.length, 'products');
+          
+          // Add Product Hunt products as sources
+          const phSources = products.map((p: any) => 
+            `[Product Hunt] ${p.name} - ${p.tagline} (${p.votesCount} votes) ||| ${p.tagline} ||| ${p.url}`
+          );
+          sources = [...sources, ...phSources];
+          
+          // Boost confidence based on Product Hunt results
+          if (products.length >= 5) {
+            confidence = Math.min(98, confidence + 20);
+            console.log('[Research] PH boost +20% (5+ products)');
+          } else if (products.length >= 1) {
+            confidence = Math.min(98, confidence + 10);
+            console.log('[Research] PH boost +10% (1-4 products)');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[HypothesisService] Product Hunt search failed:', error);
+    }
     
     return { confidence, sources };
   }
