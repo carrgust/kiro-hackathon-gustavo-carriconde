@@ -42,11 +42,11 @@ export default function RadarEqualizer({
     const existingIds = new Set(blipsRef.current.map(b => b.id));
     const newBlips: Blip[] = [];
 
-    // PROBLEMS section: 0° to 120° (top)
+    // PROBLEMS section: -90° to 30° (top slice, 120°)
     problemSources.forEach((source, i) => {
       const id = `p-${source.id}`;
       if (!existingIds.has(id)) {
-        const angle = 10 + (i * 100 / Math.max(problemSources.length, 1));
+        const angle = -80 + (i * 100 / Math.max(problemSources.length, 1)); // -80° to 20°
         const targetDistance = 30 + Math.random() * 60; // 30-90%
         newBlips.push({ 
           id, 
@@ -60,11 +60,11 @@ export default function RadarEqualizer({
       }
     });
 
-    // SOLUTIONS section: 120° to 240° (bottom-left)
+    // SOLUTIONS section: 30° to 150° (right slice, 120°)
     solutionSources.forEach((source, i) => {
       const id = `s-${source.id}`;
       if (!existingIds.has(id)) {
-        const angle = 130 + (i * 100 / Math.max(solutionSources.length, 1));
+        const angle = 40 + (i * 100 / Math.max(solutionSources.length, 1)); // 40° to 140°
         const targetDistance = 30 + Math.random() * 60;
         newBlips.push({ 
           id, 
@@ -78,11 +78,11 @@ export default function RadarEqualizer({
       }
     });
 
-    // REQUIREMENTS section: 240° to 360° (bottom-right)
+    // REQUIREMENTS section: 150° to 270° (left slice, 120°)
     requirementSources.forEach((source, i) => {
       const id = `r-${source.id}`;
       if (!existingIds.has(id)) {
-        const angle = 250 + (i * 100 / Math.max(requirementSources.length, 1));
+        const angle = 160 + (i * 100 / Math.max(requirementSources.length, 1)); // 160° to 260°
         const targetDistance = 30 + Math.random() * 60;
         newBlips.push({ 
           id, 
@@ -136,8 +136,8 @@ export default function RadarEqualizer({
 
   // Helper to create pie slice path
   const createSlicePath = (startAngle: number, endAngle: number) => {
-    const start = (startAngle - 90) * Math.PI / 180;
-    const end = (endAngle - 90) * Math.PI / 180;
+    const start = startAngle * Math.PI / 180;
+    const end = endAngle * Math.PI / 180;
     const x1 = center + center * Math.cos(start);
     const y1 = center + center * Math.sin(start);
     const x2 = center + center * Math.cos(end);
@@ -148,10 +148,10 @@ export default function RadarEqualizer({
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="absolute inset-0">
-        {/* Section backgrounds - subtle fills */}
-        <path d={createSlicePath(0, 120)} fill="rgba(255,255,255,0.02)" />
-        <path d={createSlicePath(120, 240)} fill="rgba(255,255,255,0.01)" />
-        <path d={createSlicePath(240, 360)} fill="rgba(255,255,255,0.015)" />
+        {/* Section backgrounds - subtle fills for 3 EQUAL slices */}
+        <path d={createSlicePath(-90, 30)} fill="rgba(255,255,255,0.02)" />
+        <path d={createSlicePath(30, 150)} fill="rgba(255,255,255,0.01)" />
+        <path d={createSlicePath(150, 270)} fill="rgba(255,255,255,0.015)" />
 
         {/* OUTER CIRCLE ONLY - the pizza edge */}
         <circle
@@ -163,10 +163,34 @@ export default function RadarEqualizer({
           strokeWidth="1.5"
         />
 
-        {/* Section divider lines - 3 pizza slices */}
-        <line x1={center} y1={center} x2={center} y2={0} stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" />
-        <line x1={center} y1={center} x2={center + center * Math.cos(Math.PI * 2/3)} y2={center + center * Math.sin(Math.PI * 2/3)} stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" />
-        <line x1={center} y1={center} x2={center + center * Math.cos(Math.PI * 4/3)} y2={center + center * Math.sin(Math.PI * 4/3)} stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" />
+        {/* Section divider lines - 3 EQUAL pizza slices (120° each) */}
+        {/* Line 1: -90° (straight up) */}
+        <line 
+          x1={center} 
+          y1={center} 
+          x2={center + center * Math.cos(-Math.PI / 2)} 
+          y2={center + center * Math.sin(-Math.PI / 2)} 
+          stroke="rgba(255,255,255,0.2)" 
+          strokeWidth="1.5" 
+        />
+        {/* Line 2: 30° (120° clockwise from up) */}
+        <line 
+          x1={center} 
+          y1={center} 
+          x2={center + center * Math.cos(Math.PI / 6)} 
+          y2={center + center * Math.sin(Math.PI / 6)} 
+          stroke="rgba(255,255,255,0.2)" 
+          strokeWidth="1.5" 
+        />
+        {/* Line 3: 150° (240° clockwise from up) */}
+        <line 
+          x1={center} 
+          y1={center} 
+          x2={center + center * Math.cos(5 * Math.PI / 6)} 
+          y2={center + center * Math.sin(5 * Math.PI / 6)} 
+          stroke="rgba(255,255,255,0.2)" 
+          strokeWidth="1.5" 
+        />
 
         {/* Radar sweep line with glow */}
         <defs>
@@ -188,8 +212,8 @@ export default function RadarEqualizer({
           <line
             x1={center}
             y1={center}
-            x2={center + center * Math.cos((sweepAngle - 90) * Math.PI / 180)}
-            y2={center + center * Math.sin((sweepAngle - 90) * Math.PI / 180)}
+            x2={center + center * Math.cos(sweepAngle * Math.PI / 180)}
+            y2={center + center * Math.sin(sweepAngle * Math.PI / 180)}
             stroke="url(#sweepGradient)"
             strokeWidth="2"
             filter="url(#glow)"
@@ -199,8 +223,8 @@ export default function RadarEqualizer({
         {/* Blips */}
         <AnimatePresence>
           {blips.map((blip) => {
-            const x = center + (center * blip.currentDistance / 100) * Math.cos((blip.angle - 90) * Math.PI / 180);
-            const y = center + (center * blip.currentDistance / 100) * Math.sin((blip.angle - 90) * Math.PI / 180);
+            const x = center + (center * blip.currentDistance / 100) * Math.cos(blip.angle * Math.PI / 180);
+            const y = center + (center * blip.currentDistance / 100) * Math.sin(blip.angle * Math.PI / 180);
             const progress = blip.currentDistance / blip.targetDistance;
             const opacity = 0.4 + (progress * 0.6); // Fade in as it expands
             const radius = 1.5 + (progress * 0.5); // Grow from 1.5 to 2px
