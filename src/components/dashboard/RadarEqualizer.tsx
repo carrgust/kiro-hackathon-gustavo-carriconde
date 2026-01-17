@@ -7,6 +7,7 @@ interface Source {
   id: string;
   url: string;
   confidence?: number;
+  isValidated?: boolean;
 }
 
 interface RadarEqualizerProps {
@@ -23,6 +24,7 @@ interface Blip {
   currentDistance: number;
   section: 'problems' | 'solutions' | 'requirements';
   createdAt: number;
+  isValidated: boolean;
 }
 
 export default function RadarEqualizer({ 
@@ -52,7 +54,8 @@ export default function RadarEqualizer({
           targetDistance, 
           currentDistance: 10, // Start at center
           section: 'problems',
-          createdAt: Date.now()
+          createdAt: Date.now(),
+          isValidated: source.isValidated || false
         });
       }
     });
@@ -69,7 +72,8 @@ export default function RadarEqualizer({
           targetDistance, 
           currentDistance: 10,
           section: 'solutions',
-          createdAt: Date.now()
+          createdAt: Date.now(),
+          isValidated: source.isValidated || false
         });
       }
     });
@@ -86,7 +90,8 @@ export default function RadarEqualizer({
           targetDistance, 
           currentDistance: 10,
           section: 'requirements',
-          createdAt: Date.now()
+          createdAt: Date.now(),
+          isValidated: source.isValidated || false
         });
       }
     });
@@ -184,8 +189,9 @@ export default function RadarEqualizer({
             const x = center + (center * blip.currentDistance / 100) * Math.cos((blip.angle - 90) * Math.PI / 180);
             const y = center + (center * blip.currentDistance / 100) * Math.sin((blip.angle - 90) * Math.PI / 180);
             const progress = blip.currentDistance / blip.targetDistance;
-            const opacity = 0.3 + (progress * 0.7); // Fade in as it expands
-            const radius = 2 + (progress * 2); // Grow from 2 to 4
+            const opacity = 0.4 + (progress * 0.6); // Fade in as it expands
+            const radius = 1.5 + (progress * 0.5); // Grow from 1.5 to 2px
+            const color = blip.isValidated ? '#22c55e' : '#fbbf24'; // Green if validated, yellow if pending
             
             return (
               <motion.g
@@ -199,12 +205,12 @@ export default function RadarEqualizer({
                   cx={x}
                   cy={y}
                   r={radius}
-                  fill="white"
+                  fill={color}
                   opacity={opacity}
                   filter="url(#glow)"
                   animate={{
                     opacity: [opacity * 0.8, opacity, opacity * 0.8],
-                    scale: [1, 1.15, 1],
+                    scale: [1, 1.1, 1],
                   }}
                   transition={{
                     duration: 2,

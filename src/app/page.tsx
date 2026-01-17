@@ -1095,7 +1095,8 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
                 .flatMap(h => (h.sources || []).map((url, i) => ({ 
                   id: `${h.id}-${i}`, 
                   url, 
-                  confidence: h.confidence 
+                  confidence: h.confidence,
+                  isValidated: h.state === 'fact'
                 })))
               }
               solutionSources={state.solutions
@@ -1103,7 +1104,8 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
                 .flatMap(h => (h.sources || []).map((url, i) => ({ 
                   id: `${h.id}-${i}`, 
                   url, 
-                  confidence: h.confidence 
+                  confidence: h.confidence,
+                  isValidated: h.state === 'fact'
                 })))
               }
               requirementSources={state.requirements
@@ -1111,7 +1113,8 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
                 .flatMap(h => (h.sources || []).map((url, i) => ({ 
                   id: `${h.id}-${i}`, 
                   url, 
-                  confidence: h.confidence 
+                  confidence: h.confidence,
+                  isValidated: h.state === 'fact'
                 })))
               }
               isActive={engineRunning}
