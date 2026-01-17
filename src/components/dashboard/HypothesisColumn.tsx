@@ -102,7 +102,7 @@ const HypothesisColumn = memo(function HypothesisColumn({
               </motion.span>
             )}
             <motion.div 
-              className={`text-[10px] sm:text-xs mt-0.5 sm:mt-1 font-medium ${validatedCount > 0 ? 'text-cyan-400' : 'text-gray-600'}`}
+              className={`text-[10px] sm:text-xs mt-0.5 sm:mt-1 font-medium ${validatedCount > 0 ? 'text-white' : 'text-gray-600'}`}
               animate={validatedCount > 0 ? { 
                 scale: [1, 1.05, 1]
               } : {}}
@@ -114,7 +114,7 @@ const HypothesisColumn = memo(function HypothesisColumn({
             </motion.div>
           </div>
           <motion.div 
-            className="text-green-400 text-base sm:text-lg font-mono font-bold relative"
+            className="text-white text-base sm:text-lg font-mono font-bold relative"
             key={score}
             initial={{ scale: 1.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -194,8 +194,8 @@ const HypothesisColumn = memo(function HypothesisColumn({
           {onAdd && (
             <motion.button
               onClick={onAdd}
-              className="group flex items-center gap-2 py-2 px-3 text-gray-600 hover:text-cyan-400 transition-all w-full text-left font-mono text-xs sm:text-sm rounded-lg hover:bg-gray-900/50 relative overflow-hidden min-h-[44px]"
-              whileHover={{ x: 4, backgroundColor: 'rgba(6, 182, 212, 0.1)' }}
+              className="group flex items-center gap-2 py-2 px-3 text-gray-600 hover:text-white transition-all w-full text-left font-mono text-xs sm:text-sm rounded-lg hover:bg-gray-900/50 relative overflow-hidden min-h-[44px]"
+              whileHover={{ x: 4, backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
               whileTap={{ scale: 0.98 }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -213,7 +213,7 @@ const HypothesisColumn = memo(function HypothesisColumn({
               initial={{ x: -10 }}
               whileHover={{ x: 0 }}
             >
-              <Sparkles size={12} className="text-cyan-400" />
+              <Sparkles size={12} className="text-white" />
             </motion.div>
           </motion.button>
           )}
@@ -245,9 +245,9 @@ const HypothesisColumn = memo(function HypothesisColumn({
             whileHover={{ scale: 1.05 }}
           >
             <motion.span 
-              className="text-green-400 text-sm"
+              className="text-white text-sm"
               animate={{ 
-                boxShadow: ['0 0 0px #4ade80', '0 0 8px #4ade80', '0 0 0px #4ade80']
+                boxShadow: ['0 0 0px #ffffff', '0 0 8px #ffffff', '0 0 0px #ffffff']
               }}
               transition={{ duration: 1.5, repeat: Infinity }}
             >

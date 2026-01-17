@@ -68,7 +68,7 @@ export default function GeoSelector({ selectedRegions, onRegionsChange }: GeoSel
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 px-2 py-1 metal-btn text-xs text-cyan-400 hover:border-cyan-400 transition-colors"
+        className="flex items-center gap-1 px-2 py-1 metal-btn text-xs text-white hover:border-white transition-colors"
       >
         {getDisplayText()}
         <span className="text-gray-400">▼</span>

@@ -198,13 +198,13 @@ export default function RadarEqualizer({ problems, solutions, requirements, isAc
         />
         
         {/* Section labels */}
-        <text x="0" y="-115" textAnchor="middle" className="fill-blue-400 text-xs font-mono">
+        <text x="0" y="-115" textAnchor="middle" className="fill-white text-xs font-mono">
           PROBLEMS
         </text>
-        <text x="-75" y="70" textAnchor="middle" className="fill-cyan-400 text-xs font-mono">
+        <text x="-75" y="70" textAnchor="middle" className="fill-white text-xs font-mono">
           SOLUTIONS
         </text>
-        <text x="75" y="70" textAnchor="middle" className="fill-purple-400 text-xs font-mono">
+        <text x="75" y="70" textAnchor="middle" className="fill-white text-xs font-mono">
           REQUIREMENTS
         </text>
       </svg>

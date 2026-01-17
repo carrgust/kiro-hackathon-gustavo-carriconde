@@ -38,8 +38,8 @@ export default function StageProgressBar({ stages, currentStage }: StageProgress
           >
             <motion.div
               className={`relative flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-1 rounded cursor-default transition-all min-h-[32px] sm:min-h-0 ${
-                isPassed ? 'bg-green-500/20 text-green-400' :
-                isActive ? 'bg-cyan-500/20 text-cyan-400' :
+                isPassed ? 'bg-white/10 text-white' :
+                isActive ? 'bg-white/5 text-white' :
                 'bg-gray-800 text-gray-600'
               }`}
               whileHover={{ scale: 1.05, y: -2 }}
@@ -50,12 +50,12 @@ export default function StageProgressBar({ stages, currentStage }: StageProgress
               {(isPassed || isActive) && (
                 <motion.div
                   className={`absolute inset-0 rounded ${
-                    isPassed ? 'bg-green-500/20' : 'bg-cyan-500/20'
+                    isPassed ? 'bg-white/10' : 'bg-white/5'
                   }`}
                   animate={{
                     boxShadow: isPassed 
-                      ? ['0 0 10px rgba(34,197,94,0.3)', '0 0 20px rgba(34,197,94,0.5)', '0 0 10px rgba(34,197,94,0.3)']
-                      : ['0 0 10px rgba(6,182,212,0.3)', '0 0 20px rgba(6,182,212,0.5)', '0 0 10px rgba(6,182,212,0.3)']
+                      ? ['0 0 10px rgba(255,255,255,0.2)', '0 0 20px rgba(255,255,255,0.3)', '0 0 10px rgba(255,255,255,0.2)']
+                      : ['0 0 10px rgba(255,255,255,0.1)', '0 0 20px rgba(255,255,255,0.2)', '0 0 10px rgba(255,255,255,0.1)']
                   }}
                   transition={{ duration: 2, repeat: Infinity }}
                 />
@@ -82,10 +82,10 @@ export default function StageProgressBar({ stages, currentStage }: StageProgress
             {/* Connector line with animation */}
             {index < STAGE_ORDER.length - 1 && (
               <div className="relative w-1 sm:w-4 h-px mx-0.5">
-                <div className={`absolute inset-0 ${isPassed ? 'bg-green-500' : 'bg-gray-700'}`} />
+                <div className={`absolute inset-0 ${isPassed ? 'bg-white' : 'bg-gray-700'}`} />
                 {isPassed && (
                   <motion.div
-                    className="absolute inset-0 bg-green-500"
+                    className="absolute inset-0 bg-white"
                     initial={{ scaleX: 0 }}
                     animate={{ scaleX: 1 }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}
