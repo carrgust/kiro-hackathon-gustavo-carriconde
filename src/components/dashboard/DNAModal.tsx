@@ -103,7 +103,7 @@ export default function DNAModal({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <header className="p-6 border-b border-gray-800/50">
+          <header className="p-6 border-b border-gray-700/50">
             <div className="flex justify-between items-start">
               <motion.div
                 initial={{ x: -20, opacity: 0 }}
@@ -132,7 +132,7 @@ export default function DNAModal({
           </header>
 
           {/* Tabs */}
-          <nav className="flex px-6 border-b border-gray-800/50" role="tablist" aria-label="DNA modal tabs">
+          <nav className="flex px-6 border-b border-gray-700/50" role="tablist" aria-label="DNA modal tabs">
             {[
               { id: 'dna', label: 'DNA ANALYSIS', color: 'green' },
               { id: 'autocoder', label: 'AUTO-CODER', color: 'cyan' }
@@ -204,7 +204,7 @@ export default function DNAModal({
                       {dna.requirements.map((req, i) => (
                         <motion.li
                           key={req.id}
-                          className="flex items-center gap-3 p-3 bg-gray-900/50 rounded-lg border border-gray-800/50 hover:border-cyan-500/30 transition-all"
+                          className="flex items-center gap-3 p-3 bg-gray-900/50 rounded-lg border border-gray-700/50 hover:border-cyan-500/30 transition-all"
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: i * 0.05 }}
@@ -258,7 +258,7 @@ export default function DNAModal({
           </main>
 
           {/* Footer Actions */}
-          <footer className="p-6 border-t border-gray-800/50 metal-panel">
+          <footer className="p-6 border-t border-gray-700/50 metal-panel">
             <div className="flex gap-3 relative z-10" role="group" aria-label="DNA actions">
               {onGenerateLandingPage && (
                 <motion.button
@@ -346,7 +346,7 @@ function Section({ title, count, delay, children }: { title: string; count: numb
 function ItemCard({ item, index }: { item: { text: string; confidence: number }; index: number }) {
   return (
     <motion.li
-      className="flex items-center gap-3 p-3 bg-gray-900/50 rounded-lg border border-gray-800/50 hover:border-green-500/30 transition-all"
+      className="flex items-center gap-3 p-3 bg-gray-900/50 rounded-lg border border-gray-700/50 hover:border-green-500/30 transition-all"
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.05 }}

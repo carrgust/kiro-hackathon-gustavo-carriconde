@@ -157,7 +157,7 @@ export function ExportModal({
           </div>
 
           {/* Share Link */}
-          <div className="mb-6 p-4 bg-black/50 rounded-lg border border-gray-800">
+          <div className="mb-6 p-4 bg-black/50 rounded-lg border border-gray-700">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-400">Shareable Link</span>
               <button
@@ -182,7 +182,7 @@ export function ExportModal({
                 disabled={option.disabled}
                 className={`w-full p-4 rounded-lg border transition-all flex items-center gap-4 text-left ${
                   option.disabled
-                    ? 'border-gray-800 bg-gray-900/50 opacity-50 cursor-not-allowed'
+                    ? 'border-gray-700 bg-gray-900/50 opacity-50 cursor-not-allowed'
                     : 'border-gray-700 hover:border-green-500/50 hover:bg-gray-800/50'
                 }`}
               >
@@ -201,7 +201,7 @@ export function ExportModal({
           </div>
 
           {/* Stats */}
-          <div className="mt-6 pt-4 border-t border-gray-800 flex justify-between text-xs text-gray-500">
+          <div className="mt-6 pt-4 border-t border-gray-700 flex justify-between text-xs text-gray-500">
             <span>{hypotheses.length + solutions.length} total hypotheses</span>
             <span>{validatedCount} validated (80%+)</span>
           </div>

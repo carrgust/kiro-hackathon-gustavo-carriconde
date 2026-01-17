@@ -114,7 +114,8 @@ const HypothesisColumn = memo(function HypothesisColumn({
             </motion.div>
           </div>
           <motion.div 
-            className="text-white text-base sm:text-lg font-mono font-bold relative"
+            className="text-white text-xl font-mono font-bold relative"
+            style={{ textShadow: '0 0 10px rgba(255,255,255,0.3)' }}
             key={score}
             initial={{ scale: 1.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -166,7 +167,7 @@ const HypothesisColumn = memo(function HypothesisColumn({
         </motion.div>
       ) : (
         <motion.div 
-          className="space-y-1.5 sm:space-y-2 min-h-[200px] sm:min-h-[300px]"
+          className="space-y-2 min-h-[200px] sm:min-h-[300px]"
           style={{ opacity: 1 }}
         >
           <AnimatePresence mode="popLayout">
@@ -222,7 +223,7 @@ const HypothesisColumn = memo(function HypothesisColumn({
       
       {!locked && (
         <motion.div 
-          className="mt-4 pt-3 border-t border-gray-800/50 text-xs font-mono text-gray-600 flex items-center gap-4"
+          className="mt-4 pt-3 border-t border-gray-700/50 text-xs font-mono text-gray-600 flex items-center gap-4"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}

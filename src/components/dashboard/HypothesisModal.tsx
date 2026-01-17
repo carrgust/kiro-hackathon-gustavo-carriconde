@@ -178,7 +178,7 @@ function SourceCard({ source, onRemove }: SourceCardProps) {
           <div className="text-white text-[11px] font-medium line-clamp-2 group-hover:text-cyan-300 transition-colors leading-tight pr-6">
             {title}
           </div>
-          {snippet && <div className="text-gray-400 text-[10px] font-light line-clamp-2 mt-1 leading-snug">{snippet}</div>}
+          {snippet && <div className="text-gray-400 text-[10px] font-medium line-clamp-2 mt-1 leading-snug">{snippet}</div>}
           <div className="text-gray-500 text-[9px] truncate mt-1">{domain || url}</div>
         </div>
       </div>

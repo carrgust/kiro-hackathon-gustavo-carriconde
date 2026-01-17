@@ -5,7 +5,7 @@ interface SteeringSliderProps {
 
 export default function SteeringSlider({ value, onChange }: SteeringSliderProps) {
   return (
-    <div className="px-4 py-3 border-t border-gray-800">
+    <div className="px-4 py-3 border-t border-gray-700">
       <div className="flex items-center justify-center space-x-6 font-mono text-xs text-gray-500">
         <span>problems</span>
         

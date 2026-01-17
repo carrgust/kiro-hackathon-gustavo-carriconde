@@ -19,7 +19,7 @@ export default function ChatInterface({ chatHistory, onSendMessage, disabled }: 
   };
 
   return (
-    <div className="border-b border-gray-800 bg-gray-950">
+    <div className="border-b border-gray-700 bg-gray-950">
       <div className="p-3">
         <div className="text-gray-500 text-xs font-mono mb-2">chat with agent</div>
         

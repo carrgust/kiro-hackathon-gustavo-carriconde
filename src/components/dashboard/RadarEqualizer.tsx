@@ -154,7 +154,7 @@ export default function RadarEqualizer({ problems, solutions, requirements, isAc
   };
 
   return (
-    <div className="w-full h-full flex items-center justify-center bg-gray-900/20 rounded-lg border border-gray-800">
+    <div className="w-full h-full flex items-center justify-center bg-gray-900/20 rounded-lg border border-gray-700">
       <svg width="100%" height="100%" viewBox="-120 -120 240 240" className="overflow-visible">
         {/* Section dividers */}
         <g stroke="rgba(75, 85, 99, 0.3)" strokeWidth="1">

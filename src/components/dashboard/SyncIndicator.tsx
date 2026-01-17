@@ -53,7 +53,7 @@ export default function SyncIndicator({ status, connectedUsers, lastSyncTime, us
   const colors = ['bg-cyan-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500'];
 
   return (
-    <div className="relative flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 bg-gray-900/50 rounded-lg border border-gray-800">
+    <div className="relative flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 bg-gray-900/50 rounded-lg border border-gray-700">
       {/* Status indicator with pulse */}
       <motion.div 
         className={`flex items-center gap-1.5 ${getStatusColor()}`}

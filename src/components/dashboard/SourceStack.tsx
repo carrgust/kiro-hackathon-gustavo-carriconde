@@ -44,7 +44,7 @@ function SourceBadge({ source, index }: { source: string; index: number }) {
       onMouseLeave={() => setHovered(false)}
     >
       <motion.div
-        className="w-8 h-8 rounded-full border-2 border-gray-800 flex items-center justify-center overflow-hidden"
+        className="w-8 h-8 rounded-full border-2 border-gray-700 flex items-center justify-center overflow-hidden"
         style={{ backgroundColor: imgError ? bgColor : '#1f2937' }}
         whileHover={{ scale: 1.2, zIndex: 30 }}
         transition={{ type: 'spring', stiffness: 400, damping: 15 }}
@@ -126,7 +126,7 @@ export default function SourceStack({ sources, maxVisible }: SourceStackProps) {
         ))}
         {remaining > 0 && (
           <div 
-            className="w-8 h-8 rounded-full border-2 border-gray-800 bg-gray-600 flex items-center justify-center text-xs text-white font-bold flex-shrink-0"
+            className="w-8 h-8 rounded-full border-2 border-gray-700 bg-gray-600 flex items-center justify-center text-xs text-white font-bold flex-shrink-0"
             style={{ marginLeft: '-10px', zIndex: 25 }}
           >
             +{remaining}

@@ -187,7 +187,7 @@ export default function PRDModal({
                   initial={{ width: 0, opacity: 0 }}
                   animate={{ width: 200, opacity: 1 }}
                   exit={{ width: 0, opacity: 0 }}
-                  className="hidden sm:block border-r border-gray-800 bg-gray-950 overflow-y-auto"
+                  className="hidden sm:block border-r border-gray-700 bg-gray-950 overflow-y-auto"
                 >
                   <div className="p-3">
                     <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">Sections</div>
