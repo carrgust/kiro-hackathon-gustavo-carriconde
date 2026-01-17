@@ -62,4 +62,5 @@ export interface EngineState {
   generatedDNA: DNAData | null;
   agentRationale: string[];
   chatHistory: ChatMessage[];
+  prdAssessed: boolean;
 }

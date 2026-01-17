@@ -48,6 +48,73 @@ Curatos is an autonomous AI system that helps founders discover validated proble
 
 ## Day 3 - January 12, 2026
 
+---
+
+## Day 7 - January 16, 2026
+
+### Agent Rationale UX Cleanup (Commit efd2950)
+
+**Problem Identified:**
+- Agent rationale panel showing duplicate messages
+- Verbose `[THINKING]`, `[SEARCHING]`, `[FOUND]` spam cluttering UI
+- Multiple code paths updating `agentRationale` state inconsistently
+- React StrictMode causing double-initialization issues
+
+**Solution Implemented:**
+
+1. **Created `addRationale()` Helper**
+   - Set-based deduplication using first 50 characters as key
+   - 2-second timeout to clear old entries (allows legitimate repeats)
+   - Single source of truth for all rationale updates
+   - Reduced message history from 10-15 to 8 messages max
+
+2. **Removed Verbose Autopilot Functions**
+   - Deleted `handleAddHypothesis`, `handleAddSolution`, `handleAddRequirement` (~200 lines)
+   - Eliminated all `[THINKING]`, `[SEARCHING]`, `[FOUND]`, `[VALIDATED]` message spam
+   - Removed duplicate code paths that bypassed clean message flow
+
+3. **Unified Message Format**
+   - Generation: `+ Problem: "text..."`
+   - Validation: `Validating: "text..."`
+   - Result: `✓ FACT 98%` or `○ 85%`
+   - Errors: `✗ Research failed`
+   - LP/PRD: `Generating landing page...` → `✓ Landing page ready`
+
+4. **Guard Against Duplicate Research**
+   - Added status check in `researchHypothesis()` to prevent duplicate calls
+   - Skips if hypothesis already `downloading`, `analyzing`, or `complete`
+   - Prevents race conditions from parallel research requests
+
+5. **Simplified Column UI**
+   - Made `HypothesisColumn` `onAdd` prop optional
+   - Removed manual "+" buttons (engine auto-generates everything)
+   - Cleaner interface with less user confusion
+
+**Technical Details:**
+- Replaced 30+ direct `agentRationale: [...]` updates with `addRationale()` calls
+- Used `useRef<Set<string>>` for deduplication tracking
+- Normalized messages to first 50 chars for comparison (handles truncation)
+- Auto-chain remains silent (no spam when generating solutions/requirements)
+
+**Results:**
+- Messages per hypothesis: 7+ → 3 max
+- Message history: 15 → 8 messages
+- Zero duplicate messages
+- Clean, concise rationale panel
+- Consistent messaging throughout app
+
+**Files Modified:**
+- `src/app/page.tsx` - Main dashboard logic
+- `src/components/dashboard/HypothesisColumn.tsx` - Column UI
+
+**Commit:** `efd2950` - "fix(ux): clean agent rationale - deduplication and consistent messaging"
+
+**Kiro Usage:** Kiro CLI helped identify all 30+ agentRationale update locations and systematically replaced them with the new helper.
+
+---
+
+## Day 3 - January 12, 2026
+
 ### Dashboard Design v2
 - Redesigned to terminal/hacker aesthetic
 - Implemented two-column layout (Problems | Solutions)

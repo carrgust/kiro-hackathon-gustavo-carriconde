@@ -51,7 +51,8 @@ export default function Dashboard() {
     dnaUnlocked: false,
     generatedDNA: null,
     agentRationale: [],
-    chatHistory: []
+    chatHistory: [],
+    prdAssessed: false
   });
   
   // Ref to track current state for use in intervals
@@ -281,6 +282,113 @@ export default function Dashboard() {
     }));
   }, [state.hypotheses, state.solutions, state.requirements, scoring.canCreateDNA]);
 
+  // Assess if requirements are sufficient for PRD generation
+  const assessRequirements = useCallback(async (requirements: Hypothesis[], niche: string): Promise<{ sufficient: boolean; missing: string[] }> => {
+    const apiKey = getStoredApiKey();
+    if (!apiKey || apiKey === 'demo') {
+      return { sufficient: true, missing: [] }; // Skip in demo mode
+    }
+
+    const reqList = requirements.map((r, i) => `${i + 1}. ${r.text}`).join('\n');
+    
+    const prompt = `You are a software architect reviewing requirements for a ${niche} app. Here are the current requirements:
+
+${reqList}
+
+Are these SUFFICIENT to build a complete, production-ready app? If NOT sufficient, respond with JSON: {"sufficient": false, "missing": ["FR: ...", "NFR: ..."]}.
+If sufficient, respond with JSON: {"sufficient": true, "missing": []}.
+
+Respond ONLY with valid JSON, no other text.`;
+
+    try {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': window.location.origin,
+        },
+        body: JSON.stringify({
+          model: 'deepseek/deepseek-r1-0528:free',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.3,
+        }),
+      });
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || '{"sufficient": true, "missing": []}';
+      
+      // Extract JSON from response (handle markdown code blocks)
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const result = jsonMatch ? JSON.parse(jsonMatch[0]) : { sufficient: true, missing: [] };
+      
+      return result;
+    } catch (error) {
+      console.error('[AUTO-PRD] Assessment error:', error);
+      return { sufficient: true, missing: [] }; // Fail open
+    }
+  }, []);
+
+  // AUTO-PRD: Assess requirements when threshold reached
+  useEffect(() => {
+    const validatedProblems = state.hypotheses.filter(h => h.state === 'fact').length;
+    const validatedSolutions = state.solutions.filter(h => h.state === 'fact').length;
+    const requirementsCount = state.requirements.length;
+    
+    // Trigger when: 15+ requirements AND 2+ validated problems AND 2+ validated solutions
+    const shouldAssess = requirementsCount >= 15 && validatedProblems >= 2 && validatedSolutions >= 2;
+    
+    if (shouldAssess && !state.prdAssessed && hypothesisService) {
+      console.log('[AUTO-PRD] Threshold reached - assessing requirements...');
+      setState(prev => ({ ...prev, prdAssessed: true })); // Prevent re-assessment
+      
+      addRationale('Assessing requirements for PRD...');
+      
+      // Assess and handle result
+      (async () => {
+        const assessment = await assessRequirements(state.requirements, state.niche);
+        
+        if (!assessment.sufficient && assessment.missing.length > 0) {
+          console.log('[AUTO-PRD] Missing requirements:', assessment.missing);
+          addRationale(`Missing ${assessment.missing.length} requirements - generating...`);
+          
+          // Generate missing requirements
+          for (const missingReq of assessment.missing) {
+            const type = missingReq.startsWith('NFR:') ? 'non-functional' : 'functional';
+            const text = missingReq.replace(/^(FR:|NFR:)\s*/, '');
+            
+            const newReq: Hypothesis = {
+              id: `req-${Date.now()}-${Math.random()}`,
+              text,
+              type: type as 'functional' | 'non-functional',
+              state: 'hypothesis',
+              confidence: 0,
+              sources: [],
+              status: 'pending',
+              createdAt: new Date()
+            };
+            
+            setState(prev => ({
+              ...prev,
+              requirements: [...prev.requirements, newReq]
+            }));
+            
+            // Research the new requirement
+            setTimeout(() => researchHypothesisRef.current?.(newReq, 'requirements'), 300);
+          }
+        } else {
+          console.log('[AUTO-PRD] Requirements sufficient - generating PRD...');
+          addRationale('✓ Requirements sufficient - generating PRD...');
+          
+          // Auto-generate PRD
+          setTimeout(() => {
+            handleGeneratePRD();
+          }, 1000);
+        }
+      })();
+    }
+  }, [state.requirements.length, state.hypotheses, state.solutions, state.prdAssessed, state.requirements, state.niche, hypothesisService, assessRequirements, addRationale]);
+
   // Real streaming rationale updates
   useEffect(() => {
     if (!engineRunning || !streamingService) return;
@@ -370,7 +478,7 @@ export default function Dashboard() {
       }
       
       // AUTO-CHAIN: When solution becomes fact, generate requirement (silent)
-      if (isFact && column === 'solutions' && stateRef.current.requirements.length < 4) {
+      if (isFact && column === 'solutions' && stateRef.current.requirements.length < 20) {
         setTimeout(async () => {
           try {
             const type = Math.random() < 0.6 ? 'functional' : 'non-functional';
@@ -378,7 +486,7 @@ export default function Dashboard() {
             const newReq = { ...newReqs[0], type: type as 'functional' | 'non-functional', status: 'pending' as const };
             setState(prev => ({
               ...prev,
-              requirements: [...prev.requirements, newReq].slice(0, 4)
+              requirements: [...prev.requirements, newReq].slice(0, 20)
             }));
             setTimeout(() => researchHypothesisRef.current?.(newReq, 'requirements'), 200);
           } catch (e) { console.error('Auto-requirement error:', e); }
@@ -411,7 +519,7 @@ export default function Dashboard() {
       const problemsFacts = currentState.hypotheses.filter(h => h.state === 'fact').length;
       const solutionsFacts = currentState.solutions.filter(h => h.state === 'fact').length;
       const requirementsFacts = currentState.requirements.filter(h => h.state === 'fact').length;
-      const allComplete = problemsFacts >= 4 && solutionsFacts >= 4 && requirementsFacts >= 4;
+      const allComplete = problemsFacts >= 4 && solutionsFacts >= 4 && requirementsFacts >= 15;
       
       // Dynamic interval: fast (800ms) when generating, slow (3000ms) when complete
       const nextInterval = allComplete ? 3000 : 800;
@@ -436,7 +544,7 @@ export default function Dashboard() {
         
         const shouldGenerateProblem = problemsCount < 4;
         const shouldGenerateSolution = problemsFacts >= 2 && solutionsCount < 4;
-        const shouldGenerateRequirement = problemsFacts >= 2 && solutionsFacts >= 2 && requirementsCount < 4;
+        const shouldGenerateRequirement = problemsFacts >= 2 && solutionsFacts >= 2 && requirementsCount < 20;
         
         try {
           if (shouldGenerateProblem) {
@@ -472,7 +580,7 @@ export default function Dashboard() {
             
             setState(prev => ({
               ...prev,
-              requirements: [...prev.requirements, newReq].slice(0, 4)
+              requirements: [...prev.requirements, newReq].slice(0, 20)
             }));
             addRationale(`+ Requirement: ${type}`);
             
