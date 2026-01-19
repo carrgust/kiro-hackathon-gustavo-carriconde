@@ -13,7 +13,7 @@ export default function DNAButton({ unlocked, validatedCount, requiredCount, onC
   const progress = (validatedCount / requiredCount) * 100;
 
   return (
-    <div className="text-center py-4 sm:py-6 metal-divider border-t font-mono px-4 sm:px-0 md:relative fixed bottom-0 left-0 right-0 bg-[#0a0a0f] md:bg-transparent z-40 md:z-auto safe-area-bottom">
+    <div className="text-center py-4 sm:py-6 metal-divider border-t font-mono px-4 sm:px-0 md:relative fixed bottom-0 left-0 right-0 md:bg-transparent z-40 md:z-auto safe-area-bottom" style={{ backgroundColor: 'var(--bg-base)' }}>
       <motion.button
         onClick={onClick}
         disabled={!unlocked}
@@ -83,8 +83,8 @@ export default function DNAButton({ unlocked, validatedCount, requiredCount, onC
                 <span>{validatedCount}/{requiredCount} validated</span>
                 <motion.span
                   key={progress}
-                  initial={{ scale: 1.2, color: '#ffffff' }}
-                  animate={{ scale: 1, color: '#6b7280' }}
+                  initial={{ scale: 1.2, color: 'var(--text-primary-color)' }}
+                  animate={{ scale: 1, color: 'var(--text-muted-color)' }}
                 >
                   {progress.toFixed(0)}%
                 </motion.span>
@@ -98,7 +98,8 @@ export default function DNAButton({ unlocked, validatedCount, requiredCount, onC
       <AnimatePresence>
         {unlocked && (
           <motion.div
-            className="mt-2 text-green-400 text-xs font-semibold flex items-center justify-center gap-1"
+            className="mt-2 text-xs font-semibold flex items-center justify-center gap-1"
+            style={{ color: 'var(--status-success)' }}
             initial={{ opacity: 0, y: 10, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10 }}

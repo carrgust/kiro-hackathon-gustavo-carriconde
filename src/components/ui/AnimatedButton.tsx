@@ -15,7 +15,7 @@ const variants = {
   primary: 'bg-gradient-to-r from-white to-white text-white hover:from-gray-100 hover:to-gray-100',
   secondary: 'bg-gray-800 text-gray-200 hover:bg-gray-700 border border-gray-700',
   ghost: 'bg-transparent text-gray-400 hover:text-white hover:bg-gray-800/50',
-  danger: 'bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30',
+  danger: 'border',
 };
 
 const sizes = {
@@ -45,6 +45,11 @@ export default function AnimatedButton({
         ${glow && variant === 'primary' ? 'shadow-[0_0_20px_rgba(6,182,212,0.4)]' : ''}
         ${className}
       `}
+      style={variant === 'danger' ? {
+        backgroundColor: 'rgba(239, 68, 68, 0.2)',
+        color: 'var(--status-error)',
+        borderColor: 'rgba(239, 68, 68, 0.3)'
+      } : {}}
       whileHover={!disabled ? { 
         scale: 1.02,
         y: -2,

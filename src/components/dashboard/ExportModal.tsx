@@ -144,7 +144,7 @@ export function ExportModal({
           aria-labelledby="export-title"
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 id="export-title" className="text-lg text-green-400 font-bold">
+            <h2 id="export-title" className="text-lg font-bold" style={{ color: 'var(--status-success)' }}>
               Export & Share
             </h2>
             <button
@@ -162,7 +162,8 @@ export function ExportModal({
               <span className="text-sm text-gray-400">Shareable Link</span>
               <button
                 onClick={handleShare}
-                className="flex items-center gap-2 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors"
+                className="flex items-center gap-2 px-3 py-1.5 text-white text-sm rounded-lg transition-colors"
+                style={{ backgroundColor: 'var(--status-success)' }}
               >
                 {copied ? <Check size={14} /> : <Copy size={14} />}
                 {copied ? 'Copied!' : 'Copy Link'}
@@ -186,8 +187,8 @@ export function ExportModal({
                     : 'border-gray-700 hover:border-green-500/50 hover:bg-gray-800/50'
                 }`}
               >
-                <div className={`p-2 rounded-lg ${option.disabled ? 'bg-gray-800' : 'bg-green-500/20'}`}>
-                  <span className={option.disabled ? 'text-gray-600' : 'text-green-400'}>
+                <div className="p-2 rounded-lg" style={{ backgroundColor: option.disabled ? 'var(--border-default)' : 'rgba(34, 197, 94, 0.2)' }}>
+                  <span style={{ color: option.disabled ? 'var(--text-muted-color)' : 'var(--status-success)' }}>
                     {option.icon}
                   </span>
                 </div>

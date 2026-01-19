@@ -42,7 +42,8 @@ Stop spending weeks on manual market research. Let AI discover validated opportu
 ### 📋 **PRD Generator**
 - Create comprehensive Product Requirements Documents
 - Markdown format (Notion, GitHub, Confluence compatible)
-- Includes: Executive Summary, Requirements, Success Metrics, Risks
+- Includes: Executive Summary, Requiremen
+- ts, Success Metrics, Risks
 - Preview rendered markdown or raw source
 - Download as .md file
 
@@ -64,6 +65,7 @@ Stop spending weeks on manual market research. Let AI discover validated opportu
 ### Prerequisites
 - Node.js 18+
 - OpenRouter API key ([get one free](https://openrouter.ai))
+- Serper API key ([get 2,500 free searches](https://serper.dev)) - Optional but recommended for web search
 
 ### Installation
 
@@ -74,6 +76,10 @@ cd kiro-hackathon-gustavo-carriconde
 
 # Install dependencies
 npm install
+
+# Copy environment template and add your API keys
+cp .env.local.example .env.local
+# Edit .env.local and add your OPENROUTER_API_KEY and SERPER_API_KEY
 
 # Start development server
 npm run dev

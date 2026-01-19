@@ -241,7 +241,7 @@ export default function RadarEqualizer({
             const progress = blip.currentDistance / blip.targetDistance;
             const opacity = 0.4 + (progress * 0.6); // Fade in as it expands
             const radius = 1.5 + (progress * 0.5); // Grow from 1.5 to 2px
-            const color = blip.isValidated ? '#22c55e' : '#f97316'; // Green if validated, orange if pending
+            const color = blip.isValidated ? 'var(--status-success)' : 'var(--status-warning)'; // Green if validated, orange if pending
             
             return (
               <motion.g

@@ -56,7 +56,28 @@ class HypothesisService {
 
 ### 2. ScoringEngine (`src/lib/research/engines/scoring-engine.ts`)
 
-**Purpose**: Validate hypotheses using structured criteria and web search.
+**Purpose**: Validate hypotheses using structured criteria and web search with source prioritization.
+
+**Source Prioritization System**:
+
+| Priority | Source Type | Weight | Use Cases |
+|----------|-------------|--------|-----------|
+| 1 | Official | 1.0 | Company sites, gov/edu domains, major platforms |
+| 2 | Structured API | 0.95 | Academic papers (OpenAlex), structured data |
+| 3 | News | 0.80 | TechCrunch, Reuters, Bloomberg, WSJ |
+| 4 | Community | 0.75 | Hacker News, forums, blogs |
+| 5 | Wikipedia | 0.70 | **FALLBACK ONLY** - definitions, history, company info |
+
+**Wikipedia Context Filtering**:
+- ✅ **Allowed**: Industry definitions, company founding dates, HQ locations, historical context
+- ❌ **Blocked**: Current market data, pricing, competitive analysis, problem validation
+
+**Confidence Weighting**:
+- Base confidence calculated from result count and diversity
+- Source quality bonus: `(avg_weight - 0.75) * 20` points
+- Wikipedia penalty: `-5%` per Wikipedia source beyond 2
+- Official sources bonus: `+8%` per official source
+- Academic sources bonus: `+10%` per academic source
 
 **Scoring Criteria**:
 

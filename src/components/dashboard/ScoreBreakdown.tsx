@@ -30,7 +30,7 @@ export default function ScoreBreakdown({ isVisible, scores, total }: ScoreBreakd
             ))}
             <div className="border-t border-gray-700 pt-2 flex justify-between">
               <span className="text-gray-300 font-semibold">Total</span>
-              <span className="text-green-400 font-bold">{total}%</span>
+              <span className="font-bold" style={{ color: 'var(--status-success)' }}>{total}%</span>
             </div>
           </div>
         </motion.div>

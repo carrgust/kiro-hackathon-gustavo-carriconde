@@ -89,10 +89,19 @@ Keep under 60 characters.`;
         const data = await response.json();
         console.log('[Research] Agent returned:', data.confidence, 'confidence');
         confidence = data.confidence || 50;
-        // Format sources as "[Domain] Title ||| Snippet ||| URL" for consistency
-        sources = data.sources?.map((s: { title: string; snippet: string; url: string; domain: string }) => 
-          `[${s.domain || 'Web'}] ${s.title} ||| ${s.snippet || ''} ||| ${s.url}`
-        ) || [];
+        // Format sources with source type and confidence weight for better tracking
+        sources = data.sources?.map((s: { 
+          title: string; 
+          snippet: string; 
+          url: string; 
+          domain: string; 
+          source_type?: string; 
+          confidence_weight?: number 
+        }) => {
+          const sourceTypeLabel = s.source_type ? `[${s.source_type.toUpperCase()}]` : '';
+          const weightLabel = s.confidence_weight ? ` (${Math.round(s.confidence_weight * 100)}%)` : '';
+          return `${sourceTypeLabel}[${s.domain || 'Web'}]${weightLabel} ${s.title} ||| ${s.snippet || ''} ||| ${s.url}`;
+        }) || [];
       } else {
         console.error('[Research] Agent response not ok:', response.status);
       }

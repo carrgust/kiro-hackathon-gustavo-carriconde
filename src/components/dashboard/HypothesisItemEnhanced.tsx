@@ -1,6 +1,6 @@
 import { useState, memo, useMemo, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, CheckCircle2, Trash2, Loader2, AlertTriangle, AlertCircle } from 'lucide-react';
+import { Trash2, Loader2, AlertTriangle, AlertCircle } from 'lucide-react';
 import { Hypothesis } from '@/types/project';
 import ScoreBreakdown from './ScoreBreakdown';
 import SourceStack from './SourceStack';
@@ -28,33 +28,41 @@ function ConfidenceGauge({
   penalty: number;
 }) {
   const effectiveConfidence = Math.max(0, confidence - penalty);
-  const gaugeColor = stallState === 'critical' ? 'bg-red-500' : 
-                     stallState === 'warning' ? 'bg-yellow-500' :
-                     effectiveConfidence >= 90 ? 'bg-green-500' : 
-                     effectiveConfidence >= 50 ? 'bg-yellow-500' : 
-                     effectiveConfidence > 0 ? 'bg-orange-500' : 'bg-gray-700';
-  const textColor = stallState === 'critical' ? 'text-red-400' :
-                    stallState === 'warning' ? 'text-yellow-400' :
-                    effectiveConfidence >= 90 ? 'text-green-400' : 
-                    effectiveConfidence >= 50 ? 'text-yellow-400' : 
-                    effectiveConfidence > 0 ? 'text-orange-400' : 'text-gray-500';
+  
+  const getGaugeStyle = () => {
+    if (stallState === 'critical') return { backgroundColor: 'var(--status-error)' };
+    if (stallState === 'warning') return { backgroundColor: 'var(--status-warning)' };
+    if (effectiveConfidence >= 90) return { backgroundColor: 'var(--status-success)' };
+    if (effectiveConfidence >= 50) return { backgroundColor: 'var(--status-warning)' };
+    if (effectiveConfidence > 0) return { backgroundColor: 'var(--status-warning)' };
+    return { backgroundColor: 'var(--border-default)' };
+  };
+  
+  const getTextStyle = () => {
+    if (stallState === 'critical') return { color: 'var(--status-error)' };
+    if (stallState === 'warning') return { color: 'var(--status-warning)' };
+    if (effectiveConfidence >= 90) return { color: 'var(--status-success)' };
+    if (effectiveConfidence >= 50) return { color: 'var(--status-warning)' };
+    if (effectiveConfidence > 0) return { color: 'var(--status-warning)' };
+    return { color: 'var(--text-muted-color)' };
+  };
   const zone = effectiveConfidence >= 90 ? 'FACT' : 'HYPOTHESIS';
   
   return (
     <div className="mt-2">
       <div className="flex items-center justify-between mb-1">
-        <span className={`text-[10px] font-mono font-bold ${textColor}`}>
+        <span className="text-[10px] font-mono font-bold" style={getTextStyle()}>
           CONFIDENCE: {effectiveConfidence > 0 ? `${effectiveConfidence}%` : '—'}
-          {penalty > 0 && <span className="text-red-500 ml-1">(-{penalty}%)</span>}
+          {penalty > 0 && <span className="ml-1" style={{ color: 'var(--status-error)' }}>(-{penalty}%)</span>}
         </span>
         <div className="flex items-center gap-1">
           {stallState === 'warning' && (
-            <AlertTriangle size={10} className="text-yellow-500" />
+            <AlertTriangle size={10} style={{ color: 'var(--status-warning)' }} />
           )}
           {stallState === 'critical' && (
-            <AlertCircle size={10} className="text-red-500" />
+            <AlertCircle size={10} style={{ color: 'var(--status-error)' }} />
           )}
-          <span className={`text-[9px] font-mono ${effectiveConfidence >= 90 ? 'text-green-500' : 'text-gray-500'}`}>
+          <span className={`text-[9px] font-mono`} style={{ color: effectiveConfidence >= 90 ? 'var(--status-success)' : 'var(--text-muted-color)' }}>
             {effectiveConfidence > 0 ? zone : 'PENDING'}
           </span>
         </div>
@@ -62,7 +70,8 @@ function ConfidenceGauge({
       <div className="relative h-2 bg-gray-800 rounded-full overflow-hidden">
         <div className="absolute left-[90%] top-0 bottom-0 w-px bg-gray-500 z-10" />
         <motion.div 
-          className={`h-full ${gaugeColor}`}
+          className="h-full"
+          style={getGaugeStyle()}
           animate={{ width: `${effectiveConfidence}%` }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
         />
@@ -191,8 +200,7 @@ const HypothesisItemEnhanced = memo(function HypothesisItemEnhanced({
   const config = useMemo(() => {
     if (hypothesis.state === 'fact' && effectiveConfidence >= 90) {
       return {
-        icon: CheckCircle2,
-        color: 'text-green-400',
+        color: 'var(--status-success)',
         borderColor: 'border-green-400/30',
         bgGradient: 'from-green-500/10 to-transparent',
         glow: 'shadow-[0_0_20px_rgba(34,197,94,0.2)]',
@@ -200,8 +208,7 @@ const HypothesisItemEnhanced = memo(function HypothesisItemEnhanced({
       };
     }
     return {
-      icon: Sparkles,
-      color: 'text-orange-400',
+      color: 'var(--status-warning)',
       borderColor: 'border-orange-400/30',
       bgGradient: 'from-orange-500/10 to-transparent',
       glow: '',
@@ -209,7 +216,6 @@ const HypothesisItemEnhanced = memo(function HypothesisItemEnhanced({
     };
   }, [hypothesis.state, effectiveConfidence]);
 
-  const StatusIcon = config.icon;
   const isAnimating = isProcessing || isRevealing || (hypothesis.state === 'hypothesis' && hypothesis.confidence === 0);
 
   const breakdownScores = useMemo(() => [
@@ -258,15 +264,6 @@ const HypothesisItemEnhanced = memo(function HypothesisItemEnhanced({
       tabIndex={0}
     >
       <div className="relative p-3 flex items-start gap-3">
-        <motion.div
-          animate={isAnimating ? { rotate: 360 } : {}}
-          transition={isAnimating ? { duration: 2, repeat: Infinity, ease: 'linear' } : {}}
-          className={`flex-shrink-0 ${config.color}`}
-          aria-hidden="true"
-        >
-          <StatusIcon size={16} />
-        </motion.div>
-
         <div className="flex-1 min-w-0">
           <p className="text-sm text-gray-200 leading-relaxed font-mono">
             {hypothesis.text}
@@ -298,11 +295,12 @@ const HypothesisItemEnhanced = memo(function HypothesisItemEnhanced({
                 >
                   <Loader2 
                     size={14} 
-                    className={`animate-spin ${
-                      stallState === 'critical' ? 'text-red-400' : 
-                      stallState === 'warning' ? 'text-yellow-400' : 
-                      'text-white'
-                    }`} 
+                    className="animate-spin"
+                    style={{ color: 
+                      stallState === 'critical' ? 'var(--status-error)' : 
+                      stallState === 'warning' ? 'var(--status-warning)' : 
+                      'var(--text-primary-color)'
+                    }} 
                   />
                 </motion.div>
               )}

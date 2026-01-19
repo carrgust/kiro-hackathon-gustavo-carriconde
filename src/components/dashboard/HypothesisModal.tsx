@@ -58,7 +58,7 @@ function SourceCard({ source, onRemove }: SourceCardProps) {
 
   const { title, snippet, url, domain } = parseSource(source);
   const faviconUrl = domain ? getFaviconUrl(domain) : null;
-  const bgColor = domain ? getDomainColor(domain) : '#374151';
+  const bgColor = domain ? getDomainColor(domain) : 'var(--border-default)';
 
   useEffect(() => {
     if (url === '#') {
@@ -158,7 +158,7 @@ function SourceCard({ source, onRemove }: SourceCardProps) {
   return (
     <div
       onClick={handleCardClick}
-      className="relative flex items-start gap-3 p-3 metal-card-dark rounded-lg hover:border-gray-600 transition-all group cursor-pointer"
+      className="relative flex items-start py-3 px-0 metal-card-dark rounded-lg hover:border-gray-600 transition-all group cursor-pointer"
     >
       {/* Remove button - show on hover */}
       <button
@@ -170,20 +170,22 @@ function SourceCard({ source, onRemove }: SourceCardProps) {
         <X className="w-3 h-3" />
       </button>
 
-      <div className="flex-1 min-w-0 flex items-start gap-2">
-        <div className="w-4 h-4 rounded flex-shrink-0 flex items-center justify-center overflow-hidden mt-0.5">
-          {faviconUrl ? <img src={faviconUrl} alt="" className="w-4 h-4 object-contain" /> : <Globe className="w-3 h-3 text-gray-400" />}
+      {/* Text content - now takes full left space */}
+      <div className="flex-1 min-w-0">
+        <div className="text-white text-[11px] font-medium line-clamp-2 group-hover:text-white transition-colors leading-tight">
+          {title}
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-white text-[11px] font-medium line-clamp-2 group-hover:text-white transition-colors leading-tight pr-6">
-            {title}
-          </div>
-          {snippet && <div className="text-gray-400 text-[10px] font-medium line-clamp-2 mt-1 leading-snug">{snippet}</div>}
-          <div className="text-gray-500 text-[9px] truncate mt-1">{domain || url}</div>
-        </div>
+        {snippet && <div className="text-gray-400 text-[10px] font-medium line-clamp-2 mt-1 leading-snug">{snippet}</div>}
+        <div className="text-gray-500 text-[9px] truncate mt-1">{domain || url}</div>
       </div>
-      <div className="w-20 h-20 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center border border-gray-700/50" style={{ backgroundColor: bgColor }}>
+
+      {/* Image with overlaid favicon */}
+      <div className="relative w-20 h-20 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center border border-gray-700/50" style={{ backgroundColor: bgColor }}>
         {renderThumbnail()}
+        {/* Favicon overlay on bottom-right */}
+        <div className="absolute bottom-1 right-1 w-9 h-9 rounded flex items-center justify-center">
+          {faviconUrl ? <img src={faviconUrl} alt="" className="w-6 h-6 object-contain" /> : <Globe className="w-6 h-6 text-gray-400" />}
+        </div>
       </div>
     </div>
   );

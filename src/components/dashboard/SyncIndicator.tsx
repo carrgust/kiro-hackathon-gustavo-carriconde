@@ -17,8 +17,8 @@ export default function SyncIndicator({ status, connectedUsers, lastSyncTime, us
 
   const getStatusColor = () => {
     switch (status) {
-      case 'connected': return 'text-green-400';
-      case 'connecting': return 'text-yellow-400';
+      case 'connected': return 'var(--status-success)';
+      case 'connecting': return 'var(--status-warning)';
       case 'syncing': return 'text-white';
       default: return 'text-gray-500';
     }
@@ -50,13 +50,14 @@ export default function SyncIndicator({ status, connectedUsers, lastSyncTime, us
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const colors = ['bg-white', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500'];
+  const colors = ['var(--text-primary-color)', 'var(--status-success)', 'var(--accent-primary)', 'var(--status-warning)', 'var(--status-error)'];
 
   return (
     <div className="relative flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 bg-gray-900/50 rounded-lg border border-gray-700">
       {/* Status indicator with pulse */}
       <motion.div 
-        className={`flex items-center gap-1.5 ${getStatusColor()}`}
+        className="flex items-center gap-1.5"
+        style={{ color: getStatusColor() }}
         animate={status === 'syncing' ? { scale: [1, 1.05, 1] } : {}}
         transition={{ duration: 0.5, repeat: status === 'syncing' ? Infinity : 0 }}
       >
@@ -80,7 +81,8 @@ export default function SyncIndicator({ status, connectedUsers, lastSyncTime, us
               {(userNames.length > 0 ? userNames : ['You']).slice(0, 3).map((name, i) => (
                 <motion.div
                   key={i}
-                  className={`w-6 h-6 rounded-full ${colors[i % colors.length]} flex items-center justify-center text-[10px] font-bold text-white border-2 border-gray-900`}
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white border-2 border-gray-900"
+                  style={{ backgroundColor: colors[i % colors.length] }}
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: i * 0.1 }}

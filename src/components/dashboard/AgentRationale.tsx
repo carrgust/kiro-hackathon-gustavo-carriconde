@@ -7,13 +7,13 @@ interface AgentRationaleProps {
 }
 
 const TAG_COLORS: Record<string, string> = {
-  'THINKING': 'text-purple-500',
-  'HYPOTHESIS': 'text-yellow-500',
-  'SEARCHING': 'text-white',
-  'FOUND': 'text-white',
-  'VALIDATING': 'text-orange-500',
-  'VALIDATED': 'text-green-500',
-  'ERROR': 'text-red-500',
+  'THINKING': 'var(--accent-primary)',
+  'HYPOTHESIS': 'var(--status-warning)',
+  'SEARCHING': 'var(--text-primary-color)',
+  'FOUND': 'var(--text-primary-color)',
+  'VALIDATING': 'var(--status-warning)',
+  'VALIDATED': 'var(--status-success)',
+  'ERROR': 'var(--status-error)',
 };
 
 function parseTaggedLine(line: string) {
@@ -43,7 +43,7 @@ export default function AgentRationale({
         <div className="metal-label text-xs font-mono mb-2 flex items-center">
           <span>agent rationale</span>
           {autopilotEnabled && (
-            <span className="ml-2 px-1 text-green-500 text-xs">[AP]</span>
+            <span className="ml-2 px-1 text-xs" style={{ color: 'var(--status-success)' }}>[AP]</span>
           )}
           {isActive && (
             <span className="ml-2 metal-status active"></span>
@@ -52,21 +52,22 @@ export default function AgentRationale({
         
         <div 
           ref={scrollRef}
-          className="h-48 overflow-y-auto font-mono text-xs text-gray-300 space-y-0.5 metal-scrollbar"
+          className="h-48 overflow-y-auto font-mono text-xs space-y-0.5 metal-scrollbar"
+          style={{ color: 'var(--text-secondary-color)' }}
         >
           {rationale.length === 0 ? (
-            <div className="text-gray-600">Waiting for engine to start...</div>
+            <div className="text-xs" style={{ color: 'var(--text-muted-color)' }}>Waiting for engine to start...</div>
           ) : (
             rationale.map((line, index) => {
               const { tag, text, color } = parseTaggedLine(line);
               return (
                 <div key={index} className="leading-tight">
-                  <span className="text-gray-600">&gt;</span>
-                  {autopilotEnabled && <span className="text-green-500 ml-1">[AP]</span>}
+                  <span style={{ color: 'var(--text-muted-color)' }}>&gt;</span>
+                  {autopilotEnabled && <span className="ml-1" style={{ color: 'var(--status-success)' }}>[AP]</span>}
                   {tag ? (
                     <>
-                      <span className={`ml-1 font-bold ${color}`}>[{tag}]</span>
-                      <span className="ml-1 text-gray-300">{text}</span>
+                      <span className="ml-1 font-bold" style={{ color }}>[{tag}]</span>
+                      <span className="ml-1" style={{ color: 'var(--text-secondary-color)' }}>{text}</span>
                     </>
                   ) : (
                     <span className="ml-1">{text}</span>

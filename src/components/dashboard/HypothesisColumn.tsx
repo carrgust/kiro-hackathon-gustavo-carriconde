@@ -115,7 +115,7 @@ const HypothesisColumn = memo(function HypothesisColumn({
           </div>
           <motion.div 
             className="text-white text-xl font-mono font-bold relative"
-            style={{ textShadow: '0 0 10px rgba(255,255,255,0.3)' }}
+            style={{ textShadow: 'var(--shadow-text-glow)' }}
             key={score}
             initial={{ scale: 1.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -123,7 +123,8 @@ const HypothesisColumn = memo(function HypothesisColumn({
           >
             {/* Glow effect on score change */}
             <motion.div
-              className="absolute inset-0 bg-green-400/20 rounded-full blur-md"
+              className="absolute inset-0 rounded-full blur-md"
+              style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)' }}
               initial={{ scale: 2, opacity: 0.8 }}
               animate={{ scale: 1, opacity: 0 }}
               transition={{ duration: 0.5 }}
@@ -233,7 +234,8 @@ const HypothesisColumn = memo(function HypothesisColumn({
             whileHover={{ scale: 1.05 }}
           >
             <motion.span 
-              className="text-orange-400 text-sm"
+              className="text-sm"
+              style={{ color: 'var(--status-warning)' }}
               animate={{ opacity: [0.5, 1, 0.5] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
@@ -248,7 +250,7 @@ const HypothesisColumn = memo(function HypothesisColumn({
             <motion.span 
               className="text-white text-sm"
               animate={{ 
-                boxShadow: ['0 0 0px #ffffff', '0 0 8px #ffffff', '0 0 0px #ffffff']
+                boxShadow: ['0 0 0px var(--text-primary-color)', '0 0 8px var(--text-primary-color)', '0 0 0px var(--text-primary-color)']
               }}
               transition={{ duration: 1.5, repeat: Infinity }}
             >

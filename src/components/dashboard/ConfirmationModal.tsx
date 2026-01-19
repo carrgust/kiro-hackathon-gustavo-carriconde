@@ -49,7 +49,8 @@ export default function ConfirmationModal({ isOpen, title, message, onConfirm, o
           </button>
           <button
             onClick={handleConfirm}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors"
+            className="px-4 py-2 text-white rounded text-sm transition-colors"
+            style={{ backgroundColor: 'var(--status-error)' }}
           >
             Remove
           </button>

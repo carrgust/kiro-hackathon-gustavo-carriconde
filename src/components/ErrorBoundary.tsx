@@ -66,11 +66,11 @@ export class ErrorBoundary extends React.Component<Props, State> {
             transition={{ duration: 0.3 }}
           >
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-3 bg-red-500/20 rounded-lg">
-                <AlertTriangle className="w-8 h-8 text-red-400" aria-hidden="true" />
+              <div className="p-3 rounded-lg" style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)' }}>
+                <AlertTriangle className="w-8 h-8" style={{ color: 'var(--status-error)' }} aria-hidden="true" />
               </div>
               <div>
-                <h1 className="text-red-400 text-xl font-bold">Something went wrong</h1>
+                <h1 className="text-xl font-bold" style={{ color: 'var(--status-error)' }}>Something went wrong</h1>
                 <p className="text-gray-500 text-sm">An unexpected error occurred</p>
               </div>
             </div>
@@ -86,7 +86,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
                   Technical details
                 </summary>
                 <div className="p-3 border-t border-gray-800">
-                  <p className="text-xs text-red-400 mb-2 font-semibold">
+                  <p className="text-xs mb-2 font-semibold" style={{ color: 'var(--status-error)' }}>
                     {this.state.error.name}: {this.state.error.message}
                   </p>
                   {this.state.errorInfo?.componentStack && (
@@ -109,7 +109,10 @@ export class ErrorBoundary extends React.Component<Props, State> {
               </button>
               <button
                 onClick={this.handleReload}
-                className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="flex-1 py-3 px-4 text-white rounded-lg transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2"
+                style={{ 
+                  backgroundColor: 'var(--status-error)'
+                }}
                 aria-label="Reload the page"
               >
                 <RefreshCw size={16} aria-hidden="true" />

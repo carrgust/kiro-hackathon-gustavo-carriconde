@@ -1034,7 +1034,7 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
   };
 
   return (
-    <div className={`min-h-screen relative ${state.autopilotEnabled ? 'autopilot-scan' : ''}`} style={{ background: '#1a1a1a' }}>
+    <div className={`min-h-screen relative ${state.autopilotEnabled ? 'autopilot-scan' : ''}`} style={{ background: 'var(--bg-surface)' }}>
       {/* API Error Banner */}
       <APIStatusBanner error={apiError} onDismiss={() => setApiError(null)} />
       
@@ -1274,7 +1274,7 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
             background: 'rgba(26, 26, 36, 0.95)',
             border: '1px solid rgba(148, 163, 184, 0.2)',
             backdropFilter: 'blur(12px)',
-            color: '#f8fafc',
+            color: 'var(--text-primary-color)',
           },
           className: 'font-mono text-sm',
         }}

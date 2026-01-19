@@ -45,7 +45,7 @@ function SourceBadge({ source, index }: { source: string; index: number }) {
     >
       <motion.div
         className="w-8 h-8 rounded-full border-2 border-gray-700 flex items-center justify-center overflow-hidden"
-        style={{ backgroundColor: imgError ? bgColor : '#1f2937' }}
+        style={{ backgroundColor: imgError ? bgColor : 'var(--bg-elevated)' }}
         whileHover={{ scale: 1.2, zIndex: 30 }}
         transition={{ type: 'spring', stiffness: 400, damping: 15 }}
       >

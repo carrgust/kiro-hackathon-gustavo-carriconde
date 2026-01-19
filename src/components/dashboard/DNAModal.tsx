@@ -4,6 +4,18 @@ import { X, Download, Play, FileText, Globe, CheckCircle2, Loader2 } from 'lucid
 import { DNAData } from '@/types/project';
 import AutoCoderPanel from './AutoCoderPanel';
 
+const getTabColorStyle = (color: string) => {
+  const colors: Record<string, string> = {
+    cyan: 'var(--accent-primary)',
+    green: 'var(--status-success)',
+    yellow: 'var(--status-warning)',
+    orange: 'var(--status-warning)',
+    red: 'var(--status-error)',
+    purple: 'var(--accent-primary)',
+  };
+  return colors[color] || 'var(--text-secondary-color)';
+};
+
 interface DNAModalProps {
   dna: DNAData | null;
   onClose: () => void;
@@ -111,7 +123,7 @@ export default function DNAModal({
                 transition={{ delay: 0.1 }}
               >
                 <h1 id="dna-modal-title" className="text-2xl font-bold font-mono flex items-center gap-2" style={{ color: 'var(--metal-accent)' }}>
-                  <CheckCircle2 size={28} className="text-green-400" aria-hidden="true" />
+                  <CheckCircle2 size={28} style={{ color: 'var(--status-success)' }} aria-hidden="true" />
                   DNA GENERATED
                 </h1>
                 <p className="text-gray-400 text-sm mt-1 font-mono">
@@ -146,9 +158,10 @@ export default function DNAModal({
                 onClick={() => setActiveTab(tab.id as 'dna' | 'autocoder')}
                 className={`px-6 py-3 font-mono text-sm transition-all relative focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white ${
                   activeTab === tab.id
-                    ? `text-${tab.color}-400`
+                    ? ''
                     : 'text-gray-500 hover:text-gray-300'
                 }`}
+                style={activeTab === tab.id ? { color: getTabColorStyle(tab.color) } : {}}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
@@ -157,7 +170,8 @@ export default function DNAModal({
                 {tab.label}
                 {activeTab === tab.id && (
                   <motion.div
-                    className={`absolute bottom-0 left-0 right-0 h-0.5 bg-${tab.color}-400`}
+                    className="absolute bottom-0 left-0 right-0 h-0.5"
+                    style={{ backgroundColor: getTabColorStyle(tab.color) }}
                     layoutId="activeTab"
                     transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   />
@@ -210,7 +224,7 @@ export default function DNAModal({
                           transition={{ delay: i * 0.05 }}
                           whileHover={{ x: 4 }}
                         >
-                          <CheckCircle2 size={16} className="text-green-400 flex-shrink-0" aria-hidden="true" />
+                          <CheckCircle2 size={16} style={{ color: 'var(--status-success)' }} className="flex-shrink-0" aria-hidden="true" />
                           <span className="text-gray-300 flex-1 text-sm">{req.text}</span>
                           <span className={`text-xs px-2 py-1 rounded font-mono ${
                             req.type === 'functional' 
@@ -219,7 +233,7 @@ export default function DNAModal({
                           }`}>
                             {req.type === 'functional' ? 'FUNC' : 'NON-FUNC'}
                           </span>
-                          <span className="text-green-400 text-sm font-mono font-semibold" aria-label={`${req.confidence}% confidence`}>
+                          <span className="text-sm font-mono font-semibold" style={{ color: 'var(--status-success)' }} aria-label={`${req.confidence}% confidence`}>
                             {req.confidence}%
                           </span>
                         </motion.li>
@@ -234,7 +248,7 @@ export default function DNAModal({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
                   >
-                    <h3 className="text-sm font-semibold text-yellow-400 mb-2 font-mono">TOKEN COST SUMMARY</h3>
+                    <h3 className="text-sm font-semibold mb-2 font-mono" style={{ color: 'var(--status-warning)' }}>TOKEN COST SUMMARY</h3>
                     <div className="text-lg text-gray-300 font-mono font-bold" aria-label={`Total token cost: ${dna.tokenCost.toLocaleString()} tokens`}>
                       {dna.tokenCost.toLocaleString()} tokens
                     </div>
@@ -297,7 +311,10 @@ export default function DNAModal({
               <motion.button
                 onClick={onStartBuild}
                 aria-label="Start building the product"
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg font-mono font-semibold transition-all shadow-lg flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                className="flex-1 text-white py-3 px-6 rounded-lg font-mono font-semibold transition-all shadow-lg flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900"
+                style={{ 
+                  backgroundColor: 'var(--status-success)'
+                }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >

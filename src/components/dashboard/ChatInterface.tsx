@@ -27,7 +27,7 @@ export default function ChatInterface({ chatHistory, onSendMessage, disabled }: 
         <div className="h-8 overflow-y-auto font-mono text-xs mb-2 space-y-1">
           {chatHistory.slice(-3).map((msg, index) => (
             <div key={index} className="leading-relaxed">
-              <span className={msg.role === 'user' ? 'text-white' : 'text-green-400'}>
+              <span style={{ color: msg.role === 'user' ? 'var(--text-primary-color)' : 'var(--status-success)' }}>
                 {msg.role}:
               </span>
               <span className="text-gray-300 ml-2">{msg.message}</span>

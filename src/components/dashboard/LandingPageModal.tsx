@@ -75,7 +75,7 @@ export default function LandingPageModal({
           <div className="border-b border-gray-700 p-3 sm:p-4 flex items-center justify-between">
             <div>
               <h2 className="text-white text-base sm:text-lg font-semibold flex items-center gap-2">
-                <span className="text-green-400">✓</span> Landing Page Generated
+                <span style={{ color: 'var(--status-success)' }}>✓</span> Landing Page Generated
               </h2>
               <p className="text-gray-500 text-xs mt-1">
                 {problems.length} problems + {solutions.length} solutions → {niche}
@@ -154,7 +154,7 @@ export default function LandingPageModal({
                   onClick={handleCopy}
                   className="absolute top-2 right-2 p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-2 text-xs"
                 >
-                  {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                  {copied ? <Check size={14} style={{ color: 'var(--status-success)' }} /> : <Copy size={14} />}
                   {copied ? 'Copied!' : 'Copy'}
                 </button>
                 <pre className="p-4 text-xs text-gray-300 overflow-auto h-full rounded-lg bg-black/50">
@@ -175,7 +175,7 @@ export default function LandingPageModal({
                 className="flex-1 sm:flex-none px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-white text-sm rounded-lg transition-colors flex items-center justify-center gap-2 min-h-[44px]"
                 whileTap={{ scale: 0.98 }}
               >
-                {copied ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
+                {copied ? <Check size={16} style={{ color: 'var(--status-success)' }} /> : <Copy size={16} />}
                 {copied ? 'Copied!' : 'Copy'}
               </motion.button>
               <motion.button

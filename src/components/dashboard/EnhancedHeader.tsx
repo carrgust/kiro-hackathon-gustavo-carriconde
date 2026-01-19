@@ -1,8 +1,11 @@
+'use client';
+
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Lock, Unlock, Play, Square } from 'lucide-react';
+import { Lock, Unlock, Play, Square, Sun, Moon } from 'lucide-react';
 import GeoSelector from './GeoSelector';
 import AutopilotToggle from './AutopilotToggle';
+import { useTheme } from '@/components/ThemeProvider';
 
 interface EnhancedHeaderProps {
   provider: string;
@@ -35,6 +38,7 @@ export default function EnhancedHeader({
 }: EnhancedHeaderProps) {
   const [showNicheDropdown, setShowNicheDropdown] = useState(false);
   const [nicheInput, setNicheInput] = useState(niche);
+  const { theme, toggleTheme } = useTheme();
 
   const filteredSuggestions = nicheSuggestions.filter(s => 
     s.toLowerCase().includes(nicheInput.toLowerCase())
@@ -61,7 +65,7 @@ export default function EnhancedHeader({
         {/* Logo */}
         <motion.div 
           className="text-base md:text-lg font-bold tracking-tight pr-3 md:pr-6 border-r border-gray-700"
-          style={{ color: '#ffffff' }}
+          style={{ color: 'var(--text-primary-color)' }}
           whileHover={{ scale: 1.05 }}
         >
           CURATOS DNA
@@ -91,7 +95,7 @@ export default function EnhancedHeader({
               <span className="header-label text-[9px] md:text-[10px]">SPENT</span>
               <motion.span 
                 className="font-semibold text-[10px] md:text-xs"
-                style={{ color: totalTokensSpent > tokenBudget * 0.8 ? '#ef4444' : '#888888' }}
+                style={{ color: totalTokensSpent > tokenBudget * 0.8 ? 'var(--status-error)' : 'var(--text-secondary-color)' }}
                 key={totalTokensSpent}
                 initial={{ scale: 1.2 }}
                 animate={{ scale: 1 }}
@@ -198,6 +202,21 @@ export default function EnhancedHeader({
         
         {/* Actions */}
         <div className="header-section ml-auto border-l-0">
+          {/* Theme Toggle */}
+          <motion.button
+            onClick={toggleTheme}
+            className="p-2 rounded-md transition-colors hover:bg-gray-800"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            {theme === 'dark' ? (
+              <Sun size={16} style={{ color: 'var(--status-warning)' }} />
+            ) : (
+              <Moon size={16} style={{ color: 'var(--accent-primary)' }} />
+            )}
+          </motion.button>
+          
           <AutopilotToggle
             enabled={autopilotEnabled}
             onToggle={onAutopilotToggle}
@@ -207,10 +226,12 @@ export default function EnhancedHeader({
           <motion.button
             onClick={onEngineToggle}
             className={`metal-btn-primary flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 font-semibold text-[10px] md:text-xs ${
-              engineRunning 
-                ? 'bg-red-600 hover:bg-red-700 text-white border-red-600' 
-                : ''
+              engineRunning ? 'text-white' : ''
             }`}
+            style={engineRunning ? { 
+              backgroundColor: 'var(--status-error)', 
+              borderColor: 'var(--status-error)' 
+            } : {}}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >

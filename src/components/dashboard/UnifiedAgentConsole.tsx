@@ -48,7 +48,7 @@ export default function UnifiedAgentConsole({ rationale, onSendMessage, disabled
   const isActive = isFocused || hasInput;
 
   return (
-    <div className="metal-container-dark rounded-lg overflow-hidden flex flex-col h-full" style={{ boxShadow: '0 0 20px rgba(255,255,255,0.05)' }}>
+    <div className="metal-container-dark rounded-lg overflow-hidden flex flex-col h-full" style={{ boxShadow: 'var(--shadow-glow-cyan)' }}>
       {/* Header */}
       <div className="metal-header-dark px-4 py-2 flex items-center gap-2 flex-shrink-0">
         <span className="text-white text-xs font-semibold tracking-wider">AGENT CONSOLE</span>
@@ -65,7 +65,7 @@ export default function UnifiedAgentConsole({ rationale, onSendMessage, disabled
       <div 
         ref={logsContainerRef}
         className="flex-1 overflow-y-auto px-4 py-3 space-y-1 relative min-h-0" 
-        style={{ background: 'linear-gradient(180deg, rgba(26,26,26,0.5) 0%, rgba(26,26,26,0) 10%, rgba(26,26,26,0) 100%)' }}
+        style={{ background: 'linear-gradient(180deg, var(--bg-surface) 0%, transparent 10%, transparent 100%)' }}
       >
         <AnimatePresence initial={false}>
           {rationale.map((line, i) => {
@@ -81,7 +81,7 @@ export default function UnifiedAgentConsole({ rationale, onSendMessage, disabled
                 <span className="text-gray-600 flex-shrink-0">&gt;</span>
                 <motion.span
                   className={isSuccess ? 'text-white' : 'text-gray-400'}
-                  animate={isSuccess ? { color: ['#ffffff', '#22c55e', '#ffffff'] } : {}}
+                  animate={isSuccess ? { color: ['var(--text-primary-color)', 'var(--status-success)', 'var(--text-primary-color)'] } : {}}
                   transition={{ duration: 0.5 }}
                 >
                   {line}
@@ -121,8 +121,8 @@ export default function UnifiedAgentConsole({ rationale, onSendMessage, disabled
               placeholder="> steer the agent..."
               className="w-full bg-transparent text-white text-sm font-mono px-2 py-2 outline-none transition-all duration-300 border-b"
               style={{
-                borderColor: isActive ? '#ffffff' : '#3a3a3a',
-                boxShadow: isActive ? '0 2px 8px rgba(255,255,255,0.1)' : 'none',
+                borderColor: isActive ? 'var(--text-primary-color)' : 'var(--border-default)',
+                boxShadow: isActive ? 'var(--shadow-glow-white)' : 'none',
               }}
             />
           </div>
@@ -135,7 +135,7 @@ export default function UnifiedAgentConsole({ rationale, onSendMessage, disabled
             style={{
               background: hasInput ? 'rgba(255,255,255,0.1)' : 'transparent',
               border: '1px solid',
-              borderColor: hasInput ? '#ffffff' : '#3a3a3a',
+              borderColor: hasInput ? 'var(--text-primary-color)' : 'var(--border-default)',
             }}
             animate={hasInput ? {
               boxShadow: [
