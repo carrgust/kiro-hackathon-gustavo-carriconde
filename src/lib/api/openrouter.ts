@@ -1,5 +1,6 @@
 import { AIProvider, Message, ChatResponse, ChatOptions, RateLimitInfo, HealthStatus } from './types';
 import { withRetry, DEFAULT_RETRY_CONFIG } from './retry';
+import { callWithFallback } from '@/lib/models/config';
 
 export class OpenRouterProvider implements AIProvider {
   name = 'OpenRouter';
@@ -170,6 +171,52 @@ export class OpenRouterProvider implements AIProvider {
         'meta-llama/llama-3.3-70b-instruct:free'
       ];
     }
+  }
+
+  async chatWithFallback(messages: Message[], modelChain: string[]): Promise<{ response: ChatResponse; modelUsed: string; apiKeyUsed: string }> {
+    const apiKeys = [
+      this.apiKey,
+      process.env.OPENROUTER_API_KEY,
+      process.env.OPENROUTER_API_KEY_BACKUP
+    ].filter(Boolean) as string[];
+
+    if (apiKeys.length === 0) {
+      throw new Error('No API keys available');
+    }
+
+    const errors: string[] = [];
+    
+    for (const apiKey of apiKeys) {
+      for (const model of modelChain) {
+        try {
+          console.log(`[FALLBACK] Trying ${model} with key ${apiKey.substring(0, 10)}...`);
+          
+          const provider = new OpenRouterProvider(apiKey);
+          const response = await provider.chat(messages, model);
+          
+          console.log(`[FALLBACK] ✓ Success with ${model}`);
+          return {
+            response,
+            modelUsed: model,
+            apiKeyUsed: apiKey
+          };
+          
+        } catch (error: any) {
+          const errorMsg = error?.message || String(error);
+          errors.push(`${model}: ${errorMsg}`);
+          
+          if (error?.status === 429 || errorMsg.includes('rate limit')) {
+            console.log(`[FALLBACK] ⚠ Rate limited on ${model}, trying next...`);
+            continue;
+          }
+          
+          console.log(`[FALLBACK] ✗ Failed ${model}: ${errorMsg}`);
+          continue;
+        }
+      }
+    }
+    
+    throw new Error(`All models failed. Errors: ${errors.join('; ')}`);
   }
 
   async validateKey(): Promise<boolean> {

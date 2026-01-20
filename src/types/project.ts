@@ -1,7 +1,7 @@
 import { ProblemQuality, SolutionQuality, RequirementsQuality, PRDQuality, DNAQuality } from '@/lib/scoring';
 
 export type HypothesisState = 'hypothesis' | 'fact';
-export type HypothesisStatus = 'pending' | 'downloading' | 'analyzing' | 'complete';
+export type HypothesisStatus = 'pending' | 'downloading' | 'analyzing' | 'complete' | 'not_solvable';
 
 export interface Hypothesis {
   id: string;
@@ -12,6 +12,10 @@ export interface Hypothesis {
   sources?: string[];
   type?: 'functional' | 'non-functional'; // For requirements column
   createdAt: Date;
+  // NEW: Chaining fields
+  parentProblemId?: string;  // For solutions - links to the problem it solves
+  parentSolutionId?: string; // For requirements - links to the solution
+  solutionAttempts?: number; // Track retry count for problems (max 3)
 }
 
 export interface StageScores {

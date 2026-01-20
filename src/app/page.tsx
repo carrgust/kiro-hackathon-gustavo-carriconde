@@ -9,6 +9,8 @@ import { StreamingService } from '@/lib/api/streaming';
 import { useScoring } from '@/hooks/useScoring';
 import { useSync } from '@/hooks/useSync';
 import { useSyncToasts } from '@/hooks/useSyncToasts';
+import { buildAgentContext } from '@/lib/orchestrator/context-builder';
+import { AgentAction } from '@/types/orchestrator';
 import ConfirmationModal from '@/components/dashboard/ConfirmationModal';
 import EnhancedHeader from '@/components/dashboard/EnhancedHeader';
 import AgentRationale from '@/components/dashboard/AgentRationale';
@@ -64,6 +66,23 @@ export default function Dashboard() {
   
   // Ref to prevent duplicate initialization in StrictMode
   const initializedRef = useRef(false);
+  
+  // Ref to track all pending timeouts
+  const pendingTimeoutsRef = useRef<NodeJS.Timeout[]>([]);
+  
+  // Ref to track streaming interval
+  const orchestratorIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Helper function to schedule timeouts that tracks them
+  const scheduleTimeout = useCallback((callback: () => void, delay: number) => {
+    const timeoutId = setTimeout(() => {
+      // Remove from tracking after execution
+      pendingTimeoutsRef.current = pendingTimeoutsRef.current.filter(id => id !== timeoutId);
+      callback();
+    }, delay);
+    pendingTimeoutsRef.current.push(timeoutId);
+    return timeoutId;
+  }, []);
 
   const [apiError, setApiError] = useState<string | null>(null);
   const [engineRunning, setEngineRunning] = useState(false);
@@ -104,7 +123,7 @@ export default function Dashboard() {
     recentMessagesRef.current.add(key);
     
     // Clear old messages from Set after 2 seconds
-    setTimeout(() => {
+    scheduleTimeout(() => {
       recentMessagesRef.current.delete(key);
     }, 2000);
     
@@ -381,14 +400,14 @@ Respond ONLY with valid JSON, no other text.`;
             }));
             
             // Research the new requirement
-            setTimeout(() => researchHypothesisRef.current?.(newReq, 'requirements'), 300);
+            scheduleTimeout(() => researchHypothesisRef.current?.(newReq, 'requirements'), 300);
           }
         } else {
           console.log('[AUTO-PRD] Requirements sufficient - generating PRD...');
           addRationale('✓ Requirements sufficient - generating PRD...');
           
           // Auto-generate PRD
-          setTimeout(() => {
+          scheduleTimeout(() => {
             handleGeneratePRD();
           }, 1000);
         }
@@ -396,45 +415,137 @@ Respond ONLY with valid JSON, no other text.`;
     }
   }, [state.requirements.length, state.hypotheses, state.solutions, state.prdAssessed, state.requirements, state.niche, hypothesisService, assessRequirements, addRationale]);
 
-  // Real streaming rationale updates
+  // Agent orchestrator loop
   useEffect(() => {
-    if (!engineRunning || !streamingService) return;
+    if (!engineRunning || !hypothesisService) {
+      // Clear interval if engine stopped
+      if (orchestratorIntervalRef.current) {
+        clearInterval(orchestratorIntervalRef.current);
+        orchestratorIntervalRef.current = null;
+      }
+      return;
+    }
 
     const interval = setInterval(async () => {
-      if (Math.random() < 0.4) { // 40% chance to start streaming
-        // Get current state from ref
-        const currentNiche = stateRef.current.niche;
-        const currentSlider = stateRef.current.slider;
+      try {
+        // 1. Build context from current state
+        const context = buildAgentContext(stateRef.current);
         
-        if (!currentNiche) return;
-        
-        const focus = Math.random() < (currentSlider / 100) ? 'problems' : 'solutions';
-        
-        setCurrentRationaleStream('');
-        
-        const onRationaleUpdate = (text: string) => {
-          setCurrentRationaleStream(prev => {
-            const newStream = prev + text;
-            if (text.includes('\n') || newStream.length > 100) {
-              addRationale(newStream.trim());
-              return '';
-            }
-            return newStream;
-          });
-        };
-
-        try {
-          await streamingService.streamHypothesisGeneration(currentNiche, focus, onRationaleUpdate);
-        } catch (error) {
-          console.error('Streaming error:', error);
+        // 2. Call orchestrator API
+        const apiKey = getStoredApiKey();
+        console.log('[Orchestrator] API key check:', apiKey, 'isDemo:', apiKey === 'demo');
+        if (!apiKey) {
+          console.log('[Orchestrator] No API key, skipping');
+          return;
         }
+        
+        const response = await fetch('/api/agent/orchestrate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ context, apiKey })
+        });
+        
+        if (!response.ok) return;
+        
+        const { thought, action, parameters } = await response.json();
+        
+        // 3. Display agent thought
+        if (thought) {
+          addRationale(thought);
+        }
+        
+        // 4. Execute the action
+        switch (action) {
+          case AgentAction.GENERATE_PROBLEM:
+            if (hypothesisService) {
+              const newProblems = await hypothesisService.generateHypotheses(stateRef.current.niche, 'problems', 1);
+              if (newProblems.length > 0) {
+                setState(prev => ({
+                  ...prev,
+                  hypotheses: [...prev.hypotheses, { ...newProblems[0], status: 'pending' }]
+                }));
+                scheduleTimeout(() => researchHypothesisRef.current?.(newProblems[0], 'hypotheses'), 500);
+              }
+            }
+            break;
+            
+          case AgentAction.GENERATE_SOLUTION:
+            if (hypothesisService && parameters?.problemId) {
+              const problem = stateRef.current.hypotheses.find(h => h.id === parameters.problemId);
+              if (problem) {
+                const newSolutions = await hypothesisService.generateSolutionForProblem(
+                  stateRef.current.niche, 
+                  problem.text, 
+                  problem.id
+                );
+                if (newSolutions.length > 0) {
+                  setState(prev => ({
+                    ...prev,
+                    solutions: [...prev.solutions, { ...newSolutions[0], status: 'pending' }]
+                  }));
+                  scheduleTimeout(() => researchHypothesisRef.current?.(newSolutions[0], 'solutions'), 500);
+                }
+              }
+            }
+            break;
+            
+          case AgentAction.GENERATE_REQUIREMENT:
+            if (hypothesisService && parameters?.solutionId) {
+              const solution = stateRef.current.solutions.find(s => s.id === parameters.solutionId);
+              if (solution) {
+                const newReqs = await hypothesisService.generateRequirementForSolution(
+                  stateRef.current.niche,
+                  solution.text,
+                  solution.id
+                );
+                if (newReqs.length > 0) {
+                  setState(prev => ({
+                    ...prev,
+                    requirements: [...prev.requirements, { ...newReqs[0], status: 'pending' }]
+                  }));
+                  scheduleTimeout(() => researchHypothesisRef.current?.(newReqs[0], 'requirements'), 500);
+                }
+              }
+            }
+            break;
+            
+          case AgentAction.RESEARCH_CARD:
+            if (parameters?.cardId) {
+              const card = [...stateRef.current.hypotheses, ...stateRef.current.solutions, ...stateRef.current.requirements]
+                .find(c => c.id === parameters.cardId);
+              if (card) {
+                const column = stateRef.current.hypotheses.includes(card) ? 'hypotheses' :
+                             stateRef.current.solutions.includes(card) ? 'solutions' : 'requirements';
+                researchHypothesisRef.current?.(card, column);
+              }
+            }
+            break;
+            
+          case AgentAction.GENERATE_PRD:
+            handleGeneratePRD();
+            break;
+            
+          case AgentAction.THINK:
+          case AgentAction.WAIT:
+          default:
+            // No action needed
+            break;
+        }
+        
+      } catch (error) {
+        console.error('Orchestrator loop error:', error);
       }
-    }, 8000); // Every 8 seconds
+    }, 6000); // Every 6 seconds
 
-    return () => clearInterval(interval);
-  }, [engineRunning, streamingService]);
+    orchestratorIntervalRef.current = interval;
 
-  // Helper function to research a hypothesis
+    return () => {
+      clearInterval(interval);
+      orchestratorIntervalRef.current = null;
+    };
+  }, [engineRunning, hypothesisService, addRationale, scheduleTimeout]);
+
+  // Helper function to research a hypothesis with paced API status updates
   const researchHypothesis = useCallback(async (hypothesis: Hypothesis, column: 'hypotheses' | 'solutions' | 'requirements') => {
     if (!hypothesisService) return;
     
@@ -449,10 +560,29 @@ Respond ONLY with valid JSON, no other text.`;
       ...prev,
       [column]: prev[column].map(h => h.id === hypothesis.id ? { ...h, status: 'downloading' as const } : h)
     }));
-    addRationale(`Validating: "${hypothesis.text.substring(0, 35)}..."`);
+    
+    // Show API status updates
+    addRationale(`[SEARCHING] Querying Serper API...`);
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    addRationale(`[FOUND] Analyzing web results...`);
+    await new Promise(resolve => setTimeout(resolve, 600));
     
     try {
       const result = await hypothesisService.researchHypothesis(hypothesis, stateRef.current.niche, column === 'hypotheses');
+      
+      // Show research findings before displaying confidence
+      if (result.sources.length > 0) {
+        const sourceCount = result.sources.length;
+        addRationale(`[VALIDATING] Found ${sourceCount} sources`);
+        
+        // Show key finding
+        const firstSource = result.sources[0];
+        const domain = firstSource.split('|||')[0].replace(/\[.*?\]/g, '').trim();
+        addRationale(`[EVIDENCE] ${domain}: "${firstSource.split('|||')[1]?.substring(0, 40) || 'Supporting evidence'}..."`);
+        
+        await new Promise(resolve => setTimeout(resolve, 400));
+      }
       
       const isFact = result.confidence >= 90;
       const updatedHypothesis = { 
@@ -467,54 +597,91 @@ Respond ONLY with valid JSON, no other text.`;
         ...prev,
         [column]: prev[column].map(h => h.id === hypothesis.id ? updatedHypothesis : h)
       }));
-      addRationale(isFact ? `✓ FACT ${result.confidence}%` : `○ ${result.confidence}%`);
+      addRationale(`[VALIDATED] ${isFact ? `✓ FACT ${result.confidence}%` : `○ ${result.confidence}%`}`);
       
-      // AUTO-CHAIN: When problem becomes fact, generate solution (silent)
-      if (isFact && column === 'hypotheses' && stateRef.current.solutions.length < 4) {
+      // CHAINED HYPOTHESIS SYSTEM
+      if (column === 'hypotheses' && result.confidence >= 70) {
+        // Problem validated - generate solution for this problem
         setTimeout(async () => {
           try {
-            const newSolutions = await hypothesisService.generateHypotheses(stateRef.current.niche, 'solutions', 1);
-            const newSolution = { ...newSolutions[0], status: 'pending' as const };
+            addRationale(`[CHAINING] Generating solution for problem...`);
+            const newSolutions = await hypothesisService.generateSolutionForProblem(stateRef.current.niche, hypothesis.text, hypothesis.id);
+            const newSolution = newSolutions[0];
             
             // Check for duplicates
-            const isSolutionDup = stateRef.current.solutions.some(s =>
+            const isDuplicate = stateRef.current.solutions.some(s =>
               s.text.toLowerCase().trim() === newSolution.text.toLowerCase().trim()
-            );
-            
-            if (!isSolutionDup) {
-              setState(prev => ({
-                ...prev,
-                solutions: [...prev.solutions, newSolution].slice(0, 4)
-              }));
-              setTimeout(() => researchHypothesisRef.current?.(newSolution, 'solutions'), 200);
-            }
-          } catch (e) { console.error('Auto-solution error:', e); }
-        }, 100);
-      }
-      
-      // AUTO-CHAIN: When solution becomes fact, generate requirement (silent)
-      if (isFact && column === 'solutions' && stateRef.current.requirements.length < 20) {
-        setTimeout(async () => {
-          try {
-            const newReqs = await hypothesisService.generateHypotheses(stateRef.current.niche, 'requirements', 1);
-            const text = newReqs[0].text;
-            const type = text.startsWith('NFR:') ? 'non-functional' : 'functional';
-            const newReq = { ...newReqs[0], type: type as 'functional' | 'non-functional', status: 'pending' as const };
-            
-            // Check for duplicates
-            const isDuplicate = stateRef.current.requirements.some(r => 
-              r.text.toLowerCase().trim() === newReq.text.toLowerCase().trim()
             );
             
             if (!isDuplicate) {
               setState(prev => ({
                 ...prev,
-                requirements: [...prev.requirements, newReq].slice(0, 20)
+                solutions: [...prev.solutions, { ...newSolution, status: 'pending' as const }]
               }));
-              setTimeout(() => researchHypothesisRef.current?.(newReq, 'requirements'), 200);
+              setTimeout(() => researchHypothesisRef.current?.(newSolution, 'solutions'), 2000);
             }
-          } catch (e) { console.error('Auto-requirement error:', e); }
-        }, 100);
+          } catch (e) { console.error('Chain solution error:', e); }
+        }, 1500);
+      }
+      
+      if (column === 'solutions') {
+        if (result.confidence < 70) {
+          // Solution failed - increment parent problem attempts and retry
+          const parentProblem = stateRef.current.hypotheses.find(p => p.id === hypothesis.parentProblemId);
+          if (parentProblem) {
+            const attempts = (parentProblem.solutionAttempts || 0) + 1;
+            
+            setState(prev => ({
+              ...prev,
+              hypotheses: prev.hypotheses.map(p => 
+                p.id === parentProblem.id 
+                  ? { ...p, solutionAttempts: attempts, status: attempts >= 3 ? 'not_solvable' as const : p.status }
+                  : p
+              )
+            }));
+            
+            if (attempts < 3) {
+              addRationale(`[RETRY] Solution failed, generating new one (${attempts}/3)...`);
+              setTimeout(async () => {
+                try {
+                  const newSolutions = await hypothesisService.generateSolutionForProblem(stateRef.current.niche, parentProblem.text, parentProblem.id);
+                  const newSolution = newSolutions[0];
+                  setState(prev => ({
+                    ...prev,
+                    solutions: [...prev.solutions, { ...newSolution, status: 'pending' as const }]
+                  }));
+                  setTimeout(() => researchHypothesisRef.current?.(newSolution, 'solutions'), 2000);
+                } catch (e) { console.error('Retry solution error:', e); }
+              }, 1500);
+            } else {
+              addRationale(`[FAILED] Problem marked as not solvable after 3 attempts`);
+            }
+          }
+        } else {
+          // Solution validated - check if we have 3+ validated solutions to generate requirements
+          const validatedSolutions = stateRef.current.solutions.filter(s => s.state === 'fact').length + 1; // +1 for current
+          if (validatedSolutions >= 3) {
+            setTimeout(async () => {
+              try {
+                addRationale(`[CHAINING] Generating requirement from solutions...`);
+                const newRequirements = await hypothesisService.generateRequirementForSolution(stateRef.current.niche, hypothesis.text, hypothesis.id);
+                const newRequirement = newRequirements[0];
+                
+                const isDuplicate = stateRef.current.requirements.some(r => 
+                  r.text.toLowerCase().trim() === newRequirement.text.toLowerCase().trim()
+                );
+                
+                if (!isDuplicate) {
+                  setState(prev => ({
+                    ...prev,
+                    requirements: [...prev.requirements, { ...newRequirement, status: 'pending' as const }]
+                  }));
+                  setTimeout(() => researchHypothesisRef.current?.(newRequirement, 'requirements'), 2000);
+                }
+              } catch (e) { console.error('Chain requirement error:', e); }
+            }, 1500);
+          }
+        }
       }
     } catch (error) {
       console.error('[Research] Error:', error);
@@ -522,7 +689,7 @@ Respond ONLY with valid JSON, no other text.`;
         ...prev,
         [column]: prev[column].map(h => h.id === hypothesis.id ? { ...h, status: 'complete' as const } : h)
       }));
-      addRationale(`✗ Research failed`);
+      addRationale(`[ERROR] Research failed`);
     }
   }, [hypothesisService, addRationale]);
   
@@ -545,8 +712,8 @@ Respond ONLY with valid JSON, no other text.`;
       const requirementsFacts = currentState.requirements.filter(h => h.state === 'fact').length;
       const allComplete = problemsFacts >= 4 && solutionsFacts >= 4 && requirementsFacts >= 15;
       
-      // Dynamic interval: fast (800ms) when generating, slow (3000ms) when complete
-      const nextInterval = allComplete ? 3000 : 800;
+      // Dynamic interval: slower for more deliberate feel
+      const nextInterval = allComplete ? 5000 : 2500;
       
       // Update tokens (slower when complete)
       setState(prev => {
@@ -563,15 +730,14 @@ Respond ONLY with valid JSON, no other text.`;
       // Skip generation if all complete
       if (!allComplete && Math.random() < 0.85) {
         const problemsCount = currentState.hypotheses.length;
-        const solutionsCount = currentState.solutions.length;
-        const requirementsCount = currentState.requirements.length;
         
         const shouldGenerateProblem = problemsCount < 4;
-        const shouldGenerateSolution = problemsFacts >= 2 && solutionsCount < 4;
-        const shouldGenerateRequirement = problemsFacts >= 2 && solutionsFacts >= 2 && requirementsCount < 20;
         
         try {
           if (shouldGenerateProblem) {
+            addRationale(`[HYPOTHESIS] Generating problem...`);
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
             const newProblems = await hypothesisService.generateHypotheses(currentNiche, 'problems', 1);
             const newProblem = { ...newProblems[0], status: 'pending' as const };
             
@@ -587,57 +753,17 @@ Respond ONLY with valid JSON, no other text.`;
               }));
               addRationale(`+ Problem: "${newProblem.text.substring(0, 35)}..."`);
               
-              setTimeout(() => researchHypothesisRef.current?.(newProblem, 'hypotheses'), 300);
-            }
-          }
-          
-          if (shouldGenerateSolution) {
-            const newSolutions = await hypothesisService.generateHypotheses(currentNiche, 'solutions', 1);
-            const newSolution = { ...newSolutions[0], status: 'pending' as const };
-            
-            // Check for duplicates
-            const isSolutionDup = stateRef.current.solutions.some(s =>
-              s.text.toLowerCase().trim() === newSolution.text.toLowerCase().trim()
-            );
-            
-            if (!isSolutionDup) {
-              setState(prev => ({
-                ...prev,
-                solutions: [...prev.solutions, newSolution].slice(0, 4)
-              }));
-              addRationale(`+ Solution: "${newSolution.text.substring(0, 35)}..."`);
-              
-              setTimeout(() => researchHypothesisRef.current?.(newSolution, 'solutions'), 300);
-            }
-          }
-          
-          if (shouldGenerateRequirement) {
-            const newReqs = await hypothesisService.generateHypotheses(currentNiche, 'requirements', 1);
-            const text = newReqs[0].text;
-            const type = text.startsWith('NFR:') ? 'non-functional' : 'functional';
-            const newReq = { ...newReqs[0], type: type as 'functional' | 'non-functional', status: 'pending' as const };
-            
-            // Check for duplicates
-            const isDuplicate = stateRef.current.requirements.some(r => 
-              r.text.toLowerCase().trim() === newReq.text.toLowerCase().trim()
-            );
-            
-            if (!isDuplicate) {
-              setState(prev => ({
-                ...prev,
-                requirements: [...prev.requirements, newReq].slice(0, 20)
-              }));
-              addRationale(`+ Requirement: ${type}`);
-              
-              setTimeout(() => researchHypothesisRef.current?.(newReq, 'requirements' as any), 300);
+              // Add 2-second delay before research
+              setTimeout(() => researchHypothesisRef.current?.(newProblem, 'hypotheses'), 2000);
             }
           }
         } catch (error) {
           console.error('Generation error:', error);
+          addRationale(`[ERROR] Generation failed`);
         }
       }
       
-      // Research pending hypotheses - MAX 2 researching at once per column
+      // Research pending hypotheses - MAX 1 researching at once per column for paced flow
       const researchingProblems = currentState.hypotheses.filter(h => h.status === 'downloading' || h.status === 'analyzing').length;
       const researchingSolutions = currentState.solutions.filter(h => h.status === 'downloading' || h.status === 'analyzing').length;
       const researchingRequirements = currentState.requirements.filter(h => h.status === 'downloading' || h.status === 'analyzing').length;
@@ -646,8 +772,9 @@ Respond ONLY with valid JSON, no other text.`;
       const pendingSolutions = currentState.solutions.filter(h => h.status === 'pending' && h.confidence === 0);
       const pendingRequirements = currentState.requirements.filter(h => h.status === 'pending' && h.confidence === 0);
       
-      if (pendingProblems.length > 0 && researchingProblems < 2) researchHypothesisRef.current?.(pendingProblems[0], 'hypotheses');
-      if (pendingSolutions.length > 0 && researchingSolutions < 2) researchHypothesisRef.current?.(pendingSolutions[0], 'solutions');
+      if (pendingProblems.length > 0 && researchingProblems < 1) researchHypothesisRef.current?.(pendingProblems[0], 'hypotheses');
+      if (pendingSolutions.length > 0 && researchingSolutions < 1) researchHypothesisRef.current?.(pendingSolutions[0], 'solutions');
+      if (pendingRequirements.length > 0 && researchingRequirements < 1) researchHypothesisRef.current?.(pendingRequirements[0], 'requirements');
       if (pendingRequirements.length > 0 && researchingRequirements < 2) researchHypothesisRef.current?.(pendingRequirements[0], 'requirements' as any);
       
       // Schedule next run with dynamic interval
@@ -672,6 +799,14 @@ Respond ONLY with valid JSON, no other text.`;
     setEngineRunning(false);
     setEngineStartTime(null);
     setState(prev => ({ ...prev, tokenRate: 0 }));
+    // Clear all pending timeouts
+    pendingTimeoutsRef.current.forEach(clearTimeout);
+    pendingTimeoutsRef.current = [];
+    // Clear orchestrator interval
+    if (orchestratorIntervalRef.current) {
+      clearInterval(orchestratorIntervalRef.current);
+      orchestratorIntervalRef.current = null;
+    }
   }, []);
 
   const handleEngineToggle = useCallback(() => {

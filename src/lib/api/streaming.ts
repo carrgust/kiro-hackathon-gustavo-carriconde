@@ -1,13 +1,16 @@
 import { getProvider, Message } from '@/lib/api';
 import { Hypothesis } from '@/types/project';
+import { DEMO_PRD, DEMO_LANDING_PAGE } from '@/lib/demo-data';
 
 export class StreamingService {
   private apiKey: string;
   private isLiveMode: boolean;
+  private isDemoMode: boolean;
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
     this.isLiveMode = apiKey === 'live';
+    this.isDemoMode = apiKey === 'demo';
   }
 
   async streamHypothesisGeneration(
@@ -115,6 +118,11 @@ export class StreamingService {
     problems: Hypothesis[],
     solutions: Hypothesis[]
   ): Promise<string> {
+    // Return demo data in demo mode
+    if (this.isDemoMode) {
+      return DEMO_LANDING_PAGE;
+    }
+
     const provider = getProvider('openrouter', this.apiKey);
 
     const problemsList = problems
@@ -171,6 +179,11 @@ Return ONLY the HTML code, no explanations.`;
     problems: Hypothesis[],
     solutions: Hypothesis[]
   ): Promise<string> {
+    // Return demo data in demo mode
+    if (this.isDemoMode) {
+      return DEMO_PRD;
+    }
+
     const provider = getProvider('openrouter', this.apiKey);
 
     const problemsList = problems

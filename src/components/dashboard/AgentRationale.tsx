@@ -13,6 +13,7 @@ const TAG_COLORS: Record<string, string> = {
   'FOUND': 'var(--text-primary-color)',
   'VALIDATING': 'var(--status-warning)',
   'VALIDATED': 'var(--status-success)',
+  'EVIDENCE': 'var(--accent-secondary)',
   'ERROR': 'var(--status-error)',
 };
 

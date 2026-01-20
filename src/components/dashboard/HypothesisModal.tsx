@@ -158,7 +158,7 @@ function SourceCard({ source, onRemove }: SourceCardProps) {
   return (
     <div
       onClick={handleCardClick}
-      className="relative flex items-start py-3 px-0 metal-card-dark rounded-lg hover:border-gray-600 transition-all group cursor-pointer"
+      className="relative flex items-start py-3 rounded-lg hover:bg-gray-800/30 transition-all group cursor-pointer"
     >
       {/* Remove button - show on hover */}
       <button
@@ -170,8 +170,8 @@ function SourceCard({ source, onRemove }: SourceCardProps) {
         <X className="w-3 h-3" />
       </button>
 
-      {/* Text content - now takes full left space */}
-      <div className="flex-1 min-w-0">
+      {/* Text content - starts at left edge */}
+      <div className="flex-1 min-w-0 pr-3">
         <div className="text-white text-[11px] font-medium line-clamp-2 group-hover:text-white transition-colors leading-tight">
           {title}
         </div>
