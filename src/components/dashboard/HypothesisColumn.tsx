@@ -45,12 +45,12 @@ const HypothesisColumn = memo(function HypothesisColumn({
   
   return (
     <div className="flex-1 min-w-0">
-      <GlassCard className="p-6 h-full bg-slate-900/60 border-white/10 hover:border-amber-500/30 transition-all backdrop-blur-xl">
+      <GlassCard className="p-6 h-full bg-yellow-900/20 border-amber-400/20 hover:border-amber-400/40 transition-all backdrop-blur-xl">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Sparkles size={20} className="text-amber-400" />
+              <Sparkles size={20} className="text-amber-200" />
               <h2 className="text-xl font-semibold text-white capitalize">{title}</h2>
             </div>
             <motion.div 
@@ -67,16 +67,16 @@ const HypothesisColumn = memo(function HypothesisColumn({
           {/* Progress Bar */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-300">
+              <span className="text-white/90">
                 {validatedCount} / {requiredCount} validated
               </span>
               {percentage !== undefined && (
-                <span className="text-amber-400 font-medium">{percentage}%</span>
+                <span className="text-amber-200 font-medium">{percentage}%</span>
               )}
             </div>
-            <div className="h-2 bg-black/30 rounded-full overflow-hidden">
+            <div className="h-2 bg-black/20 rounded-full overflow-hidden">
               <motion.div
-                className="h-full bg-gradient-to-r from-amber-500 to-amber-600 shadow-amber-500/50 shadow-lg"
+                className="h-full bg-gradient-to-r from-amber-400 to-amber-500 shadow-amber-400/50 shadow-lg"
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.min(progress, 100)}%` }}
                 transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -103,9 +103,9 @@ const HypothesisColumn = memo(function HypothesisColumn({
                 repeatDelay: 3
               }}
             >
-              <Lock size={48} className="text-amber-400/50 mb-4" />
+              <Lock size={48} className="text-amber-300/50 mb-4" />
             </motion.div>
-            <p className="text-white/60 text-sm font-medium">
+            <p className="text-white/80 text-sm font-medium">
               Complete previous requirements to unlock
             </p>
           </motion.div>
@@ -140,7 +140,7 @@ const HypothesisColumn = memo(function HypothesisColumn({
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex flex-col items-center justify-center h-32 text-white/40 text-sm"
+                className="flex flex-col items-center justify-center h-32 text-white/60 text-sm"
               >
                 <Sparkles size={32} className="mb-2 opacity-50" />
                 <p>No {title} yet</p>
