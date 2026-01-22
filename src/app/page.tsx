@@ -1183,16 +1183,8 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
           {activeSection === 'INPUT' && (
             <InputDashboard
               key="input"
-              apiKey={getStoredApiKey() || ''}
               niche={state.niche}
               geography={geography}
-              onApiKeyChange={(key) => {
-                localStorage.setItem('openrouter_api_key', key);
-                if (key) {
-                  setHypothesisService(new HypothesisService(key));
-                  setStreamingService(new StreamingService(key));
-                }
-              }}
               onNicheChange={(niche) => setState(prev => ({ ...prev, niche }))}
               onGeographyChange={setGeography}
               onStartProcessing={() => {
