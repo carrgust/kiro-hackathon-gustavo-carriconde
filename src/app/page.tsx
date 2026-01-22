@@ -58,6 +58,8 @@ export default function Dashboard() {
     prdAssessed: false
   });
   
+  const [geography, setGeography] = useState('Global');
+  
   // Ref to track current state for use in intervals
   const stateRef = useRef(state);
   useEffect(() => { stateRef.current = state; }, [state]);
@@ -1183,6 +1185,7 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
               key="input"
               apiKey={getStoredApiKey() || ''}
               niche={state.niche}
+              geography={geography}
               onApiKeyChange={(key) => {
                 localStorage.setItem('openrouter_api_key', key);
                 if (key) {
@@ -1191,11 +1194,20 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
                 }
               }}
               onNicheChange={(niche) => setState(prev => ({ ...prev, niche }))}
+              onGeographyChange={setGeography}
               onStartProcessing={() => {
                 setActiveSection('PROCESSING');
                 handleEngineToggle();
               }}
               isProcessing={engineRunning}
+              problemsCount={state.hypotheses.length}
+              problemsValidated={countGreenFacts()}
+              solutionsCount={state.solutions.length}
+              solutionsValidated={countSolutionsGreenFacts()}
+              requirementsCount={state.requirements.length}
+              requirementsValidated={countRequirementsGreenFacts()}
+              prdStatus={isGeneratingPRD ? 'generating' : prdMarkdown ? 'complete' : 'pending'}
+              autoCoderStatus="idle"
             />
           )}
           
