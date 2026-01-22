@@ -45,7 +45,7 @@ const HypothesisColumn = memo(function HypothesisColumn({
   
   return (
     <div className="flex-1 min-w-0">
-      <GlassCard className="p-6 h-full border-amber-500/20 hover:border-amber-500/40 transition-all">
+      <GlassCard className="p-6 h-full bg-slate-900/60 border-white/10 hover:border-amber-500/30 transition-all backdrop-blur-xl">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
@@ -67,16 +67,16 @@ const HypothesisColumn = memo(function HypothesisColumn({
           {/* Progress Bar */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-amber-200">
+              <span className="text-gray-300">
                 {validatedCount} / {requiredCount} validated
               </span>
               {percentage !== undefined && (
-                <span className="text-amber-300 font-medium">{percentage}%</span>
+                <span className="text-amber-400 font-medium">{percentage}%</span>
               )}
             </div>
-            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+            <div className="h-2 bg-black/30 rounded-full overflow-hidden">
               <motion.div
-                className="h-full bg-gradient-to-r from-amber-500 to-yellow-500 shadow-amber-500/50 shadow-lg"
+                className="h-full bg-gradient-to-r from-amber-500 to-amber-600 shadow-amber-500/50 shadow-lg"
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.min(progress, 100)}%` }}
                 transition={{ duration: 0.5, ease: 'easeOut' }}

@@ -15,7 +15,7 @@ export default function ProcessingSection({
 }: ProcessingSectionProps) {
   return (
     <motion.div
-      className="min-h-screen bg-gradient-to-br from-yellow-500 to-amber-700 p-8"
+      className="min-h-screen bg-gradient-to-br from-amber-900/20 via-slate-900 to-slate-950 p-8"
       variants={pageVariants}
       initial="initial"
       animate="animate"
@@ -25,7 +25,7 @@ export default function ProcessingSection({
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">Processing Dashboard</h1>
-          <p className="text-yellow-100">AI-powered hypothesis generation and validation</p>
+          <p className="text-amber-200/80">AI-powered hypothesis generation and validation</p>
         </div>
 
         {/* Content */}
