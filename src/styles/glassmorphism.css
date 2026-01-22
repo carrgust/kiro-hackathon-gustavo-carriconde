@@ -1,0 +1,133 @@
+/* Glassmorphism Design System */
+
+/* Glass Card Base */
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card-hover:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
+}
+
+/* Glass Sidebar */
+.glass-sidebar {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Status Indicators with Pulse */
+.status-indicator {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.status-indicator::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  opacity: 0;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.5);
+  }
+}
+
+/* Status Colors */
+.status-idle {
+  background: #6b7280;
+}
+
+.status-idle::before {
+  background: #6b7280;
+}
+
+.status-active {
+  background: #3b82f6;
+}
+
+.status-active::before {
+  background: #3b82f6;
+}
+
+.status-processing {
+  background: #f59e0b;
+}
+
+.status-processing::before {
+  background: #f59e0b;
+}
+
+.status-complete {
+  background: #10b981;
+}
+
+.status-complete::before {
+  background: #10b981;
+}
+
+.status-error {
+  background: #ef4444;
+}
+
+.status-error::before {
+  background: #ef4444;
+}
+
+/* Section Color Overlays */
+.section-overlay-blue {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(30, 64, 175, 0.05) 100%);
+}
+
+.section-overlay-yellow {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(180, 83, 9, 0.05) 100%);
+}
+
+.section-overlay-green {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(6, 95, 70, 0.05) 100%);
+}
+
+.section-overlay-black {
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.2) 0%, rgba(0, 0, 0, 0.1) 100%);
+}
+
+/* Glow Effects */
+.glow-blue {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+.glow-yellow {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+}
+
+.glow-green {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+.glow-white {
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}

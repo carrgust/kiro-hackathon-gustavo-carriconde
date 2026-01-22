@@ -1,7 +1,9 @@
 'use client';
 
+import '@/styles/glassmorphism.css';
 import { useState, useEffect, useCallback, useMemo, Suspense, lazy, useRef } from 'react';
 import { Toaster, toast } from 'sonner';
+import { AnimatePresence } from 'framer-motion';
 import { EngineState, Hypothesis, DNAData } from '@/types/project';
 import { getStoredApiKey } from '@/lib/api';
 import { HypothesisService } from '@/lib/api/hypothesis';
@@ -11,6 +13,12 @@ import { useSync } from '@/hooks/useSync';
 import { useSyncToasts } from '@/hooks/useSyncToasts';
 import { buildAgentContext } from '@/lib/orchestrator/context-builder';
 import { AgentAction } from '@/types/orchestrator';
+import { SectionKey } from '@/lib/colors';
+import Sidebar from '@/components/Sidebar';
+import InputDashboard from '@/components/sections/InputDashboard';
+import ProcessingSection from '@/components/sections/ProcessingSection';
+import PRDSection from '@/components/sections/PRDSection';
+import StakeholderSection from '@/components/sections/StakeholderSection';
 import ConfirmationModal from '@/components/dashboard/ConfirmationModal';
 import EnhancedHeader from '@/components/dashboard/EnhancedHeader';
 import AgentRationale from '@/components/dashboard/AgentRationale';
@@ -85,6 +93,7 @@ export default function Dashboard() {
   }, []);
 
   const [apiError, setApiError] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<SectionKey>('INPUT');
   const [engineRunning, setEngineRunning] = useState(false);
   const [engineStartTime, setEngineStartTime] = useState<Date | null>(null);
   const [runningTime, setRunningTime] = useState('00:00');
@@ -1169,163 +1178,217 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
   };
 
   return (
-    <div className={`min-h-screen relative ${state.autopilotEnabled ? 'autopilot-scan' : ''}`} style={{ background: 'var(--bg-surface)' }}>
-      {/* API Error Banner */}
-      <APIStatusBanner error={apiError} onDismiss={() => setApiError(null)} />
+    <div className="flex min-h-screen">
+      {/* Sidebar */}
+      <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
       
-      <div className={state.autopilotEnabled ? 'autopilot-border autopilot-glow' : ''}>
-        <div className="rounded-md">
-          <EnhancedHeader
-            provider={getProvider()}
-            model={getModel()}
-            tokenBudget={state.tokenBudget}
-            totalTokensSpent={state.totalTokensSpent}
-            runningTime={runningTime}
-            niche={state.niche}
-            nicheLocked={state.nicheLocked}
-            selectedRegions={state.selectedRegions}
-            autopilotEnabled={state.autopilotEnabled}
-            engineRunning={engineRunning}
-            sliderValue={state.slider}
-            onTokenBudgetChange={handleTokenBudgetChange}
-        onNicheChange={handleNicheChange}
-        onNicheLockToggle={handleNicheLockToggle}
-        onRegionsChange={handleRegionsChange}
-        onAutopilotToggle={handleAutopilotToggle}
-        onSliderChange={handleSliderChange}
-        onEngineToggle={handleEngineToggle}
-      />
-      
-      {/* Stage Progress Bar with Sync Indicator */}
-      <div className="px-2 sm:px-4 py-2 border-b metal-panel flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
-        <StageProgressBar 
-          stages={scoring.stages} 
-          currentStage={scoring.currentStage} 
-        />
-        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end relative z-10">
-          <button
-            onClick={() => setShowExportModal(true)}
-            disabled={state.hypotheses.length === 0 && state.solutions.length === 0}
-            className="px-2 sm:px-3 py-1.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-300 text-xs sm:text-sm rounded-lg transition-colors flex items-center gap-1.5 sm:gap-2 font-mono border border-gray-700 min-h-[36px] sm:min-h-[32px]"
-            aria-label="Export data"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            <span className="hidden xs:inline">Export</span>
-          </button>
-          <SyncIndicator 
-            status={sync.status}
-            connectedUsers={sync.connectedUsers.length}
-            lastSyncTime={sync.lastSyncTime}
-          />
-        </div>
-      </div>
-      
-      <div className="flex flex-col md:flex-row gap-4">
-        {/* Left side: Radar equalizer - hidden on mobile */}
-        <div className="hidden md:block w-64 flex-shrink-0">
-          <div className="h-[400px] flex items-center justify-center border border-gray-800 rounded-lg">
-            <RadarEqualizer
-              problemSources={state.hypotheses
-                .filter(h => h.sources && h.sources.length > 0)
-                .flatMap(h => (h.sources || []).map((url, i) => ({ 
-                  id: `${h.id}-${i}`, 
-                  url, 
-                  confidence: h.confidence,
-                  isValidated: h.state === 'fact'
-                })))
-              }
-              solutionSources={state.solutions
-                .filter(h => h.sources && h.sources.length > 0)
-                .flatMap(h => (h.sources || []).map((url, i) => ({ 
-                  id: `${h.id}-${i}`, 
-                  url, 
-                  confidence: h.confidence,
-                  isValidated: h.state === 'fact'
-                })))
-              }
-              requirementSources={state.requirements
-                .filter(h => h.sources && h.sources.length > 0)
-                .flatMap(h => (h.sources || []).map((url, i) => ({ 
-                  id: `${h.id}-${i}`, 
-                  url, 
-                  confidence: h.confidence,
-                  isValidated: h.state === 'fact'
-                })))
-              }
-              isActive={engineRunning}
+      {/* Main Content with offset for sidebar */}
+      <main className="flex-1 ml-16 sm:ml-20">
+        <AnimatePresence mode="wait">
+          {activeSection === 'INPUT' && (
+            <InputDashboard
+              key="input"
+              apiKey={getStoredApiKey() || ''}
+              niche={state.niche}
+              onApiKeyChange={(key) => {
+                localStorage.setItem('openrouter_api_key', key);
+                if (key) {
+                  setHypothesisService(new HypothesisService(key));
+                  setStreamingService(new StreamingService(key));
+                }
+              }}
+              onNicheChange={(niche) => setState(prev => ({ ...prev, niche }))}
+              onStartProcessing={() => {
+                setActiveSection('PROCESSING');
+                handleEngineToggle();
+              }}
+              isProcessing={engineRunning}
             />
-          </div>
-        </div>
-        
-        {/* Right side: Unified Agent Console */}
-        <div className="flex-1 h-[400px]">
-          <UnifiedAgentConsole
-            rationale={[...state.agentRationale, currentRationaleStream].filter(Boolean)}
-            onSendMessage={handleSendMessage}
-            disabled={!engineRunning}
-          />
-        </div>
-      </div>
+          )}
+          
+          {activeSection === 'PROCESSING' && (
+            <ProcessingSection
+              key="processing"
+              isOnline={!!hypothesisService}
+              isProcessing={engineRunning}
+            >
+              {/* API Error Banner */}
+              <APIStatusBanner error={apiError} onDismiss={() => setApiError(null)} />
+              
+              <div className={state.autopilotEnabled ? 'autopilot-border autopilot-glow' : ''}>
+                <div className="rounded-md">
+                  <EnhancedHeader
+                    provider={getProvider()}
+                    model={getModel()}
+                    tokenBudget={state.tokenBudget}
+                    totalTokensSpent={state.totalTokensSpent}
+                    runningTime={runningTime}
+                    niche={state.niche}
+                    nicheLocked={state.nicheLocked}
+                    selectedRegions={state.selectedRegions}
+                    autopilotEnabled={state.autopilotEnabled}
+                    engineRunning={engineRunning}
+                    sliderValue={state.slider}
+                    onTokenBudgetChange={handleTokenBudgetChange}
+                    onNicheChange={handleNicheChange}
+                    onNicheLockToggle={handleNicheLockToggle}
+                    onRegionsChange={handleRegionsChange}
+                    onAutopilotToggle={handleAutopilotToggle}
+                    onSliderChange={handleSliderChange}
+                    onEngineToggle={handleEngineToggle}
+                  />
+                  
+                  {/* Stage Progress Bar with Sync Indicator */}
+                  <div className="px-2 sm:px-4 py-2 border-b metal-panel flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+                    <StageProgressBar 
+                      stages={scoring.stages} 
+                      currentStage={scoring.currentStage} 
+                    />
+                    <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end relative z-10">
+                      <button
+                        onClick={() => setShowExportModal(true)}
+                        disabled={state.hypotheses.length === 0 && state.solutions.length === 0}
+                        className="px-2 sm:px-3 py-1.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-300 text-xs sm:text-sm rounded-lg transition-colors flex items-center gap-1.5 sm:gap-2 font-mono border border-gray-700 min-h-[36px] sm:min-h-[32px]"
+                        aria-label="Export data"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        <span className="hidden xs:inline">Export</span>
+                      </button>
+                      <SyncIndicator 
+                        status={sync.status}
+                        connectedUsers={sync.connectedUsers.length}
+                        lastSyncTime={sync.lastSyncTime}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col md:flex-row gap-4">
+                    {/* Left side: Radar equalizer - hidden on mobile */}
+                    <div className="hidden md:block w-64 flex-shrink-0">
+                      <div className="h-[400px] flex items-center justify-center border border-gray-800 rounded-lg">
+                        <RadarEqualizer
+                          problemSources={state.hypotheses
+                            .filter(h => h.sources && h.sources.length > 0)
+                            .flatMap(h => (h.sources || []).map((url, i) => ({ 
+                              id: `${h.id}-${i}`, 
+                              url, 
+                              confidence: h.confidence,
+                              isValidated: h.state === 'fact'
+                            })))
+                          }
+                          solutionSources={state.solutions
+                            .filter(h => h.sources && h.sources.length > 0)
+                            .flatMap(h => (h.sources || []).map((url, i) => ({ 
+                              id: `${h.id}-${i}`, 
+                              url, 
+                              confidence: h.confidence,
+                              isValidated: h.state === 'fact'
+                            })))
+                          }
+                          requirementSources={state.requirements
+                            .filter(h => h.sources && h.sources.length > 0)
+                            .flatMap(h => (h.sources || []).map((url, i) => ({ 
+                              id: `${h.id}-${i}`, 
+                              url, 
+                              confidence: h.confidence,
+                              isValidated: h.state === 'fact'
+                            })))
+                          }
+                          isActive={engineRunning}
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Right side: Unified Agent Console */}
+                    <div className="flex-1 h-[400px]">
+                      <UnifiedAgentConsole
+                        rationale={[...state.agentRationale, currentRationaleStream].filter(Boolean)}
+                        onSendMessage={handleSendMessage}
+                        disabled={!engineRunning}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Hypothesis columns - stack on mobile, row on desktop */}
+                  <div className="flex flex-col md:flex-row pb-24 md:pb-0">
+                    <HypothesisColumn
+                      title="problems"
+                      hypotheses={state.hypotheses}
+                      score={state.problemsScore}
+                      percentage={state.slider}
+                      validatedCount={countGreenFacts()}
+                      requiredCount={3}
+                      onItemClick={handleItemClick}
+                      onItemRemove={(h) => handleItemRemove(h, 'hypotheses')}
+                    />
+                    
+                    <div className="hidden md:block w-px bg-gray-800" />
+                    <div className="md:hidden h-px bg-gray-800 mx-4" />
+                    
+                    <HypothesisColumn
+                      title="solutions"
+                      hypotheses={state.solutions}
+                      score={state.solutionsScore}
+                      percentage={100 - state.slider}
+                      locked={(() => {
+                        const isLocked = countGreenFacts() < 2;
+                        console.log('[DEBUG] Solutions locked:', isLocked, 'greenFacts:', countGreenFacts());
+                        return isLocked;
+                      })()}
+                      validatedCount={countSolutionsGreenFacts()}
+                      requiredCount={2}
+                      onItemClick={handleItemClick}
+                      onItemRemove={(h) => handleItemRemove(h, 'solutions')}
+                    />
+                    
+                    <div className="hidden md:block w-px bg-gray-800" />
+                    <div className="md:hidden h-px bg-gray-800 mx-4" />
+                    
+                    <HypothesisColumn
+                      title="requirements"
+                      hypotheses={state.requirements}
+                      score={state.requirements.filter(h => h.state === 'fact').reduce((sum, h) => sum + h.confidence, 0)}
+                      locked={(() => {
+                        const isLocked = !(countGreenFacts() >= 2 && countSolutionsGreenFacts() >= 2);
+                        console.log('[DEBUG] Requirements locked:', isLocked, 'greenFacts:', countGreenFacts(), 'solutionsFacts:', countSolutionsGreenFacts());
+                        return isLocked;
+                      })()}
+                      validatedCount={countRequirementsGreenFacts()}
+                      requiredCount={2}
+                      onItemClick={handleItemClick}
+                      onItemRemove={(h) => handleItemRemove(h, 'requirements')}
+                    />
+                  </div>
+                  
+                  {/* DNA Button - fixed on mobile */}
+                  <DNAButton
+                    unlocked={state.dnaUnlocked}
+                    validatedCount={countGreenFacts() + countSolutionsGreenFacts() + countRequirementsGreenFacts()}
+                    requiredCount={9}
+                    onClick={handleCreateDNA}
+                  />
+                </div>
+              </div>
+            </ProcessingSection>
+          )}
+          
+          {activeSection === 'PRD' && (
+            <PRDSection
+              key="prd"
+              prdContent={prdMarkdown}
+              isGenerating={isGeneratingPRD}
+              onGenerate={handleGeneratePRD}
+              canGenerate={validatedProblems.length >= 3 && validatedSolutions.length >= 3}
+            />
+          )}
+          
+          {activeSection === 'STAKEHOLDER' && (
+            <StakeholderSection key="stakeholder" />
+          )}
+        </AnimatePresence>
+      </main>
       
-      {/* Hypothesis columns - stack on mobile, row on desktop */}
-      <div className="flex flex-col md:flex-row pb-24 md:pb-0">
-        <HypothesisColumn
-          title="problems"
-          hypotheses={state.hypotheses}
-          score={state.problemsScore}
-          percentage={state.slider}
-          validatedCount={countGreenFacts()}
-          requiredCount={3}
-          onItemClick={handleItemClick}
-          onItemRemove={(h) => handleItemRemove(h, 'hypotheses')}
-        />
-        
-        <div className="hidden md:block w-px bg-gray-800" />
-        <div className="md:hidden h-px bg-gray-800 mx-4" />
-        
-        <HypothesisColumn
-          title="solutions"
-          hypotheses={state.solutions}
-          score={state.solutionsScore}
-          percentage={100 - state.slider}
-          locked={(() => {
-            const isLocked = countGreenFacts() < 2;
-            console.log('[DEBUG] Solutions locked:', isLocked, 'greenFacts:', countGreenFacts());
-            return isLocked;
-          })()}
-          validatedCount={countSolutionsGreenFacts()}
-          requiredCount={2}
-          onItemClick={handleItemClick}
-          onItemRemove={(h) => handleItemRemove(h, 'solutions')}
-        />
-        
-        <div className="hidden md:block w-px bg-gray-800" />
-        <div className="md:hidden h-px bg-gray-800 mx-4" />
-        
-        <HypothesisColumn
-          title="requirements"
-          hypotheses={state.requirements}
-          score={state.requirements.filter(h => h.state === 'fact').reduce((sum, h) => sum + h.confidence, 0)}
-          locked={(() => {
-            const isLocked = !(countGreenFacts() >= 2 && countSolutionsGreenFacts() >= 2);
-            console.log('[DEBUG] Requirements locked:', isLocked, 'greenFacts:', countGreenFacts(), 'solutionsFacts:', countSolutionsGreenFacts());
-            return isLocked;
-          })()}
-          validatedCount={countRequirementsGreenFacts()}
-          requiredCount={2}
-          onItemClick={handleItemClick}
-          onItemRemove={(h) => handleItemRemove(h, 'requirements')}
-        />
-      </div>
-      
-      {/* DNA Button - fixed on mobile */}
-      <DNAButton
-        unlocked={state.dnaUnlocked}
-        validatedCount={countGreenFacts() + countSolutionsGreenFacts() + countRequirementsGreenFacts()}
-        requiredCount={9}
-        onClick={handleCreateDNA}
-      />
-      
+      {/* Modals - rendered outside sections */}
       <HypothesisModal
         hypothesis={selectedHypothesis}
         onClose={handleModalClose}
@@ -1414,8 +1477,6 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
           className: 'font-mono text-sm',
         }}
       />
-        </div>
-      </div>
     </div>
   );
 }
