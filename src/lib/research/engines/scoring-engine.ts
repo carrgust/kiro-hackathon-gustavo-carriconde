@@ -1,6 +1,7 @@
 import { getProvider, Message } from '@/lib/api';
 import { getTokenTracker } from '@/lib/api/token-tracker';
 import { ChatResponse } from '@/lib/api/types';
+import { HypothesisCheck } from '@/types/project';
 
 const VALIDATION_MODELS = [
   'deepseek/deepseek-chat',        // Primary - cheap and fast
@@ -62,13 +63,13 @@ export const SCORING_CRITERIA = {
 };
 
 /**
- * Confidence score interpretation - 90%+ = fact
+ * WTP/ATP score interpretation with new thresholds
  */
 export const CONFIDENCE_LEVELS = {
-  WEAK: { min: 0, max: 49, label: 'Weak Evidence', color: 'red' },
-  MODERATE: { min: 50, max: 69, label: 'Moderate Evidence', color: 'yellow' },
-  GOOD: { min: 70, max: 89, label: 'Good Evidence', color: 'blue' },
-  STRONG: { min: 90, max: 100, label: 'Strong Evidence', color: 'green' },
+  REJECTED: { min: 0, max: 39, label: 'Rejected', color: 'red' },
+  RESEARCHING: { min: 40, max: 59, label: 'Researching', color: 'yellow' },
+  VALIDATED: { min: 60, max: 84, label: 'Validated', color: 'blue' },
+  FACT: { min: 85, max: 100, label: 'Fact', color: 'green' },
 };
 
 export interface ScoringResult {
@@ -301,6 +302,110 @@ If you only find generic content, score LOW (0-15 per criterion).`;
       breakdown: data.breakdown || [],
       sources,
       level,
+    };
+  }
+
+  /**
+   * Validate hypothesis using WTP/ATP scoring system
+   */
+  async validateHypothesis(hypothesis: string, niche: string): Promise<HypothesisCheck> {
+    const provider = getProvider('openrouter', this.apiKey);
+
+    // Get web search context
+    const searchQuery = `${hypothesis} ${niche} market research`;
+    let searchContext = '\n\nNo results found from any source. Base analysis on general market knowledge.';
+    
+    try {
+      const response = await fetch('/api/research/machine-gun', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: searchQuery }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.stats?.totalResults > 0) {
+          searchContext = `\n\nMULTI-SOURCE RESEARCH (${data.stats.successfulSources}/8 sources, ${data.stats.totalResults} results):\n${data.formatted}`;
+        }
+      }
+    } catch (error) {
+      console.error('[ScoringEngine] API Machine Gun failed:', error);
+    }
+
+    const systemPrompt = `You are a market research analyst evaluating business hypotheses using WTP/ATP scoring.
+
+WTP (Willingness to Pay): How much customers want to pay for this solution (0-100)
+- Evidence: pricing data, revenue numbers, funding rounds, payment behavior
+- High scores need actual payment evidence or strong demand signals
+
+ATP (Ability to Pay): How much customers can afford to pay (0-100)  
+- Evidence: market size, customer segments, disposable income, budget allocation
+- High scores need market size data and customer financial capacity
+
+Be SKEPTICAL. Use web search results as primary evidence. If results are weak, score LOW.`;
+
+    const userPrompt = `Evaluate this hypothesis in the ${niche} market:
+"${hypothesis}"
+
+Use the web search evidence to score:
+
+WTP (Willingness to Pay) 0-100:
+- Look for: pricing data, revenue numbers, customer complaints about cost, payment behavior
+- High scores (80+): Strong payment evidence, proven revenue models
+- Medium scores (40-79): Some pricing signals, moderate demand
+- Low scores (0-39): No payment evidence, weak demand signals
+
+ATP (Ability to Pay) 0-100:
+- Look for: market size, customer budgets, industry spending, economic capacity
+- High scores (80+): Large market with proven spending power
+- Medium scores (40-79): Moderate market size and budgets
+- Low scores (0-39): Small market or limited financial capacity
+
+${searchContext}
+
+Respond in JSON format:
+{
+  "wtp": <0-100>,
+  "atp": <0-100>,
+  "reasoning": "Detailed explanation of both scores with specific evidence"
+}`;
+
+    const messages: Message[] = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ];
+
+    const response = await this.chatWithRetry(provider, messages);
+
+    // Track token usage
+    const tracker = getTokenTracker();
+    tracker.log({
+      promptTokens: response.tokens.prompt,
+      completionTokens: response.tokens.completion,
+      totalTokens: response.tokens.total,
+      model: response.model,
+      timestamp: new Date(),
+      operation: 'wtp-atp-validation',
+    });
+
+    // Parse response
+    const jsonMatch = response.content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('Failed to parse WTP/ATP results: Invalid response format');
+    }
+
+    let data;
+    try {
+      data = JSON.parse(jsonMatch[0]);
+    } catch {
+      const repaired = repairJson(jsonMatch[0]);
+      data = JSON.parse(repaired);
+    }
+
+    return {
+      wtp: Math.min(100, Math.max(0, data.wtp || 0)),
+      atp: Math.min(100, Math.max(0, data.atp || 0)),
+      reasoning: data.reasoning || 'No reasoning provided'
     };
   }
 }

@@ -22,7 +22,7 @@ export interface Card {
   type: 'problem' | 'solution' | 'requirement'
   text: string
   confidence: number              // 0-100
-  state: 'hypothesis' | 'fact'    // fact when confidence >= 80%
+  state: 'hypothesis' | 'validated' | 'fact' | 'rejected'    // fact when confidence >= 85%
   sources: Source[]               // Web sources from research
   parentId?: string               // For solutions/requirements
   createdAt: number
@@ -30,9 +30,9 @@ export interface Card {
 }
 
 export interface PipelineStats {
-  validatedProblems: number      // confidence >= 80%
-  validatedSolutions: number     // confidence >= 80%
-  validatedRequirements: number  // confidence >= 80%
+  validatedProblems: number      // confidence >= 85%
+  validatedSolutions: number     // confidence >= 85%
+  validatedRequirements: number  // confidence >= 85%
   totalCards: number
   avgProblemConfidence: number
   avgSolutionConfidence: number

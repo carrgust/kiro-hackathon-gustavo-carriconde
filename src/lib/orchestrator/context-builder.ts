@@ -1,5 +1,6 @@
 import { EngineState } from '@/types/project'
 import { AgentContext, Card, PipelineStats, PipelineState, AgentAction, Source } from '@/types/orchestrator'
+import { getHypothesisState } from '@/lib/scoring/schemas'
 
 /**
  * Builds AgentContext from current EngineState
@@ -25,7 +26,7 @@ export function buildAgentContext(state: EngineState): AgentContext {
     type: 'problem' as const,
     text: h.text,
     confidence: h.confidence || 0,
-    state: (h.confidence || 0) >= 80 ? 'fact' : 'hypothesis',
+    state: getHypothesisState(h.confidence || 0),
     sources: convertSources(h.sources),
     createdAt: h.createdAt.getTime(),
     researchedAt: h.confidence ? Date.now() : undefined
@@ -36,7 +37,7 @@ export function buildAgentContext(state: EngineState): AgentContext {
     type: 'solution' as const,
     text: s.text,
     confidence: s.confidence || 0,
-    state: (s.confidence || 0) >= 80 ? 'fact' : 'hypothesis',
+    state: getHypothesisState(s.confidence || 0),
     sources: convertSources(s.sources),
     parentId: s.parentProblemId,
     createdAt: s.createdAt.getTime(),
@@ -48,7 +49,7 @@ export function buildAgentContext(state: EngineState): AgentContext {
     type: 'requirement' as const,
     text: r.text,
     confidence: r.confidence || 0,
-    state: (r.confidence || 0) >= 80 ? 'fact' : 'hypothesis',
+    state: getHypothesisState(r.confidence || 0),
     sources: convertSources(r.sources),
     parentId: r.parentSolutionId,
     createdAt: r.createdAt.getTime(),
@@ -57,9 +58,9 @@ export function buildAgentContext(state: EngineState): AgentContext {
 
   // Calculate pipeline statistics
   const allCards = [...problems, ...solutions, ...requirements]
-  const validatedProblems = problems.filter(p => p.confidence >= 80).length
-  const validatedSolutions = solutions.filter(s => s.confidence >= 80).length
-  const validatedRequirements = requirements.filter(r => r.confidence >= 80).length
+  const validatedProblems = problems.filter(p => p.confidence >= 85).length
+  const validatedSolutions = solutions.filter(s => s.confidence >= 85).length
+  const validatedRequirements = requirements.filter(r => r.confidence >= 85).length
   
   const avgProblemConfidence = problems.length > 0 
     ? problems.reduce((sum, p) => sum + p.confidence, 0) / problems.length 

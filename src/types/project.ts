@@ -1,7 +1,13 @@
 import { ProblemQuality, SolutionQuality, RequirementsQuality, PRDQuality, DNAQuality } from '@/lib/scoring';
 
-export type HypothesisState = 'hypothesis' | 'fact';
-export type HypothesisStatus = 'pending' | 'downloading' | 'analyzing' | 'complete' | 'not_solvable';
+export type HypothesisState = 'hypothesis' | 'validated' | 'fact' | 'rejected';
+export type HypothesisStatus = 'pending' | 'downloading' | 'analyzing' | 'complete' | 'not_solvable' | 'researching';
+
+export interface HypothesisCheck {
+  wtp: number; // Willingness to Pay (0-100)
+  atp: number; // Ability to Pay (0-100)
+  reasoning: string; // Explanation of the scores
+}
 
 export interface Hypothesis {
   id: string;

@@ -198,13 +198,31 @@ const HypothesisItemEnhanced = memo(function HypothesisItemEnhanced({
   const effectiveConfidence = Math.max(0, displayedConfidence - penalty);
   
   const config = useMemo(() => {
-    if (hypothesis.state === 'fact' && effectiveConfidence >= 90) {
+    if (hypothesis.state === 'fact' && effectiveConfidence >= 85) {
       return {
         color: 'var(--status-success)',
         borderColor: 'border-green-400/30',
         bgGradient: 'from-green-500/10 to-transparent',
         glow: 'shadow-[0_0_20px_rgba(34,197,94,0.2)]',
-        stateLabel: 'Validated fact'
+        stateLabel: 'Fact'
+      };
+    }
+    if (hypothesis.state === 'validated' && effectiveConfidence >= 60) {
+      return {
+        color: 'var(--status-info)',
+        borderColor: 'border-blue-400/30',
+        bgGradient: 'from-blue-500/10 to-transparent',
+        glow: 'shadow-[0_0_20px_rgba(59,130,246,0.2)]',
+        stateLabel: 'Validated'
+      };
+    }
+    if (hypothesis.state === 'rejected') {
+      return {
+        color: 'var(--status-error)',
+        borderColor: 'border-red-400/30',
+        bgGradient: 'from-red-500/10 to-transparent',
+        glow: 'shadow-[0_0_20px_rgba(239,68,68,0.2)]',
+        stateLabel: 'Rejected'
       };
     }
     return {
@@ -240,7 +258,7 @@ const HypothesisItemEnhanced = memo(function HypothesisItemEnhanced({
   }, [onClick, onRemove]);
 
   const handleMouseEnter = useCallback(() => {
-    if (hypothesis.state === 'fact') setShowBreakdown(true);
+    if (hypothesis.state === 'fact' || hypothesis.state === 'validated') setShowBreakdown(true);
   }, [hypothesis.state]);
 
   const handleMouseLeave = useCallback(() => setShowBreakdown(false), []);
@@ -319,7 +337,7 @@ const HypothesisItemEnhanced = memo(function HypothesisItemEnhanced({
             </span>
           </motion.div>
           
-          {hypothesis.state === 'fact' && effectiveConfidence >= 90 && (
+          {hypothesis.state === 'fact' && effectiveConfidence >= 85 && (
             <ScoreBreakdown
               isVisible={showBreakdown}
               scores={breakdownScores}

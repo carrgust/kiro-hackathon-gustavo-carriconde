@@ -3,6 +3,8 @@ import { Hypothesis } from '@/types/project';
 import { getTokenTracker } from './token-tracker';
 import { calculateConfidence } from '../confidence';
 import { getModelChain } from '@/lib/models/config';
+import { ScoringEngine } from '@/lib/research/engines/scoring-engine';
+import { processValidationResult } from '@/lib/wtp-atp-utils';
 
 export class HypothesisService {
   private apiKey: string;
@@ -18,11 +20,19 @@ export class HypothesisService {
     let userPrompt: string;
     
     if (focus === 'problems') {
-      systemPrompt = `You are a market research expert. Generate specific problem hypotheses using the formula: [WHO] struggles with [WHAT], causing [NEGATIVE OUTCOME]. Examples: 'Pilots struggle with manual logs, causing compliance delays' or 'Developers struggle with API testing, causing deployment bugs'.`;
-      userPrompt = `Generate ${count} problem hypotheses for the ${niche} market using format: [WHO] struggles with [WHAT], causing [NEGATIVE OUTCOME]. Format as JSON array with "text" field only. Keep under 50 characters.`;
+      systemPrompt = `You are a market research expert. Generate problem hypotheses using S|P|O|C format: Subject|Predicate|Object|Constraint. Subject=WHO (user type), Predicate=STRUGGLE_WITH/FACE_ISSUES_WITH, Object=WHAT (specific problem), Constraint=WHEN/WHERE (timeframe/context).`;
+      userPrompt = `Generate ${count} problem hypotheses for the ${niche} market using S|P|O|C format: Subject|Predicate|Object|Constraint. Examples:
+- "VenueOwners|STRUGGLE_WITH|booking management|2026"
+- "Developers|FACE_ISSUES_WITH|API testing|daily"
+- "Pilots|STRUGGLE_WITH|manual logs|pre-flight"
+Format as JSON array with "text" field only. Keep under 60 characters.`;
     } else if (focus === 'solutions') {
-      systemPrompt = `You are a solution architect. Generate specific solution hypotheses using the formula: [SOLUTION] that enables [WHO] to [BENEFIT]. Examples: 'Offline checklist app that enables pilots to complete preflight faster' or 'Auto-fill logger that enables pilots to submit reports instantly'.`;
-      userPrompt = `Generate ${count} solution hypotheses for the ${niche} market using format: [SOLUTION] that enables [WHO] to [BENEFIT]. Format as JSON array with "text" field only. Keep under 80 characters each.`;
+      systemPrompt = `You are a solution architect. Generate solution hypotheses using S|P|O|C format: Subject|Predicate|Object|Constraint. Subject=SOLUTION_TYPE, Predicate=ENABLES/HELPS, Object=WHO to BENEFIT, Constraint=HOW/WHEN.`;
+      userPrompt = `Generate ${count} solution hypotheses for the ${niche} market using S|P|O|C format: Subject|Predicate|Object|Constraint. Examples:
+- "AutoBookingApp|ENABLES|venue owners to manage bookings|instantly"
+- "APITestSuite|HELPS|developers validate endpoints|pre-deployment"
+- "DigitalLogbook|ENABLES|pilots to complete logs|offline"
+Format as JSON array with "text" field only. Keep under 80 characters.`;
     } else {
       // requirements
       systemPrompt = `You are a software requirements engineer. Generate specific, testable requirements for a ${niche} application. Use standard FR (Functional Requirement) and NFR (Non-Functional Requirement) format.`;
@@ -53,30 +63,58 @@ Keep under 60 characters.`;
     });
     
     // Parse JSON response
+    console.log('Raw AI response:', response.content);
+    
     const jsonMatch = response.content.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
+      console.error('No JSON array found in response:', response.content);
       throw new Error('Failed to generate hypotheses: Invalid response format from AI model');
     }
 
-    const hypothesesData = JSON.parse(jsonMatch[0]);
+    let hypothesesData;
+    try {
+      hypothesesData = JSON.parse(jsonMatch[0]);
+      console.log('Parsed hypotheses data:', hypothesesData);
+    } catch (error) {
+      console.error('JSON parse error:', error, 'Raw JSON:', jsonMatch[0]);
+      throw new Error('Failed to parse AI response as JSON');
+    }
     
-    return hypothesesData.map((item: any, index: number) => ({
-      id: `${Date.now()}-${index}`,
-      text: item.text || `${focus} hypothesis`,
-      type: focus,  // ADD THIS LINE - 'problems' or 'solutions'
-      state: 'hypothesis' as const,
-      confidence: 0,
-      createdAt: new Date()
-    }));
+    return hypothesesData.map((item: any, index: number) => {
+      console.log(`Processing item ${index}:`, item);
+      
+      // Create proper fallback text based on focus type
+      let fallbackText: string;
+      if (focus === 'problems') {
+        fallbackText = 'Users|STRUGGLE_WITH|undefined problem|daily';
+      } else if (focus === 'solutions') {
+        fallbackText = 'Solution|ENABLES|users to solve problems|efficiently';
+      } else {
+        fallbackText = 'FR: The system shall provide basic functionality';
+      }
+      
+      return {
+        id: `${Date.now()}-${index}`,
+        text: item.text || fallbackText,
+        type: focus,
+        state: 'hypothesis' as const,
+        confidence: 0,
+        createdAt: new Date()
+      };
+    });
   }
 
   async generateSolutionForProblem(niche: string, problemText: string, problemId: string): Promise<Hypothesis[]> {
     const provider = getProvider('openrouter', this.apiKey);
     
-    const systemPrompt = `You are a solution architect. Generate specific solution hypotheses using the formula: [SOLUTION] that enables [WHO] to [BENEFIT]. Examples: 'Offline checklist app that enables pilots to complete preflight faster' or 'Auto-fill logger that enables pilots to submit reports instantly'.`;
+    const systemPrompt = `You are a solution architect. Generate solution hypotheses using S|P|O|C format: Subject|Predicate|Object|Constraint. Subject=SOLUTION_TYPE, Predicate=ENABLES/HELPS, Object=WHO to BENEFIT, Constraint=HOW/WHEN.`;
     const userPrompt = `Given this validated problem: "${problemText}" in the ${niche} market.
 
-Generate 3 solution hypotheses using format: [SOLUTION] that enables [WHO] to [BENEFIT]. Format as JSON array with "text" field only. Keep under 80 characters each.`;
+Generate 3 solution hypotheses using S|P|O|C format: Subject|Predicate|Object|Constraint. Examples:
+- "AutoBookingApp|ENABLES|venue owners to manage bookings|instantly"
+- "APITestSuite|HELPS|developers validate endpoints|pre-deployment"
+- "DigitalLogbook|ENABLES|pilots to complete logs|offline"
+Format as JSON array with "text" field only. Keep under 80 characters.`;
 
     const messages: Message[] = [
       { role: 'system', content: systemPrompt },
@@ -108,7 +146,7 @@ Generate 3 solution hypotheses using format: [SOLUTION] that enables [WHO] to [B
     
     return solutionsData.map((item: any, index: number) => ({
       id: `${Date.now()}-${index}`,
-      text: item.text || 'Solution hypothesis',
+      text: item.text || 'Solution|ENABLES|users to solve problems|efficiently',
       type: 'solutions',
       state: 'hypothesis' as const,
       confidence: 0,
@@ -120,13 +158,14 @@ Generate 3 solution hypotheses using format: [SOLUTION] that enables [WHO] to [B
   async generateRequirementForSolution(niche: string, solutionText: string, solutionId: string): Promise<Hypothesis[]> {
     const provider = getProvider('openrouter', this.apiKey);
     
-    const systemPrompt = `You are a software requirements engineer. Generate specific, testable requirements for implementing the given solution. Use standard FR (Functional Requirement) and NFR (Non-Functional Requirement) format.`;
+    const systemPrompt = `You are a software requirements engineer. Generate requirements using S|P|O|C format: Subject|Predicate|Object|Constraint. Subject=SYSTEM/USER, Predicate=SHALL/MUST, Object=ACTION/CAPABILITY, Constraint=CONDITIONS/LIMITS.`;
     const userPrompt = `Given this validated solution: "${solutionText}" for the ${niche} market.
 
-Generate 3 requirements (mix of FR and NFR) needed to implement this solution. Format as JSON array with objects containing "text" field. Each requirement must start with "FR:" or "NFR:" followed by "The system shall [action]". Examples:
-- "FR: The system shall allow users to export data"
-- "NFR: The system shall respond within 200ms"
-Keep under 60 characters.`;
+Generate 3 requirements using S|P|O|C format: Subject|Predicate|Object|Constraint. Examples:
+- "SYSTEM|SHALL|authenticate users|via OAuth2"
+- "USER|MUST|export data|within 5 seconds"
+- "API|SHALL|respond to requests|under 200ms"
+Format as JSON array with "text" field only. Keep under 60 characters.`;
 
     const messages: Message[] = [
       { role: 'system', content: systemPrompt },
@@ -158,7 +197,7 @@ Keep under 60 characters.`;
     
     return requirementsData.map((item: any, index: number) => ({
       id: `${Date.now()}-${index}`,
-      text: item.text || 'Requirement hypothesis',
+      text: item.text || 'FR: The system shall provide basic functionality',
       type: item.text?.startsWith('NFR:') ? 'non-functional' : 'functional',
       state: 'hypothesis' as const,
       confidence: 0,
@@ -171,39 +210,55 @@ Keep under 60 characters.`;
     let confidence = 50;
     let sources: string[] = [];
     
-    // Use intelligent research agent
+    // Use WTP/ATP validation via scoring engine
     try {
-      const response = await fetch('/api/research/agent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          hypothesis: `${hypothesis.text} in ${niche}`,
-          apiKey: this.apiKey
-        }),
-      });
+      const scoringEngine = new ScoringEngine(this.apiKey);
+      const validationResult = await scoringEngine.validateHypothesis(hypothesis.text, niche);
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log('[Research] Agent returned:', data.confidence, 'confidence');
-        confidence = data.confidence || 50;
-        // Format sources with source type and confidence weight for better tracking
-        sources = data.sources?.map((s: { 
-          title: string; 
-          snippet: string; 
-          url: string; 
-          domain: string; 
-          source_type?: string; 
-          confidence_weight?: number 
-        }) => {
-          const sourceTypeLabel = s.source_type ? `[${s.source_type.toUpperCase()}]` : '';
-          const weightLabel = s.confidence_weight ? ` (${Math.round(s.confidence_weight * 100)}%)` : '';
-          return `${sourceTypeLabel}[${s.domain || 'Web'}]${weightLabel} ${s.title} ||| ${s.snippet || ''} ||| ${s.url}`;
-        }) || [];
-      } else {
-        console.error('[Research] Agent response not ok:', response.status);
-      }
+      const processed = processValidationResult(validationResult);
+      confidence = processed.confidence;
+      
+      // Create sources from reasoning
+      sources = [`[WTP/ATP Analysis] WTP: ${validationResult.wtp}%, ATP: ${validationResult.atp}% ||| ${validationResult.reasoning} ||| validation-result`];
+      
+      console.log(`[Research] WTP/ATP validation: WTP=${validationResult.wtp}%, ATP=${validationResult.atp}%, Combined=${confidence}%`);
+      
     } catch (error) {
-      console.error('[HypothesisService] Research agent failed:', error);
+      console.error('[HypothesisService] WTP/ATP validation failed:', error);
+      
+      // Fallback to intelligent research agent
+      try {
+        const response = await fetch('/api/research/agent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            hypothesis: `${hypothesis.text} in ${niche}`,
+            apiKey: this.apiKey
+          }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('[Research] Agent returned:', data.confidence, 'confidence');
+          confidence = data.confidence || 50;
+          sources = data.sources?.map((s: { 
+            title: string; 
+            snippet: string; 
+            url: string; 
+            domain: string; 
+            source_type?: string; 
+            confidence_weight?: number 
+          }) => {
+            const sourceTypeLabel = s.source_type ? `[${s.source_type.toUpperCase()}]` : '';
+            const weightLabel = s.confidence_weight ? ` (${Math.round(s.confidence_weight * 100)}%)` : '';
+            return `${sourceTypeLabel}[${s.domain || 'Web'}]${weightLabel} ${s.title} ||| ${s.snippet || ''} ||| ${s.url}`;
+          }) || [];
+        } else {
+          console.error('[Research] Agent response not ok:', response.status);
+        }
+      } catch (agentError) {
+        console.error('[HypothesisService] Research agent failed:', agentError);
+      }
     }
     
     // If agent failed, fallback to machine-gun
@@ -263,7 +318,6 @@ Keep under 60 characters.`;
     } catch (error) {
       console.error('[HypothesisService] Product Hunt search failed:', error);
     }
-    
     return { confidence, sources };
   }
 }

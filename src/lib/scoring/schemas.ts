@@ -6,7 +6,7 @@ const ScoreValue = z.number().min(0).max(100);
 // Stage 1: Hypothesis-Fact Validation
 export const HypothesisFactScoreSchema = z.object({
   confidence: ScoreValue,
-  state: z.enum(['hypothesis', 'fact']),
+  state: z.enum(['hypothesis', 'validated', 'fact', 'rejected']),
   type: z.enum(['problem', 'solution']),
   sources: z.array(z.string()).optional(),
 });
@@ -80,7 +80,10 @@ export type RequirementsQuality = z.infer<typeof RequirementsQualitySchema>;
 export type PRDQuality = z.infer<typeof PRDQualitySchema>;
 export type DNAQuality = z.infer<typeof DNAQualitySchema>;
 
-// Helper: Determine state from confidence (90%+ = fact)
-export function getHypothesisState(confidence: number): 'hypothesis' | 'fact' {
-  return confidence >= 90 ? 'fact' : 'hypothesis';
+// Helper: Determine state from confidence using WTP/ATP thresholds
+export function getHypothesisState(confidence: number): 'hypothesis' | 'validated' | 'fact' | 'rejected' {
+  if (confidence >= 85) return 'fact';
+  if (confidence >= 60) return 'validated';
+  if (confidence >= 40) return 'hypothesis';
+  return 'rejected';
 }

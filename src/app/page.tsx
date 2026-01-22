@@ -142,17 +142,17 @@ export default function Dashboard() {
 
   // Memoized computed values to prevent unnecessary re-renders
   const validatedProblems = useMemo(
-    () => state.hypotheses.filter(h => h.state === 'fact'),
+    () => state.hypotheses.filter(h => h.state === 'fact' || h.state === 'validated'),
     [state.hypotheses]
   );
 
   const validatedSolutions = useMemo(
-    () => state.solutions.filter(h => h.state === 'fact'),
+    () => state.solutions.filter(h => h.state === 'fact' || h.state === 'validated'),
     [state.solutions]
   );
 
   const validatedRequirements = useMemo(
-    () => state.requirements.filter(h => h.state === 'fact'),
+    () => state.requirements.filter(h => h.state === 'fact' || h.state === 'validated'),
     [state.requirements]
   );
 
@@ -304,8 +304,8 @@ export default function Dashboard() {
   // Assess if requirements are sufficient for PRD generation
   const assessRequirements = useCallback(async (requirements: Hypothesis[], niche: string): Promise<{ sufficient: boolean; missing: string[] }> => {
     const apiKey = getStoredApiKey();
-    if (!apiKey || apiKey === 'demo') {
-      return { sufficient: true, missing: [] }; // Skip in demo mode
+    if (!apiKey) {
+      return { sufficient: false, missing: ['API key required'] };
     }
 
     const reqList = requirements.map((r, i) => `${i + 1}. ${r.text}`).join('\n');
@@ -433,7 +433,7 @@ Respond ONLY with valid JSON, no other text.`;
         
         // 2. Call orchestrator API
         const apiKey = getStoredApiKey();
-        console.log('[Orchestrator] API key check:', apiKey, 'isDemo:', apiKey === 'demo');
+        console.log('[Orchestrator] API key check:', apiKey);
         if (!apiKey) {
           console.log('[Orchestrator] No API key, skipping');
           return;
