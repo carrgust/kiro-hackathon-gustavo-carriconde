@@ -45,12 +45,12 @@ const HypothesisColumn = memo(function HypothesisColumn({
   
   return (
     <div className="flex-1 min-w-0">
-      <GlassCard className="p-6 h-full bg-yellow-900/20 border-amber-400/20 hover:border-amber-400/40 transition-all backdrop-blur-xl">
+      <GlassCard className="p-6 h-full bg-white/10 border-white/20 hover:border-amber-300/50 transition-all backdrop-blur-xl">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Sparkles size={20} className="text-amber-200" />
+              <Sparkles size={20} className="text-white" />
               <h2 className="text-xl font-semibold text-white capitalize">{title}</h2>
             </div>
             <motion.div 
@@ -71,12 +71,12 @@ const HypothesisColumn = memo(function HypothesisColumn({
                 {validatedCount} / {requiredCount} validated
               </span>
               {percentage !== undefined && (
-                <span className="text-amber-200 font-medium">{percentage}%</span>
+                <span className="text-white font-medium">{percentage}%</span>
               )}
             </div>
-            <div className="h-2 bg-black/20 rounded-full overflow-hidden">
+            <div className="h-2 bg-white/20 rounded-full overflow-hidden">
               <motion.div
-                className="h-full bg-gradient-to-r from-amber-400 to-amber-500 shadow-amber-400/50 shadow-lg"
+                className="h-full bg-gradient-to-r from-orange-400 to-orange-500 shadow-orange-400/50 shadow-lg"
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.min(progress, 100)}%` }}
                 transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -103,7 +103,7 @@ const HypothesisColumn = memo(function HypothesisColumn({
                 repeatDelay: 3
               }}
             >
-              <Lock size={48} className="text-amber-300/50 mb-4" />
+              <Lock size={48} className="text-white/50 mb-4" />
             </motion.div>
             <p className="text-white/80 text-sm font-medium">
               Complete previous requirements to unlock

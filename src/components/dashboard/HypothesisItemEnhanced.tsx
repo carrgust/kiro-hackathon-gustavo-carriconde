@@ -67,8 +67,8 @@ function ConfidenceGauge({
           </span>
         </div>
       </div>
-      <div className="relative h-2 bg-gray-800 rounded-full overflow-hidden">
-        <div className="absolute left-[90%] top-0 bottom-0 w-px bg-gray-500 z-10" />
+      <div className="relative h-2 bg-white/20 rounded-full overflow-hidden">
+        <div className="absolute left-[90%] top-0 bottom-0 w-px bg-white/30 z-10" />
         <motion.div 
           className="h-full"
           style={getGaugeStyle()}
