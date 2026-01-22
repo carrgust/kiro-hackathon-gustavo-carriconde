@@ -33,15 +33,15 @@ export const SECTION_COLORS = {
     rgb: 'rgb(16, 185, 129)',
     rgba: 'rgba(16, 185, 129, 0.1)',
   },
-  STAKEHOLDER: {
-    name: 'Stakeholder',
-    gradient: 'from-gray-800 to-black',
-    bg: 'bg-gray-800',
-    text: 'text-gray-400',
-    border: 'border-gray-700',
-    glow: 'shadow-gray-700/50',
-    rgb: 'rgb(31, 41, 55)',
-    rgba: 'rgba(31, 41, 55, 0.2)',
+  AUTOCODER: {
+    name: 'Auto Coder',
+    gradient: 'from-purple-600 to-indigo-900',
+    bg: 'bg-purple-600',
+    text: 'text-purple-400',
+    border: 'border-purple-500',
+    glow: 'shadow-purple-500/50',
+    rgb: 'rgb(147, 51, 234)',
+    rgba: 'rgba(147, 51, 234, 0.1)',
   },
 } as const;
 

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Brain, FileText, Users } from 'lucide-react';
+import { LayoutDashboard, Brain, FileText, Code2 } from 'lucide-react';
 import { SectionKey } from '@/lib/colors';
 import '@/styles/glassmorphism.css';
 
@@ -12,7 +12,7 @@ const SECTIONS = [
   { key: 'INPUT' as SectionKey, icon: LayoutDashboard, label: 'Input' },
   { key: 'PROCESSING' as SectionKey, icon: Brain, label: 'Processing' },
   { key: 'PRD' as SectionKey, icon: FileText, label: 'PRD' },
-  { key: 'STAKEHOLDER' as SectionKey, icon: Users, label: 'Stakeholder' },
+  { key: 'AUTOCODER' as SectionKey, icon: Code2, label: 'Auto Coder' },
 ];
 
 export default function Sidebar({ activeSection, onSectionChange }: SidebarProps) {

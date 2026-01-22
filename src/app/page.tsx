@@ -18,20 +18,13 @@ import Sidebar from '@/components/Sidebar';
 import InputDashboard from '@/components/sections/InputDashboard';
 import ProcessingSection from '@/components/sections/ProcessingSection';
 import PRDSection from '@/components/sections/PRDSection';
-import StakeholderSection from '@/components/sections/StakeholderSection';
+import AutoCoderSection from '@/components/sections/AutoCoderSection';
 import ConfirmationModal from '@/components/dashboard/ConfirmationModal';
-import EnhancedHeader from '@/components/dashboard/EnhancedHeader';
-import AgentRationale from '@/components/dashboard/AgentRationale';
 import UnifiedAgentConsole from '@/components/dashboard/UnifiedAgentConsole';
-import RadarEqualizer from '@/components/dashboard/RadarEqualizer';
 import HypothesisModal from '@/components/dashboard/HypothesisModal';
 import HypothesisColumn from '@/components/dashboard/HypothesisColumn';
-import DNAButton from '@/components/dashboard/DNAButton';
-import StageProgressBar from '@/components/dashboard/StageProgressBar';
-import SyncIndicator from '@/components/dashboard/SyncIndicator';
 import ModalLoading from '@/components/ui/ModalLoading';
 import { KeyboardShortcuts } from '@/components/ui/KeyboardShortcuts';
-import { APIStatusBanner } from '@/components/ui/APIStatusBanner';
 
 // Lazy load heavy modals
 const DNAModal = lazy(() => import('@/components/dashboard/DNAModal'));
@@ -1212,162 +1205,50 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
               isOnline={!!hypothesisService}
               isProcessing={engineRunning}
             >
-              {/* API Error Banner */}
-              <APIStatusBanner error={apiError} onDismiss={() => setApiError(null)} />
+              {/* Agent Console */}
+              <div className="mb-6">
+                <UnifiedAgentConsole
+                  rationale={[...state.agentRationale, currentRationaleStream].filter(Boolean)}
+                  onSendMessage={handleSendMessage}
+                  disabled={!engineRunning}
+                />
+              </div>
               
-              <div className={state.autopilotEnabled ? 'autopilot-border autopilot-glow' : ''}>
-                <div className="rounded-md">
-                  <EnhancedHeader
-                    provider={getProvider()}
-                    model={getModel()}
-                    tokenBudget={state.tokenBudget}
-                    totalTokensSpent={state.totalTokensSpent}
-                    runningTime={runningTime}
-                    niche={state.niche}
-                    nicheLocked={state.nicheLocked}
-                    selectedRegions={state.selectedRegions}
-                    autopilotEnabled={state.autopilotEnabled}
-                    engineRunning={engineRunning}
-                    sliderValue={state.slider}
-                    onTokenBudgetChange={handleTokenBudgetChange}
-                    onNicheChange={handleNicheChange}
-                    onNicheLockToggle={handleNicheLockToggle}
-                    onRegionsChange={handleRegionsChange}
-                    onAutopilotToggle={handleAutopilotToggle}
-                    onSliderChange={handleSliderChange}
-                    onEngineToggle={handleEngineToggle}
-                  />
-                  
-                  {/* Stage Progress Bar with Sync Indicator */}
-                  <div className="px-2 sm:px-4 py-2 border-b metal-panel flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
-                    <StageProgressBar 
-                      stages={scoring.stages} 
-                      currentStage={scoring.currentStage} 
-                    />
-                    <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end relative z-10">
-                      <button
-                        onClick={() => setShowExportModal(true)}
-                        disabled={state.hypotheses.length === 0 && state.solutions.length === 0}
-                        className="px-2 sm:px-3 py-1.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-300 text-xs sm:text-sm rounded-lg transition-colors flex items-center gap-1.5 sm:gap-2 font-mono border border-gray-700 min-h-[36px] sm:min-h-[32px]"
-                        aria-label="Export data"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        <span className="hidden xs:inline">Export</span>
-                      </button>
-                      <SyncIndicator 
-                        status={sync.status}
-                        connectedUsers={sync.connectedUsers.length}
-                        lastSyncTime={sync.lastSyncTime}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col md:flex-row gap-4">
-                    {/* Left side: Radar equalizer - hidden on mobile */}
-                    <div className="hidden md:block w-64 flex-shrink-0">
-                      <div className="h-[400px] flex items-center justify-center border border-gray-800 rounded-lg">
-                        <RadarEqualizer
-                          problemSources={state.hypotheses
-                            .filter(h => h.sources && h.sources.length > 0)
-                            .flatMap(h => (h.sources || []).map((url, i) => ({ 
-                              id: `${h.id}-${i}`, 
-                              url, 
-                              confidence: h.confidence,
-                              isValidated: h.state === 'fact'
-                            })))
-                          }
-                          solutionSources={state.solutions
-                            .filter(h => h.sources && h.sources.length > 0)
-                            .flatMap(h => (h.sources || []).map((url, i) => ({ 
-                              id: `${h.id}-${i}`, 
-                              url, 
-                              confidence: h.confidence,
-                              isValidated: h.state === 'fact'
-                            })))
-                          }
-                          requirementSources={state.requirements
-                            .filter(h => h.sources && h.sources.length > 0)
-                            .flatMap(h => (h.sources || []).map((url, i) => ({ 
-                              id: `${h.id}-${i}`, 
-                              url, 
-                              confidence: h.confidence,
-                              isValidated: h.state === 'fact'
-                            })))
-                          }
-                          isActive={engineRunning}
-                        />
-                      </div>
-                    </div>
-                    
-                    {/* Right side: Unified Agent Console */}
-                    <div className="flex-1 h-[400px]">
-                      <UnifiedAgentConsole
-                        rationale={[...state.agentRationale, currentRationaleStream].filter(Boolean)}
-                        onSendMessage={handleSendMessage}
-                        disabled={!engineRunning}
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Hypothesis columns - stack on mobile, row on desktop */}
-                  <div className="flex flex-col md:flex-row pb-24 md:pb-0">
-                    <HypothesisColumn
-                      title="problems"
-                      hypotheses={state.hypotheses}
-                      score={state.problemsScore}
-                      percentage={state.slider}
-                      validatedCount={countGreenFacts()}
-                      requiredCount={3}
-                      onItemClick={handleItemClick}
-                      onItemRemove={(h) => handleItemRemove(h, 'hypotheses')}
-                    />
-                    
-                    <div className="hidden md:block w-px bg-gray-800" />
-                    <div className="md:hidden h-px bg-gray-800 mx-4" />
-                    
-                    <HypothesisColumn
-                      title="solutions"
-                      hypotheses={state.solutions}
-                      score={state.solutionsScore}
-                      percentage={100 - state.slider}
-                      locked={(() => {
-                        const isLocked = countGreenFacts() < 2;
-                        console.log('[DEBUG] Solutions locked:', isLocked, 'greenFacts:', countGreenFacts());
-                        return isLocked;
-                      })()}
-                      validatedCount={countSolutionsGreenFacts()}
-                      requiredCount={2}
-                      onItemClick={handleItemClick}
-                      onItemRemove={(h) => handleItemRemove(h, 'solutions')}
-                    />
-                    
-                    <div className="hidden md:block w-px bg-gray-800" />
-                    <div className="md:hidden h-px bg-gray-800 mx-4" />
-                    
-                    <HypothesisColumn
-                      title="requirements"
-                      hypotheses={state.requirements}
-                      score={state.requirements.filter(h => h.state === 'fact').reduce((sum, h) => sum + h.confidence, 0)}
-                      locked={(() => {
-                        const isLocked = !(countGreenFacts() >= 2 && countSolutionsGreenFacts() >= 2);
-                        console.log('[DEBUG] Requirements locked:', isLocked, 'greenFacts:', countGreenFacts(), 'solutionsFacts:', countSolutionsGreenFacts());
-                        return isLocked;
-                      })()}
-                      validatedCount={countRequirementsGreenFacts()}
-                      requiredCount={2}
-                      onItemClick={handleItemClick}
-                      onItemRemove={(h) => handleItemRemove(h, 'requirements')}
-                    />
-                  </div>
-                  
-                  {/* DNA Button - fixed on mobile */}
-                  <DNAButton
-                    unlocked={state.dnaUnlocked}
-                    validatedCount={countGreenFacts() + countSolutionsGreenFacts() + countRequirementsGreenFacts()}
-                    requiredCount={9}
-                    onClick={handleCreateDNA}
-                  />
-                </div>
+              {/* Hypothesis columns - stack on mobile, row on desktop */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <HypothesisColumn
+                  title="problems"
+                  hypotheses={state.hypotheses}
+                  score={state.problemsScore}
+                  percentage={state.slider}
+                  validatedCount={countGreenFacts()}
+                  requiredCount={3}
+                  onItemClick={handleItemClick}
+                  onItemRemove={(h) => handleItemRemove(h, 'hypotheses')}
+                />
+                
+                <HypothesisColumn
+                  title="solutions"
+                  hypotheses={state.solutions}
+                  score={state.solutionsScore}
+                  percentage={100 - state.slider}
+                  locked={countGreenFacts() < 2}
+                  validatedCount={countSolutionsGreenFacts()}
+                  requiredCount={2}
+                  onItemClick={handleItemClick}
+                  onItemRemove={(h) => handleItemRemove(h, 'solutions')}
+                />
+                
+                <HypothesisColumn
+                  title="requirements"
+                  hypotheses={state.requirements}
+                  score={state.requirements.filter(h => h.state === 'fact').reduce((sum, h) => sum + h.confidence, 0)}
+                  locked={!(countGreenFacts() >= 2 && countSolutionsGreenFacts() >= 2)}
+                  validatedCount={countRequirementsGreenFacts()}
+                  requiredCount={2}
+                  onItemClick={handleItemClick}
+                  onItemRemove={(h) => handleItemRemove(h, 'requirements')}
+                />
               </div>
             </ProcessingSection>
           )}
@@ -1382,8 +1263,8 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
             />
           )}
           
-          {activeSection === 'STAKEHOLDER' && (
-            <StakeholderSection key="stakeholder" />
+          {activeSection === 'AUTOCODER' && (
+            <AutoCoderSection key="autocoder" />
           )}
         </AnimatePresence>
       </main>
