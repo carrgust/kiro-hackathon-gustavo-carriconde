@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send } from 'lucide-react';
+import { Send, Terminal } from 'lucide-react';
 
 interface UnifiedAgentConsoleProps {
   rationale: string[];
@@ -18,9 +18,8 @@ export default function UnifiedAgentConsole({ rationale, onSendMessage, disabled
   const inputRef = useRef<HTMLInputElement>(null);
   const prevRationaleLength = useRef(0);
 
-  // Auto-scroll to bottom when new rationale added (not on stream updates)
+  // Auto-scroll to bottom when new rationale added
   useEffect(() => {
-    // Only scroll if a new complete message was added (length changed)
     if (rationale.length !== prevRationaleLength.current) {
       if (logsContainerRef.current) {
         logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight;
@@ -44,48 +43,46 @@ export default function UnifiedAgentConsole({ rationale, onSendMessage, disabled
     }
   };
 
-  const hasInput = input.trim().length > 0;
-  const isActive = isFocused || hasInput;
-
   return (
-    <div className="metal-container-dark rounded-lg overflow-hidden flex flex-col h-full" style={{ boxShadow: 'var(--shadow-glow-cyan)' }}>
+    <div className="glass-card p-6 h-[400px] flex flex-col border-amber-500/20 shadow-amber-500/10">
       {/* Header */}
-      <div className="metal-header-dark px-4 py-2 flex items-center gap-2 flex-shrink-0">
-        <span className="text-white text-xs font-semibold tracking-wider">AGENT CONSOLE</span>
+      <div className="flex items-center gap-2 mb-4">
+        <Terminal size={20} className="text-amber-400" />
+        <h2 className="text-xl font-semibold text-white">Agent Console</h2>
         <motion.span
-          className="text-white text-xs"
-          animate={{ opacity: [1, 0, 1] }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          className="text-amber-400 text-sm ml-auto"
+          animate={{ opacity: [1, 0.3, 1] }}
+          transition={{ duration: 2, repeat: Infinity }}
         >
-          _
+          {disabled ? 'Idle' : 'Active'}
         </motion.span>
       </div>
 
       {/* Logs Area */}
       <div 
         ref={logsContainerRef}
-        className="flex-1 overflow-y-auto px-4 py-3 space-y-1 relative min-h-0" 
-        style={{ background: 'linear-gradient(180deg, var(--bg-surface) 0%, transparent 10%, transparent 100%)' }}
+        className="flex-1 overflow-y-auto mb-4 bg-black/20 rounded-lg p-4 backdrop-blur-sm border border-white/5"
       >
         <AnimatePresence initial={false}>
           {rationale.map((line, i) => {
             const isSuccess = line.includes('✓');
+            const isError = line.includes('✗');
             return (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3 }}
-                className="text-xs font-mono flex items-start gap-2"
+                className="text-sm font-mono flex items-start gap-2 mb-1"
               >
-                <span className="text-gray-600 flex-shrink-0">&gt;</span>
-                <motion.span
-                  className={isSuccess ? 'text-white' : 'text-gray-400'}
-                  animate={isSuccess ? { color: ['var(--text-primary-color)', 'var(--status-success)', 'var(--text-primary-color)'] } : {}}
-                  transition={{ duration: 0.5 }}
-                >
+                <span className="text-amber-600 flex-shrink-0">&gt;</span>
+                <span className={
+                  isSuccess ? 'text-green-400' : 
+                  isError ? 'text-red-400' : 
+                  'text-gray-300'
+                }>
                   {line}
-                </motion.span>
+                </span>
               </motion.div>
             );
           })}
@@ -94,61 +91,26 @@ export default function UnifiedAgentConsole({ rationale, onSendMessage, disabled
       </div>
 
       {/* Input Area */}
-      <div className="px-4 pb-4 pt-2 flex-shrink-0 relative">
-        {/* Scan-line effect when active */}
-        {isActive && (
-          <motion.div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: 'linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.03) 50%, transparent 100%)',
-            }}
-            animate={{ y: ['-100%', '100%'] }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-          />
-        )}
-
-        <div className="flex items-center gap-2 relative">
-          <div className="flex-1 relative">
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-              disabled={disabled}
-              placeholder="> steer the agent..."
-              className="w-full bg-transparent text-white text-sm font-mono px-2 py-2 outline-none transition-all duration-300 border-b"
-              style={{
-                borderColor: isActive ? 'var(--text-primary-color)' : 'var(--border-default)',
-                boxShadow: isActive ? 'var(--shadow-glow-white)' : 'none',
-              }}
-            />
-          </div>
-
-          {/* Send Button */}
-          <motion.button
-            onClick={handleSend}
-            disabled={disabled || !hasInput}
-            className="p-2 rounded transition-all duration-300 disabled:opacity-30"
-            style={{
-              background: hasInput ? 'rgba(255,255,255,0.1)' : 'transparent',
-              border: '1px solid',
-              borderColor: hasInput ? 'var(--text-primary-color)' : 'var(--border-default)',
-            }}
-            animate={hasInput ? {
-              boxShadow: [
-                '0 0 5px rgba(255,255,255,0.2)',
-                '0 0 15px rgba(255,255,255,0.4)',
-                '0 0 5px rgba(255,255,255,0.2)',
-              ],
-            } : {}}
-            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <Send className="w-4 h-4 text-white" />
-          </motion.button>
-        </div>
+      <div className="flex gap-2">
+        <input
+          ref={inputRef}
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          disabled={disabled}
+          placeholder="Send message to agent..."
+          className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+        />
+        <button
+          onClick={handleSend}
+          disabled={disabled || !input.trim()}
+          className="px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-all flex items-center gap-2 shadow-lg"
+        >
+          <Send size={16} />
+        </button>
       </div>
     </div>
   );

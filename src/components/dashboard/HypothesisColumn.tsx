@@ -1,8 +1,9 @@
 import { memo, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Plus, Sparkles } from 'lucide-react';
+import { Lock, Sparkles } from 'lucide-react';
 import { Hypothesis } from '@/types/project';
 import HypothesisItemEnhanced from './HypothesisItemEnhanced';
+import GlassCard from '@/components/GlassCard';
 
 interface HypothesisColumnProps {
   title: string;
@@ -17,7 +18,6 @@ interface HypothesisColumnProps {
   onAdd?: () => void;
 }
 
-// Stagger animation variants
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -29,31 +29,10 @@ const containerVariants = {
   },
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.95 },
-  visible: { 
-    opacity: 1, 
-    y: 0, 
-    scale: 1,
-    transition: {
-      type: 'spring' as const,
-      stiffness: 400,
-      damping: 25,
-    },
-  },
-};
-
 const HypothesisColumn = memo(function HypothesisColumn({ 
-  title, hypotheses, score, percentage, locked = false, validatedCount = 0, onItemClick, onItemRemove, onAdd 
+  title, hypotheses, score, percentage, locked = false, validatedCount = 0, requiredCount = 3, onItemClick, onItemRemove 
 }: HypothesisColumnProps) {
-  console.log(`[HypothesisColumn ${title}] Props:`, { 
-    hypothesesCount: hypotheses.length, 
-    locked, 
-    validatedCount,
-    firstHypothesis: hypotheses[0]?.text?.substring(0, 30)
-  });
   
-  // Memoize click handlers to prevent child re-renders
   const handleItemClick = useCallback((hypothesis: Hypothesis) => {
     onItemClick(hypothesis);
   }, [onItemClick]);
@@ -62,124 +41,90 @@ const HypothesisColumn = memo(function HypothesisColumn({
     onItemRemove(hypothesis);
   }, [onItemRemove]);
 
-  const columnId = `column-${title.toLowerCase().replace(/\s+/g, '-')}`;
+  const progress = requiredCount > 0 ? (validatedCount / requiredCount) * 100 : 0;
   
   return (
-    <motion.section 
-      className="flex-1 min-w-0 w-full md:w-auto p-2 sm:p-4 relative metal-panel"
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
-      aria-labelledby={`${columnId}-heading`}
-      role="region"
-    >
-      {/* Metal Header */}
-      <motion.header 
-        className="sticky top-0 z-10 p-2 sm:p-3 mb-3 sm:mb-4 metal-header-dark"
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
-        <div className="flex items-center justify-between">
-          <div className="text-[10px] sm:text-xs font-mono">
-            <motion.h2
-              id={`${columnId}-heading`}
-              className="inline metal-label text-white"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              {title}
-            </motion.h2>
-            {percentage !== undefined && (
-              <motion.span 
-                className="ml-1 sm:ml-2 font-semibold"
-                style={{ color: 'var(--metal-accent)' }}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-                aria-label={`${percentage}% focus`}
-              >
-                ({percentage}%)
-              </motion.span>
-            )}
+    <div className="flex-1 min-w-0">
+      <GlassCard className="p-6 h-full border-amber-500/20 hover:border-amber-500/40 transition-all">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Sparkles size={20} className="text-amber-400" />
+              <h2 className="text-xl font-semibold text-white capitalize">{title}</h2>
+            </div>
             <motion.div 
-              className={`text-[10px] sm:text-xs mt-0.5 sm:mt-1 font-medium ${validatedCount > 0 ? 'text-white' : 'text-gray-600'}`}
-              animate={validatedCount > 0 ? { 
-                scale: [1, 1.05, 1]
-              } : {}}
-              transition={{ duration: 0.5 }}
-              role="status"
-              aria-live="polite"
+              className="text-2xl font-bold text-white"
+              key={score}
+              initial={{ scale: 1.2, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
             >
-              {validatedCount} validated
+              {score}
             </motion.div>
           </div>
-          <motion.div 
-            className="text-white text-xl font-mono font-bold relative"
-            style={{ textShadow: 'var(--shadow-text-glow)' }}
-            key={score}
-            initial={{ scale: 1.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-          >
-            {/* Glow effect on score change */}
-            <motion.div
-              className="absolute inset-0 rounded-full blur-md"
-              style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)' }}
-              initial={{ scale: 2, opacity: 0.8 }}
-              animate={{ scale: 1, opacity: 0 }}
-              transition={{ duration: 0.5 }}
-              aria-hidden="true"
-            />
-            <span aria-label={`Score: ${score}`}>{score}</span>
-          </motion.div>
+          
+          {/* Progress Bar */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-amber-200">
+                {validatedCount} / {requiredCount} validated
+              </span>
+              {percentage !== undefined && (
+                <span className="text-amber-300 font-medium">{percentage}%</span>
+              )}
+            </div>
+            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-amber-500 to-yellow-500 shadow-amber-500/50 shadow-lg"
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.min(progress, 100)}%` }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+              />
+            </div>
+          </div>
         </div>
-      </motion.header>
-      
-      {locked ? (
-        <motion.div 
-          className="flex items-center justify-center h-64 text-gray-600 text-xs font-mono"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          role="status"
-          aria-label={`${title} column is locked`}
-        >
-          <div className="text-center">
+
+        {locked ? (
+          <motion.div 
+            className="flex flex-col items-center justify-center h-64 text-center"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+          >
             <motion.div
               animate={{ 
                 rotate: [0, -5, 5, -5, 0],
                 scale: [1, 1.1, 1]
               }}
               transition={{ 
-                duration: 0.5,
+                duration: 2,
                 repeat: Infinity,
                 repeatDelay: 3
               }}
             >
-              <Lock size={32} className="mx-auto mb-3 text-gray-700" />
+              <Lock size={48} className="text-amber-400/50 mb-4" />
             </motion.div>
-            <div className="mb-2 text-sm font-semibold text-gray-500">LOCKED</div>
-            {title === 'requirements' && (
-              <div className="text-xs text-gray-600 max-w-[200px]">
-                Unlock: 3 problems + 3 solutions needed
-              </div>
-            )}
-          </div>
-        </motion.div>
-      ) : (
-        <motion.div 
-          className="space-y-2 min-h-[200px] sm:min-h-[300px]"
-          style={{ opacity: 1 }}
-        >
-          <AnimatePresence mode="popLayout">
-            {hypotheses.map((hypothesis, index) => {
-              console.log(`[${title}] Rendering card:`, hypothesis.id, hypothesis.text.substring(0, 30));
-              return (
+            <p className="text-white/60 text-sm font-medium">
+              Complete previous requirements to unlock
+            </p>
+          </motion.div>
+        ) : (
+          <motion.div
+            className="space-y-3 max-h-[600px] overflow-y-auto pr-2"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <AnimatePresence mode="popLayout">
+              {hypotheses.map((hypothesis, index) => (
                 <motion.div
                   key={hypothesis.id}
-                  initial={{ opacity: 1 }}
-                  animate={{ opacity: 1 }}
-                  style={{ opacity: 1 }}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ delay: index * 0.05 }}
                 >
                   <HypothesisItemEnhanced
                     hypothesis={hypothesis}
@@ -188,79 +133,23 @@ const HypothesisColumn = memo(function HypothesisColumn({
                     index={index}
                   />
                 </motion.div>
-              );
-            })}
-          </AnimatePresence>
-          
-          {/* Add button - only show if onAdd provided */}
-          {onAdd && (
-            <motion.button
-              onClick={onAdd}
-              className="group flex items-center gap-2 py-2 px-3 text-gray-600 hover:text-white transition-all w-full text-left font-mono text-xs sm:text-sm rounded-lg hover:bg-gray-900/50 relative overflow-hidden min-h-[44px]"
-              whileHover={{ x: 4, backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
-              whileTap={{ scale: 0.98 }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-            <motion.div
-              whileHover={{ rotate: 90 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Plus size={14} />
-            </motion.div>
-            <span className="relative">add hypothesis</span>
-            <motion.div
-              className="ml-auto opacity-0 group-hover:opacity-100"
-              initial={{ x: -10 }}
-              whileHover={{ x: 0 }}
-            >
-              <Sparkles size={12} className="text-white" />
-            </motion.div>
-          </motion.button>
-          )}
-        </motion.div>
-      )}
-      
-      {!locked && (
-        <motion.div 
-          className="mt-4 pt-3 border-t border-gray-700/50 text-xs font-mono text-gray-600 flex items-center gap-4"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-        >
-          <motion.div 
-            className="flex items-center gap-1.5"
-            whileHover={{ scale: 1.05 }}
-          >
-            <motion.span 
-              className="text-sm"
-              style={{ color: 'var(--status-warning)' }}
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              ◐
-            </motion.span>
-            <span>hypothesis</span>
+              ))}
+            </AnimatePresence>
+            
+            {hypotheses.length === 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex flex-col items-center justify-center h-32 text-white/40 text-sm"
+              >
+                <Sparkles size={32} className="mb-2 opacity-50" />
+                <p>No {title} yet</p>
+              </motion.div>
+            )}
           </motion.div>
-          <motion.div 
-            className="flex items-center gap-1.5"
-            whileHover={{ scale: 1.05 }}
-          >
-            <motion.span 
-              className="text-white text-sm"
-              animate={{ 
-                boxShadow: ['0 0 0px var(--text-primary-color)', '0 0 8px var(--text-primary-color)', '0 0 0px var(--text-primary-color)']
-              }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            >
-              ●
-            </motion.span>
-            <span>fact</span>
-          </motion.div>
-        </motion.div>
-      )}
-    </motion.section>
+        )}
+      </GlassCard>
+    </div>
   );
 });
 
