@@ -88,25 +88,29 @@ Keep under 60 characters.`;
         operation: 'hypothesis-generation',
       });
       
-      // Parse JSON response
+      // DEFENSIVE PARSING: Try multiple strategies
       console.log('Raw AI response:', response.content);
       
-      const jsonMatch = response.content.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) {
-        console.error('No JSON array found in response:', response.content);
-        throw new Error('Failed to generate hypotheses: Invalid response format from AI model');
-      }
-
       let hypothesesData;
-      try {
-        hypothesesData = JSON.parse(jsonMatch[0]);
-        console.log('Parsed hypotheses data:', hypothesesData);
-      } catch (error) {
-        console.error('JSON parse error:', error, 'Raw JSON:', jsonMatch[0]);
-        throw new Error('Failed to parse AI response as JSON');
+      
+      // Strategy 1: Find JSON array
+      const jsonMatch = response.content.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        try {
+          hypothesesData = JSON.parse(jsonMatch[0]);
+          console.log('Parsed hypotheses data:', hypothesesData);
+        } catch (error) {
+          console.error('JSON parse error:', error, 'Raw JSON:', jsonMatch[0]);
+        }
       }
       
-      return hypothesesData.map((item: any, index: number) => {
+      // Strategy 2: If no valid JSON, throw to trigger fallback
+      if (!hypothesesData || !Array.isArray(hypothesesData) || hypothesesData.length === 0) {
+        console.error('No valid JSON array found in response:', response.content);
+        throw new Error('Failed to generate hypotheses: Invalid response format from AI model');
+      }
+      
+      return hypothesesData.slice(0, count).map((item: any, index: number) => {
         console.log(`Processing item ${index}:`, item);
         
         // Create proper fallback text based on focus type
@@ -145,10 +149,17 @@ Keep under 60 characters.`;
   }
 
   async generateSolutionForProblem(niche: string, problemText: string, problemId: string): Promise<Hypothesis[]> {
-    const provider = getProvider('openrouter', this.apiKey);
-    
-    const systemPrompt = `You are a solution architect. Generate solution hypotheses using S|P|O|C format: Subject|Predicate|Object|Constraint. Subject=SOLUTION_TYPE, Predicate=ENABLES/HELPS, Object=WHO to BENEFIT, Constraint=HOW/WHEN.`;
-    const userPrompt = `Given this validated problem: "${problemText}" in the ${niche} market.
+    const FALLBACK_SOLUTIONS = [
+      'Automation platform|ENABLES|users to streamline workflows|automatically',
+      'Analytics tool|HELPS|teams make data-driven decisions|in real-time',
+      'Integration hub|ENABLES|systems to connect seamlessly|via API'
+    ];
+
+    try {
+      const provider = getProvider('openrouter', this.apiKey);
+      
+      const systemPrompt = `You are a solution architect. Generate solution hypotheses using S|P|O|C format: Subject|Predicate|Object|Constraint. Subject=SOLUTION_TYPE, Predicate=ENABLES/HELPS, Object=WHO to BENEFIT, Constraint=HOW/WHEN.`;
+      const userPrompt = `Given this validated problem: "${problemText}" in the ${niche} market.
 
 Generate 3 solution hypotheses using S|P|O|C format: Subject|Predicate|Object|Constraint. Examples:
 - "AutoBookingApp|ENABLES|venue owners to manage bookings|instantly"
@@ -156,50 +167,80 @@ Generate 3 solution hypotheses using S|P|O|C format: Subject|Predicate|Object|Co
 - "DigitalLogbook|ENABLES|pilots to complete logs|offline"
 Format as JSON array with "text" field only. Keep under 80 characters.`;
 
-    const messages: Message[] = [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
-    ];
+      const messages: Message[] = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ];
 
-    // Use fallback system for hypothesis generation
-    const modelChain = getModelChain('HYPOTHESIS')
-    const { response } = await (provider as any).chatWithFallback(messages, modelChain)
-    
-    // Track token usage
-    const tracker = getTokenTracker();
-    tracker.log({
-      promptTokens: response.tokens?.prompt || 0,
-      completionTokens: response.tokens?.completion || 0,
-      totalTokens: response.tokens?.total || 0,
-      model: response.model || 'unknown',
-      timestamp: new Date(),
-      operation: 'solution-generation',
-    });
-    
-    // Parse JSON response
-    const jsonMatch = response.content.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      throw new Error('Failed to generate solutions: Invalid response format from AI model');
+      // Use fallback system for hypothesis generation
+      const modelChain = getModelChain('HYPOTHESIS')
+      const { response } = await (provider as any).chatWithFallback(messages, modelChain)
+      
+      // Track token usage
+      const tracker = getTokenTracker();
+      tracker.log({
+        promptTokens: response.tokens?.prompt || 0,
+        completionTokens: response.tokens?.completion || 0,
+        totalTokens: response.tokens?.total || 0,
+        model: response.model || 'unknown',
+        timestamp: new Date(),
+        operation: 'solution-generation',
+      });
+      
+      // DEFENSIVE PARSING: Try multiple strategies
+      let solutionsData;
+      
+      // Strategy 1: Find JSON array
+      const jsonMatch = response.content.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        try {
+          solutionsData = JSON.parse(jsonMatch[0]);
+        } catch (parseError) {
+          console.error('JSON parse failed, trying fallback:', parseError);
+        }
+      }
+      
+      // Strategy 2: If no valid JSON, use fallback
+      if (!solutionsData || !Array.isArray(solutionsData) || solutionsData.length === 0) {
+        console.warn('Invalid solution data, using fallback');
+        solutionsData = FALLBACK_SOLUTIONS.map(text => ({ text }));
+      }
+      
+      return solutionsData.slice(0, 3).map((item: any, index: number) => ({
+        id: `${Date.now()}-${index}`,
+        text: item.text || FALLBACK_SOLUTIONS[index] || 'Solution|ENABLES|users to solve problems|efficiently',
+        state: 'hypothesis' as const,
+        confidence: 0,
+        parentProblemId: problemId,
+        createdAt: new Date()
+      }));
+    } catch (error) {
+      console.error('Solution generation failed, using fallback:', error);
+      
+      return FALLBACK_SOLUTIONS.map((text, index) => ({
+        id: `fallback-solution-${Date.now()}-${index}`,
+        text,
+        state: 'hypothesis' as const,
+        confidence: 0,
+        parentProblemId: problemId,
+        createdAt: new Date(),
+        isFallback: true
+      }));
     }
-
-    const solutionsData = JSON.parse(jsonMatch[0]);
-    
-    return solutionsData.map((item: any, index: number) => ({
-      id: `${Date.now()}-${index}`,
-      text: item.text || 'Solution|ENABLES|users to solve problems|efficiently',
-      type: 'solutions',
-      state: 'hypothesis' as const,
-      confidence: 0,
-      parentProblemId: problemId,
-      createdAt: new Date()
-    }));
   }
 
   async generateRequirementForSolution(niche: string, solutionText: string, solutionId: string): Promise<Hypothesis[]> {
-    const provider = getProvider('openrouter', this.apiKey);
-    
-    const systemPrompt = `You are a software requirements engineer. Generate requirements using S|P|O|C format: Subject|Predicate|Object|Constraint. Subject=SYSTEM/USER, Predicate=SHALL/MUST, Object=ACTION/CAPABILITY, Constraint=CONDITIONS/LIMITS.`;
-    const userPrompt = `Given this validated solution: "${solutionText}" for the ${niche} market.
+    const FALLBACK_REQUIREMENTS = [
+      'FR: The system shall provide user authentication',
+      'FR: The system shall enable data export functionality',
+      'NFR: The system shall respond within 2 seconds'
+    ];
+
+    try {
+      const provider = getProvider('openrouter', this.apiKey);
+      
+      const systemPrompt = `You are a software requirements engineer. Generate requirements using S|P|O|C format: Subject|Predicate|Object|Constraint. Subject=SYSTEM/USER, Predicate=SHALL/MUST, Object=ACTION/CAPABILITY, Constraint=CONDITIONS/LIMITS.`;
+      const userPrompt = `Given this validated solution: "${solutionText}" for the ${niche} market.
 
 Generate 3 requirements using S|P|O|C format: Subject|Predicate|Object|Constraint. Examples:
 - "SYSTEM|SHALL|authenticate users|via OAuth2"
@@ -207,43 +248,68 @@ Generate 3 requirements using S|P|O|C format: Subject|Predicate|Object|Constrain
 - "API|SHALL|respond to requests|under 200ms"
 Format as JSON array with "text" field only. Keep under 60 characters.`;
 
-    const messages: Message[] = [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
-    ];
+      const messages: Message[] = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ];
 
-    // Use fallback system for hypothesis generation
-    const modelChain = getModelChain('HYPOTHESIS')
-    const { response } = await (provider as any).chatWithFallback(messages, modelChain)
-    
-    // Track token usage
-    const tracker = getTokenTracker();
-    tracker.log({
-      promptTokens: response.tokens?.prompt || 0,
-      completionTokens: response.tokens?.completion || 0,
-      totalTokens: response.tokens?.total || 0,
-      model: response.model || 'unknown',
-      timestamp: new Date(),
-      operation: 'requirement-generation',
-    });
-    
-    // Parse JSON response
-    const jsonMatch = response.content.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      throw new Error('Failed to generate requirements: Invalid response format from AI model');
+      // Use fallback system for hypothesis generation
+      const modelChain = getModelChain('HYPOTHESIS')
+      const { response } = await (provider as any).chatWithFallback(messages, modelChain)
+      
+      // Track token usage
+      const tracker = getTokenTracker();
+      tracker.log({
+        promptTokens: response.tokens?.prompt || 0,
+        completionTokens: response.tokens?.completion || 0,
+        totalTokens: response.tokens?.total || 0,
+        model: response.model || 'unknown',
+        timestamp: new Date(),
+        operation: 'requirement-generation',
+      });
+      
+      // DEFENSIVE PARSING: Try multiple strategies
+      let requirementsData;
+      
+      // Strategy 1: Find JSON array
+      const jsonMatch = response.content.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        try {
+          requirementsData = JSON.parse(jsonMatch[0]);
+        } catch (parseError) {
+          console.error('JSON parse failed, trying fallback:', parseError);
+        }
+      }
+      
+      // Strategy 2: If no valid JSON, use fallback
+      if (!requirementsData || !Array.isArray(requirementsData) || requirementsData.length === 0) {
+        console.warn('Invalid requirement data, using fallback');
+        requirementsData = FALLBACK_REQUIREMENTS.map(text => ({ text }));
+      }
+      
+      return requirementsData.slice(0, 3).map((item: any, index: number) => ({
+        id: `${Date.now()}-${index}`,
+        text: item.text || FALLBACK_REQUIREMENTS[index] || 'FR: The system shall provide basic functionality',
+        type: item.text?.startsWith('NFR:') ? 'non-functional' : 'functional',
+        state: 'hypothesis' as const,
+        confidence: 0,
+        parentSolutionId: solutionId,
+        createdAt: new Date()
+      }));
+    } catch (error) {
+      console.error('Requirement generation failed, using fallback:', error);
+      
+      return FALLBACK_REQUIREMENTS.map((text, index) => ({
+        id: `fallback-requirement-${Date.now()}-${index}`,
+        text,
+        type: text.startsWith('NFR:') ? 'non-functional' as const : 'functional' as const,
+        state: 'hypothesis' as const,
+        confidence: 0,
+        parentSolutionId: solutionId,
+        createdAt: new Date(),
+        isFallback: true
+      }));
     }
-
-    const requirementsData = JSON.parse(jsonMatch[0]);
-    
-    return requirementsData.map((item: any, index: number) => ({
-      id: `${Date.now()}-${index}`,
-      text: item.text || 'FR: The system shall provide basic functionality',
-      type: item.text?.startsWith('NFR:') ? 'non-functional' : 'functional',
-      state: 'hypothesis' as const,
-      confidence: 0,
-      parentSolutionId: solutionId,
-      createdAt: new Date()
-    }));
   }
 
   async researchHypothesis(hypothesis: Hypothesis, niche: string, isProblemParam?: boolean): Promise<{ confidence: number; sources: string[] }> {
