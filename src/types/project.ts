@@ -18,6 +18,7 @@ export interface Hypothesis {
   sources?: string[];
   type?: 'functional' | 'non-functional'; // For requirements column
   createdAt: Date;
+  isFallback?: boolean; // Flag for fallback data when API fails
   // NEW: Chaining fields
   parentProblemId?: string;  // For solutions - links to the problem it solves
   parentSolutionId?: string; // For requirements - links to the solution

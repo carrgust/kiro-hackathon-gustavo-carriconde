@@ -11,18 +11,23 @@ export const DEFAULT_RETRY_CONFIG: RetryConfig = {
 };
 
 export function isRetryableError(error: any): boolean {
-  // DON'T retry 429 - rate limit should fail fast
-  if (error?.message?.includes('429')) return false;
-  if (error?.status === 429) return false;
+  // RETRY 429 rate limits with backoff (critical for hackathon judging)
+  if (error?.message?.includes('429') || error?.status === 429) return true;
   
-  // Only retry network errors and 5xx
+  // Retry network errors and 5xx
   if (error?.message?.includes('fetch failed')) return true;
   if (error?.message?.match(/5\d{2}/)) return true;
   if (error?.status >= 500) return true;
   return false;
 }
 
-export function calculateDelay(attempt: number, config: RetryConfig): number {
+export function calculateDelay(attempt: number, config: RetryConfig, is429: boolean = false): number {
+  // Special handling for 429 rate limits: 2s, 5s, 10s
+  if (is429) {
+    const delays = [2000, 5000, 10000];
+    return delays[Math.min(attempt, delays.length - 1)];
+  }
+  
   const exponentialDelay = config.baseDelay * Math.pow(2, attempt);
   return Math.min(exponentialDelay, config.maxDelay);
 }
@@ -43,9 +48,12 @@ export async function withRetry<T>(
         throw error;
       }
 
-      const delay = calculateDelay(attempt, config);
+      const is429 = (error as any)?.message?.includes('429') || (error as any)?.status === 429;
+      const delay = calculateDelay(attempt, config, is429);
+      
+      const errorType = is429 ? 'RATE LIMITED' : 'ERROR';
       console.warn(
-        `[Retry] Attempt ${attempt + 1}/${config.maxRetries} failed. Retrying in ${delay}ms...`
+        `[Retry ${errorType}] Attempt ${attempt + 1}/${config.maxRetries} failed. Retrying in ${delay}ms...`
       );
       await new Promise((resolve) => setTimeout(resolve, delay));
     }

@@ -93,31 +93,39 @@ export class OpenRouterProvider implements AIProvider {
         body.model = options.model || this.defaultModel;
       }
 
-      const response = await fetch(`${this.baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'https://curatos.app',
-          'X-Title': 'Curatos DNA'
-        },
-        body: JSON.stringify(body)
-      });
+      // Add 15 second timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      // Parse rate limit headers
-      this.rateLimitInfo = this.parseRateLimitHeaders(response.headers);
+      try {
+        const response = await fetch(`${this.baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'https://curatos.app',
+            'X-Title': 'Curatos DNA'
+          },
+          body: JSON.stringify(body),
+          signal: controller.signal
+        });
 
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`OpenRouter API error: ${response.status} - ${error}`);
-      }
+        clearTimeout(timeoutId);
 
-      const data = await response.json();
-      this.lastSuccessfulRequest = new Date();
-      
-      return {
-        content: data.choices[0]?.message?.content || '',
-        model: data.model || options.model || this.defaultModel,
+        // Parse rate limit headers
+        this.rateLimitInfo = this.parseRateLimitHeaders(response.headers);
+
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(`OpenRouter API error: ${response.status} - ${error}`);
+        }
+
+        const data = await response.json();
+        this.lastSuccessfulRequest = new Date();
+        
+        return {
+          content: data.choices[0]?.message?.content || '',
+          model: data.model || options.model || this.defaultModel,
         tokens: {
           prompt: data.usage?.prompt_tokens || 0,
           completion: data.usage?.completion_tokens || 0,
@@ -125,6 +133,13 @@ export class OpenRouterProvider implements AIProvider {
         },
         annotations: data.choices[0]?.message?.annotations || undefined
       };
+      } catch (error: any) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          throw new Error('Request timeout after 15 seconds');
+        }
+        throw error;
+      }
     }, DEFAULT_RETRY_CONFIG);
   }
 

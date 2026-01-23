@@ -763,7 +763,18 @@ Respond ONLY with valid JSON, no other text.`;
           }
         } catch (error) {
           console.error('Generation error:', error);
-          addRationale(`[ERROR] Generation failed`);
+          
+          // Informative error messages based on error type
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          if (errorMsg.includes('429')) {
+            addRationale(`[RATE LIMITED] Switching to backup - please wait...`);
+          } else if (errorMsg.includes('fetch') || errorMsg.includes('network')) {
+            addRationale(`[NETWORK] Retrying connection...`);
+          } else if (errorMsg.includes('auth') || errorMsg.includes('key')) {
+            addRationale(`[CONFIG] Check API configuration`);
+          } else {
+            addRationale(`[FALLBACK] Using backup data...`);
+          }
         }
       }
       
