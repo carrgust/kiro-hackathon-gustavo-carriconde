@@ -325,8 +325,12 @@ Format as JSON array with "text" field only. Keep under 60 characters.`;
       const processed = processValidationResult(validationResult);
       confidence = processed.confidence;
       
-      // Create sources from reasoning
-      sources = [`[WTP/ATP Analysis] WTP: ${validationResult.wtp}%, ATP: ${validationResult.atp}% ||| ${validationResult.reasoning} ||| validation-result`];
+      // Create sources from reasoning - ensure reasoning is a string
+      const reasoningText = typeof validationResult.reasoning === 'string' 
+        ? validationResult.reasoning 
+        : JSON.stringify(validationResult.reasoning);
+      
+      sources = [`[WTP/ATP Analysis] WTP: ${validationResult.wtp}%, ATP: ${validationResult.atp}% ||| ${reasoningText} ||| validation-result`];
       
       console.log(`[Research] WTP/ATP validation: WTP=${validationResult.wtp}%, ATP=${validationResult.atp}%, Combined=${confidence}%`);
       
