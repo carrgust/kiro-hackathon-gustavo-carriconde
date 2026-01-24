@@ -113,19 +113,20 @@ Keep under 60 characters.`;
       return hypothesesData.slice(0, count).map((item: any, index: number) => {
         console.log(`Processing item ${index}:`, item);
         
-        // Create proper fallback text based on focus type
-        let fallbackText: string;
-        if (focus === 'problems') {
-          fallbackText = 'Users|STRUGGLE_WITH|undefined problem|daily';
-        } else if (focus === 'solutions') {
-          fallbackText = 'Solution|ENABLES|users to solve problems|efficiently';
+        // Use item text if valid, otherwise use high-quality fallback from array
+        let text: string;
+        if (item.text && typeof item.text === 'string' && item.text.trim().length > 0) {
+          text = item.text;
         } else {
-          fallbackText = 'FR: The system shall provide basic functionality';
+          // Use fallback from the predefined array
+          const fallbackArray = FALLBACK_HYPOTHESES[focus];
+          text = fallbackArray[index % fallbackArray.length];
+          console.warn(`Item ${index} has no valid text, using fallback:`, text);
         }
         
         return {
           id: `${Date.now()}-${index}`,
-          text: item.text || fallbackText,
+          text,
           state: 'hypothesis' as const,
           confidence: 0,
           createdAt: new Date()
