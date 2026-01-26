@@ -25,6 +25,7 @@ import HypothesisModal from '@/components/dashboard/HypothesisModal';
 import HypothesisColumn from '@/components/dashboard/HypothesisColumn';
 import ModalLoading from '@/components/ui/ModalLoading';
 import { KeyboardShortcuts } from '@/components/ui/KeyboardShortcuts';
+import StopProcessingButton from '@/components/dashboard/StopProcessingButton';
 
 // Lazy load heavy modals
 const DNAModal = lazy(() => import('@/components/dashboard/DNAModal'));
@@ -70,11 +71,17 @@ export default function Dashboard() {
   // Ref to prevent duplicate initialization in StrictMode
   const initializedRef = useRef(false);
   
+  // Ref to track if processing should stop
+  const shouldStopRef = useRef(false);
+  
   // Ref to track all pending timeouts
   const pendingTimeoutsRef = useRef<NodeJS.Timeout[]>([]);
   
   // Ref to track streaming interval
   const orchestratorIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Ref to track all active abort controllers
+  const abortControllersRef = useRef<AbortController[]>([]);
   
   // Helper function to schedule timeouts that tracks them
   const scheduleTimeout = useCallback((callback: () => void, delay: number) => {
@@ -86,6 +93,62 @@ export default function Dashboard() {
     pendingTimeoutsRef.current.push(timeoutId);
     return timeoutId;
   }, []);
+  
+  // Track recent messages to prevent duplicates
+  const recentMessagesRef = useRef<Set<string>>(new Set());
+  
+  // Helper to add rationale message (prevents duplicates with Set)
+  const addRationale = useCallback((msg: string) => {
+    // Normalize message for comparison (first 50 chars)
+    const key = msg.substring(0, 50);
+    
+    if (recentMessagesRef.current.has(key)) return;
+    
+    recentMessagesRef.current.add(key);
+    
+    // Clear old messages from Set after 2 seconds
+    scheduleTimeout(() => {
+      recentMessagesRef.current.delete(key);
+    }, 2000);
+    
+    setState(prev => ({
+      ...prev,
+      agentRationale: [...prev.agentRationale, msg].slice(-8)
+    }));
+  }, [scheduleTimeout]);
+  
+  // Stop all processing
+  const stopAllProcessing = useCallback(() => {
+    // Set stop flag
+    shouldStopRef.current = true;
+    
+    // Abort all active API calls
+    abortControllersRef.current.forEach(controller => {
+      try {
+        controller.abort();
+      } catch (e) {
+        // Ignore errors from already aborted controllers
+      }
+    });
+    abortControllersRef.current = [];
+    
+    // Clear all pending timeouts
+    pendingTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
+    pendingTimeoutsRef.current = [];
+    
+    // Clear orchestrator interval
+    if (orchestratorIntervalRef.current) {
+      clearInterval(orchestratorIntervalRef.current);
+      orchestratorIntervalRef.current = null;
+    }
+    
+    // Stop engine
+    setEngineRunning(false);
+    setEngineStartTime(null);
+    
+    addRationale('[STOPPED] All processing halted by user');
+    toast.info('Processing stopped');
+  }, [addRationale]);
 
   const [apiError, setApiError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<SectionKey>('INPUT');
@@ -113,29 +176,6 @@ export default function Dashboard() {
     hypothesis: null,
     columnType: 'hypotheses'
   });
-  
-  // Track recent messages to prevent duplicates
-  const recentMessagesRef = useRef<Set<string>>(new Set());
-  
-  // Helper to add rationale message (prevents duplicates with Set)
-  const addRationale = useCallback((msg: string) => {
-    // Normalize message for comparison (first 50 chars)
-    const key = msg.substring(0, 50);
-    
-    if (recentMessagesRef.current.has(key)) return;
-    
-    recentMessagesRef.current.add(key);
-    
-    // Clear old messages from Set after 2 seconds
-    scheduleTimeout(() => {
-      recentMessagesRef.current.delete(key);
-    }, 2000);
-    
-    setState(prev => ({
-      ...prev,
-      agentRationale: [...prev.agentRationale, msg].slice(-8)
-    }));
-  }, []);
 
   // Scoring hook for stage progression
   const scoring = useScoring({
@@ -163,6 +203,14 @@ export default function Dashboard() {
   const problemsScore = useMemo(
     () => state.hypotheses.filter(h => h.state === 'fact').length,
     [state.hypotheses]
+  );
+  
+  // Track if any processing is happening
+  const isProcessing = useMemo(
+    () => engineRunning || isGeneratingLandingPage || isGeneratingPRD || 
+          pendingTimeoutsRef.current.length > 0 || 
+          abortControllersRef.current.length > 0,
+    [engineRunning, isGeneratingLandingPage, isGeneratingPRD]
   );
 
   const solutionsScore = useMemo(
@@ -324,6 +372,9 @@ If sufficient, respond with JSON: {"sufficient": true, "missing": []}.
 Respond ONLY with valid JSON, no other text.`;
 
     try {
+      const abortController = new AbortController();
+      abortControllersRef.current.push(abortController);
+      
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -336,7 +387,11 @@ Respond ONLY with valid JSON, no other text.`;
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.3,
         }),
+        signal: abortController.signal,
       });
+      
+      // Remove from tracking after completion
+      abortControllersRef.current = abortControllersRef.current.filter(c => c !== abortController);
 
       const data = await response.json();
       const content = data.choices?.[0]?.message?.content || '{"sufficient": true, "missing": []}';
@@ -346,7 +401,12 @@ Respond ONLY with valid JSON, no other text.`;
       const result = jsonMatch ? JSON.parse(jsonMatch[0]) : { sufficient: true, missing: [] };
       
       return result;
-    } catch (error) {
+    } catch (error: any) {
+      // Ignore abort errors (user stopped processing)
+      if (error.name === 'AbortError') {
+        console.log('[AUTO-PRD] Assessment aborted by user');
+        return { sufficient: false, missing: ['Processing stopped'] };
+      }
       console.error('[AUTO-PRD] Assessment error:', error);
       return { sufficient: true, missing: [] }; // Fail open
     }
@@ -431,6 +491,15 @@ Respond ONLY with valid JSON, no other text.`;
     }
 
     const interval = setInterval(async () => {
+      // Check if processing should stop
+      if (shouldStopRef.current) {
+        if (orchestratorIntervalRef.current) {
+          clearInterval(orchestratorIntervalRef.current);
+          orchestratorIntervalRef.current = null;
+        }
+        return;
+      }
+      
       try {
         // 1. Build context from current state
         const context = buildAgentContext(stateRef.current);
@@ -443,15 +512,25 @@ Respond ONLY with valid JSON, no other text.`;
           return;
         }
         
+        const abortController = new AbortController();
+        abortControllersRef.current.push(abortController);
+        
         const response = await fetch('/api/agent/orchestrate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ context, apiKey })
+          body: JSON.stringify({ context, apiKey }),
+          signal: abortController.signal,
         });
+        
+        // Remove from tracking after completion
+        abortControllersRef.current = abortControllersRef.current.filter(c => c !== abortController);
         
         if (!response.ok) return;
         
         const { thought, action, parameters } = await response.json();
+        
+        // Check if processing should stop before continuing
+        if (shouldStopRef.current) return;
         
         // 3. Display agent thought
         if (thought) {
@@ -536,7 +615,12 @@ Respond ONLY with valid JSON, no other text.`;
             break;
         }
         
-      } catch (error) {
+      } catch (error: any) {
+        // Ignore abort errors (user stopped processing)
+        if (error.name === 'AbortError') {
+          console.log('Orchestrator loop aborted by user');
+          return;
+        }
         console.error('Orchestrator loop error:', error);
       }
     }, 6000); // Every 6 seconds
@@ -551,6 +635,11 @@ Respond ONLY with valid JSON, no other text.`;
 
   // Helper function to research a hypothesis with paced API status updates
   const researchHypothesis = useCallback(async (hypothesis: Hypothesis, column: 'hypotheses' | 'solutions' | 'requirements') => {
+    // Check if processing should stop
+    if (shouldStopRef.current) {
+      return;
+    }
+    
     if (!hypothesisService) return;
     
     // Skip if already researching or complete
@@ -806,6 +895,7 @@ Respond ONLY with valid JSON, no other text.`;
       toast.error('Enter a niche first');
       return;
     }
+    shouldStopRef.current = false;
     setEngineRunning(true);
     setEngineStartTime(new Date());
   }, [state.niche]);
@@ -1185,6 +1275,9 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
 
   return (
     <div className="flex min-h-screen">
+      {/* Stop Processing Button - Global */}
+      <StopProcessingButton isProcessing={isProcessing} onStop={stopAllProcessing} />
+      
       {/* Sidebar */}
       <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
       

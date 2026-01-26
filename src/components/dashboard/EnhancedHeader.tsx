@@ -19,6 +19,7 @@ interface EnhancedHeaderProps {
   autopilotEnabled: boolean;
   engineRunning: boolean;
   sliderValue: number;
+  isProcessing: boolean;
   onTokenBudgetChange: (budget: number) => void;
   onNicheChange: (niche: string) => void;
   onNicheLockToggle: () => void;
@@ -26,6 +27,7 @@ interface EnhancedHeaderProps {
   onAutopilotToggle: () => void;
   onSliderChange: (value: number) => void;
   onEngineToggle: () => void;
+  onStopProcessing: () => void;
 }
 
 const nicheSuggestions = [
@@ -33,8 +35,8 @@ const nicheSuggestions = [
 ];
 
 export default function EnhancedHeader({
-  provider, model, tokenBudget, totalTokensSpent, runningTime, niche, nicheLocked, selectedRegions, autopilotEnabled, engineRunning, sliderValue,
-  onTokenBudgetChange, onNicheChange, onNicheLockToggle, onRegionsChange, onAutopilotToggle, onSliderChange, onEngineToggle
+  provider, model, tokenBudget, totalTokensSpent, runningTime, niche, nicheLocked, selectedRegions, autopilotEnabled, engineRunning, sliderValue, isProcessing,
+  onTokenBudgetChange, onNicheChange, onNicheLockToggle, onRegionsChange, onAutopilotToggle, onSliderChange, onEngineToggle, onStopProcessing
 }: EnhancedHeaderProps) {
   const [showNicheDropdown, setShowNicheDropdown] = useState(false);
   const [nicheInput, setNicheInput] = useState(niche);
@@ -202,6 +204,31 @@ export default function EnhancedHeader({
         
         {/* Actions */}
         <div className="header-section ml-auto border-l-0">
+          {/* Stop Processing Button */}
+          {isProcessing && (
+            <motion.button
+              onClick={onStopProcessing}
+              className="relative p-2 rounded-md transition-colors hover:bg-red-900/20 border border-red-500/50"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title="Stop all processing"
+              animate={{
+                boxShadow: [
+                  '0 0 5px rgba(239, 68, 68, 0.5)',
+                  '0 0 20px rgba(239, 68, 68, 0.8)',
+                  '0 0 5px rgba(239, 68, 68, 0.5)',
+                ],
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            >
+              <Square size={16} className="text-red-500" />
+            </motion.button>
+          )}
+          
           {/* Theme Toggle */}
           <motion.button
             onClick={toggleTheme}

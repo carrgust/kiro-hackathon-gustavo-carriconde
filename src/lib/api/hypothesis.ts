@@ -317,7 +317,46 @@ Format as JSON array with "text" field only. Keep under 60 characters.`;
     let confidence = 50;
     let sources: string[] = [];
     
-    // Use WTP/ATP validation via scoring engine
+    // Try research agent first for better source diversity
+    try {
+      const response = await fetch('/api/research/agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          hypothesis: `${hypothesis.text} in ${niche}`,
+          apiKey: this.apiKey
+        }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('[Research] Agent returned:', data.confidence, 'confidence,', data.sources?.length || 0, 'sources');
+        confidence = data.confidence || 50;
+        sources = data.sources?.map((s: { 
+          title: string; 
+          snippet: string; 
+          url: string; 
+          domain: string; 
+          source_type?: string; 
+          confidence_weight?: number 
+        }) => {
+          const sourceTypeLabel = s.source_type ? `[${s.source_type.toUpperCase()}]` : '';
+          const weightLabel = s.confidence_weight ? ` (${Math.round(s.confidence_weight * 100)}%)` : '';
+          return `${sourceTypeLabel}[${s.domain || 'Web'}]${weightLabel} ${s.title} ||| ${s.snippet || ''} ||| ${s.url}`;
+        }) || [];
+        
+        // If agent succeeded, return immediately
+        if (sources.length > 0) {
+          return { confidence, sources };
+        }
+      } else {
+        console.error('[Research] Agent response not ok:', response.status);
+      }
+    } catch (agentError) {
+      console.error('[HypothesisService] Research agent failed:', agentError);
+    }
+    
+    // Fallback to WTP/ATP validation if agent fails
     try {
       const scoringEngine = new ScoringEngine(this.apiKey);
       const validationResult = await scoringEngine.validateHypothesis(hypothesis.text, niche);
@@ -336,43 +375,9 @@ Format as JSON array with "text" field only. Keep under 60 characters.`;
       
     } catch (error) {
       console.error('[HypothesisService] WTP/ATP validation failed:', error);
-      
-      // Fallback to intelligent research agent
-      try {
-        const response = await fetch('/api/research/agent', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            hypothesis: `${hypothesis.text} in ${niche}`,
-            apiKey: this.apiKey
-          }),
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log('[Research] Agent returned:', data.confidence, 'confidence');
-          confidence = data.confidence || 50;
-          sources = data.sources?.map((s: { 
-            title: string; 
-            snippet: string; 
-            url: string; 
-            domain: string; 
-            source_type?: string; 
-            confidence_weight?: number 
-          }) => {
-            const sourceTypeLabel = s.source_type ? `[${s.source_type.toUpperCase()}]` : '';
-            const weightLabel = s.confidence_weight ? ` (${Math.round(s.confidence_weight * 100)}%)` : '';
-            return `${sourceTypeLabel}[${s.domain || 'Web'}]${weightLabel} ${s.title} ||| ${s.snippet || ''} ||| ${s.url}`;
-          }) || [];
-        } else {
-          console.error('[Research] Agent response not ok:', response.status);
-        }
-      } catch (agentError) {
-        console.error('[HypothesisService] Research agent failed:', agentError);
-      }
     }
     
-    // If agent failed, fallback to machine-gun
+    // If both failed, fallback to machine-gun
     if (sources.length === 0) {
       console.log('[Research] Falling back to machine-gun');
       const searchQuery = `${hypothesis.text} ${niche} market research`;

@@ -158,13 +158,13 @@ function SourceCard({ source, onRemove }: SourceCardProps) {
   return (
     <div
       onClick={handleCardClick}
-      className="relative flex items-start py-3 rounded-lg hover:bg-gray-800/30 transition-all group cursor-pointer"
+      className="relative flex items-start py-3 px-3 rounded-lg bg-orange-950/30 hover:bg-orange-900/40 border border-orange-500/20 hover:border-orange-500/40 transition-all group cursor-pointer"
     >
       {/* Remove button - show on hover */}
       <button
         onClick={handleRemove}
         onMouseDown={(e) => e.stopPropagation()}
-        className="absolute top-2 right-2 w-5 h-5 rounded-full metal-btn flex items-center justify-center text-gray-400 hover:text-red-400 transition-all z-10 opacity-0 group-hover:opacity-100"
+        className="absolute top-2 right-2 w-5 h-5 rounded-full bg-orange-800/50 hover:bg-red-600/50 border border-orange-500/30 flex items-center justify-center text-gray-400 hover:text-red-300 transition-all z-10 opacity-0 group-hover:opacity-100"
         type="button"
       >
         <X className="w-3 h-3" />
@@ -172,19 +172,19 @@ function SourceCard({ source, onRemove }: SourceCardProps) {
 
       {/* Text content - starts at left edge */}
       <div className="flex-1 min-w-0 pr-3">
-        <div className="text-white text-[11px] font-medium line-clamp-2 group-hover:text-white transition-colors leading-tight">
+        <div className="text-white text-[11px] font-medium line-clamp-2 group-hover:text-orange-100 transition-colors leading-tight">
           {title}
         </div>
-        {snippet && <div className="text-gray-400 text-[10px] font-medium line-clamp-2 mt-1 leading-snug">{snippet}</div>}
-        <div className="text-gray-500 text-[9px] truncate mt-1">{domain || url}</div>
+        {snippet && <div className="text-orange-200/70 text-[10px] font-medium line-clamp-2 mt-1 leading-snug">{snippet}</div>}
+        <div className="text-orange-300/50 text-[9px] truncate mt-1">{domain || url}</div>
       </div>
 
       {/* Image with overlaid favicon */}
-      <div className="relative w-20 h-20 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center border border-gray-700/50" style={{ backgroundColor: bgColor }}>
+      <div className="relative w-20 h-20 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center border border-orange-500/30" style={{ backgroundColor: bgColor }}>
         {renderThumbnail()}
         {/* Favicon overlay on bottom-right */}
-        <div className="absolute bottom-1 right-1 w-9 h-9 rounded flex items-center justify-center">
-          {faviconUrl ? <img src={faviconUrl} alt="" className="w-6 h-6 object-contain" /> : <Globe className="w-6 h-6 text-gray-400" />}
+        <div className="absolute bottom-1 right-1 w-9 h-9 rounded flex items-center justify-center bg-orange-950/80 border border-orange-500/30">
+          {faviconUrl ? <img src={faviconUrl} alt="" className="w-6 h-6 object-contain" /> : <Globe className="w-6 h-6 text-orange-400" />}
         </div>
       </div>
     </div>
@@ -214,12 +214,12 @@ export default function HypothesisModal({ hypothesis, onClose, onUpdateSources }
 
   return (
     <div
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="metal-container-dark rounded-lg max-w-lg w-full font-mono max-h-[80vh] flex flex-col overflow-hidden">
+      <div className="bg-gradient-to-br from-orange-900/95 to-amber-900/95 backdrop-blur-xl border border-orange-500/30 rounded-lg max-w-lg w-full font-mono max-h-[80vh] flex flex-col overflow-hidden shadow-2xl shadow-orange-500/20">
         {/* Header - fixed, no overflow */}
-        <div className="p-4 border-b metal-header-dark flex-shrink-0">
+        <div className="p-4 border-b border-orange-500/30 bg-orange-950/50 flex-shrink-0">
           <div className="flex items-start justify-between gap-3">
             <div className="text-white text-sm flex-1 pr-2">{hypothesis.text}</div>
             <div className="flex items-center gap-3 flex-shrink-0">
@@ -228,7 +228,7 @@ export default function HypothesisModal({ hypothesis, onClose, onUpdateSources }
                   {hypothesis.confidence}%
                 </span>
               )}
-              <button onClick={onClose} className="metal-btn text-gray-400 hover:text-white transition-colors text-xl leading-none w-8 h-8 flex items-center justify-center rounded">×</button>
+              <button onClick={onClose} className="bg-orange-800/50 hover:bg-orange-700/50 border border-orange-500/30 text-gray-300 hover:text-white transition-colors text-xl leading-none w-8 h-8 flex items-center justify-center rounded">×</button>
             </div>
           </div>
         </div>
