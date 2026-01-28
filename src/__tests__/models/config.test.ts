@@ -219,9 +219,9 @@ describe('getModelChain function', () => {
 
 describe('Integration tests', () => {
   it('should have consistent model chains across use cases', () => {
-    // Ensure all chains have deepseek/deepseek-chat as final fallback
+    // Ensure all chains have DEEPSEEK_CHAT as final fallback
     Object.values(MODEL_CHAINS).forEach(chain => {
-      expect(chain[chain.length - 1]).toBe('deepseek/deepseek-chat');
+      expect(chain[chain.length - 1]).toBe(MODELS.DEEPSEEK_CHAT);
     });
   });
 

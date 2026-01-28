@@ -3,18 +3,18 @@ import { createResearchAgent } from '@/lib/api/research-agent';
 
 export async function POST(request: NextRequest) {
   try {
-    const { hypothesis, apiKey } = await request.json();
+    const { hypothesis } = await request.json();
     
     if (!hypothesis) {
       return NextResponse.json({ error: 'Hypothesis required' }, { status: 400 });
     }
     
-    const key = apiKey || process.env.OPENROUTER_API_KEY;
-    if (!key) {
-      return NextResponse.json({ error: 'API key required' }, { status: 400 });
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Server not configured - no API key' }, { status: 500 });
     }
     
-    const agent = createResearchAgent(key, process.env.SERPER_API_KEY);
+    const agent = createResearchAgent(apiKey, process.env.SERPER_API_KEY);
     const result = await agent.research(hypothesis);
     
     return NextResponse.json({

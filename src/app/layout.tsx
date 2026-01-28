@@ -28,6 +28,7 @@ export default function RootLayout({
       <head>
         <meta name="theme-color" content="#0a0a0f" />
         <meta name="color-scheme" content="dark" />
+        <link href="https://fonts.cdnfonts.com/css/ocr-b" rel="stylesheet" />
       </head>
       <body className={inter.className}>
         {/* Skip to main content link for keyboard users */}

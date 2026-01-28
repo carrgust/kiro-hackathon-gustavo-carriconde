@@ -14,15 +14,16 @@ import { useSyncToasts } from '@/hooks/useSyncToasts';
 import { buildAgentContext } from '@/lib/orchestrator/context-builder';
 import { AgentAction } from '@/types/orchestrator';
 import { SectionKey } from '@/lib/colors';
+import { PRIMARY_MODEL } from '@/lib/config/models';
 import Sidebar from '@/components/Sidebar';
 import InputDashboard from '@/components/sections/InputDashboard';
 import ProcessingSection from '@/components/sections/ProcessingSection';
 import PRDSection from '@/components/sections/PRDSection';
 import AutoCoderSection from '@/components/sections/AutoCoderSection';
 import ConfirmationModal from '@/components/dashboard/ConfirmationModal';
-import UnifiedAgentConsole from '@/components/dashboard/UnifiedAgentConsole';
 import HypothesisModal from '@/components/dashboard/HypothesisModal';
-import HypothesisColumn from '@/components/dashboard/HypothesisColumn';
+import ValidationDashboardV2 from '@/components/dashboard/ValidationDashboardV2';
+import SourceModal from '@/components/dashboard/SourceModal';
 import ModalLoading from '@/components/ui/ModalLoading';
 import { KeyboardShortcuts } from '@/components/ui/KeyboardShortcuts';
 import StopProcessingButton from '@/components/dashboard/StopProcessingButton';
@@ -60,6 +61,10 @@ export default function Dashboard() {
   });
   
   const [geography, setGeography] = useState('Global');
+  
+  // Continuous mode state
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [continuousMode, setContinuousMode] = useState(false);
   
   // Ref to track current state for use in intervals
   const stateRef = useRef(state);
@@ -176,6 +181,13 @@ export default function Dashboard() {
     hypothesis: null,
     columnType: 'hypotheses'
   });
+
+  // Validation state
+  const [validationSessionId, setValidationSessionId] = useState<string | null>(null);
+  const [validationData, setValidationData] = useState<any | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
+  const [selectedSource, setSelectedSource] = useState<any | null>(null);
+  const [showValidation, setShowValidation] = useState(false);
 
   // Scoring hook for stage progression
   const scoring = useScoring({
@@ -325,6 +337,92 @@ export default function Dashboard() {
     addRationale('Ready');
   }, [addRationale]);
 
+  // Validation polling effect
+  useEffect(() => {
+    if (!validationSessionId || !isValidating) return;
+
+    const poll = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/validate/${validationSessionId}`);
+        const data = await res.json();
+        setValidationData(data);
+
+        if (data.status === 'complete') {
+          setIsValidating(false);
+          clearInterval(poll);
+          addRationale(`[VALIDATION COMPLETE] Score: ${data.overallScore}/100 - ${data.scoreLabel}`);
+          toast.success(`Validation complete! Score: ${data.overallScore}/100`);
+        }
+      } catch (error) {
+        console.error('Validation poll error:', error);
+      }
+    }, 2000);
+
+    return () => clearInterval(poll);
+  }, [validationSessionId, isValidating, addRationale]);
+
+  // Start validation function
+  const startValidation = useCallback(async (idea: string, canonicalDescription?: string) => {
+    if (!idea || idea.trim().length < 3) {
+      toast.error('Please select a market niche');
+      return;
+    }
+
+    // Set showValidation immediately to hide 3 columns
+    setShowValidation(true);
+    console.log('[DEBUG] showValidation set to TRUE');
+
+    try {
+      let canonical = canonicalDescription;
+      
+      // Only normalize if canonical not provided
+      if (!canonical) {
+        addRationale('[NORMALIZING] Converting idea to canonical description...');
+        
+        const normalizeRes = await fetch('/api/validate/normalize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userInput: idea })
+        });
+
+        if (!normalizeRes.ok) {
+          const error = await normalizeRes.json();
+          throw new Error(error.error || 'Normalization failed');
+        }
+
+        const data = await normalizeRes.json();
+        canonical = data.canonical;
+      }
+      
+      addRationale('[NORMALIZED] Starting 7-pillar validation...');
+
+      // Step 2: Start validation
+      const validateRes = await fetch('/api/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idea, canonicalDescription: canonical })
+      });
+
+      if (!validateRes.ok) {
+        const error = await validateRes.json();
+        throw new Error(error.error || 'Validation failed');
+      }
+
+      const { sessionId } = await validateRes.json();
+      setValidationSessionId(sessionId);
+      setIsValidating(true);
+      
+      addRationale('[VALIDATING] Researching 7 pillars × 3 subcategories × 5 sources = 105 searches...');
+      toast.success('Validation started! Researching 105 sources...');
+    } catch (error: any) {
+      console.error('Validation error:', error);
+      addRationale(`[ERROR] ${error.message}`);
+      toast.error(error.message || 'Validation failed');
+      // Reset showValidation on error
+      setShowValidation(false);
+    }
+  }, [addRationale]);
+
   // Calculate scores and unlock status
   useEffect(() => {
     const problemsScore = state.hypotheses
@@ -355,11 +453,6 @@ export default function Dashboard() {
 
   // Assess if requirements are sufficient for PRD generation
   const assessRequirements = useCallback(async (requirements: Hypothesis[], niche: string): Promise<{ sufficient: boolean; missing: string[] }> => {
-    const apiKey = getStoredApiKey();
-    if (!apiKey) {
-      return { sufficient: false, missing: ['API key required'] };
-    }
-
     const reqList = requirements.map((r, i) => `${i + 1}. ${r.text}`).join('\n');
     
     const prompt = `You are a software architect reviewing requirements for a ${niche} app. Here are the current requirements:
@@ -375,16 +468,14 @@ Respond ONLY with valid JSON, no other text.`;
       const abortController = new AbortController();
       abortControllersRef.current.push(abortController);
       
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': window.location.origin,
         },
         body: JSON.stringify({
-          model: 'deepseek/deepseek-r1-0528:free',
           messages: [{ role: 'user', content: prompt }],
+          model: PRIMARY_MODEL,
           temperature: 0.3,
         }),
         signal: abortController.signal,
@@ -501,12 +592,7 @@ Respond ONLY with valid JSON, no other text.`;
       }
       
       try {
-        // 1. Build context from current state
-        const context = buildAgentContext(stateRef.current);
-        
-        // 2. Call orchestrator API
         const apiKey = getStoredApiKey();
-        console.log('[Orchestrator] API key check:', apiKey);
         if (!apiKey) {
           console.log('[Orchestrator] No API key, skipping');
           return;
@@ -514,6 +600,53 @@ Respond ONLY with valid JSON, no other text.`;
         
         const abortController = new AbortController();
         abortControllersRef.current.push(abortController);
+        
+        // CONTINUOUS MODE: Call /api/research/cycle
+        if (continuousMode) {
+          const response = await fetch('/api/research/cycle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              sessionId,
+              niche: stateRef.current.niche,
+              apiKey 
+            }),
+            signal: abortController.signal,
+          });
+          
+          abortControllersRef.current = abortControllersRef.current.filter(c => c !== abortController);
+          
+          if (!response.ok) {
+            console.error('[Continuous] Cycle failed:', response.status);
+            return;
+          }
+          
+          const { sessionId: newSessionId, state: newState, action, thought } = await response.json();
+          
+          // Update session ID if new
+          if (!sessionId && newSessionId) {
+            setSessionId(newSessionId);
+          }
+          
+          // Update state from backend
+          setState(prev => ({
+            ...prev,
+            hypotheses: newState.hypotheses || prev.hypotheses,
+            solutions: newState.solutions || prev.solutions,
+            requirements: newState.requirements || prev.requirements,
+            tokensUsed: newState.tokensUsed || prev.tokensUsed,
+          }));
+          
+          // Display agent thought
+          if (thought) {
+            addRationale(`[Continuous] ${thought}`);
+          }
+          
+          return;
+        }
+        
+        // MANUAL MODE: Call /api/agent/orchestrate and execute locally
+        const context = buildAgentContext(stateRef.current);
         
         const response = await fetch('/api/agent/orchestrate', {
           method: 'POST',
@@ -631,7 +764,7 @@ Respond ONLY with valid JSON, no other text.`;
       clearInterval(interval);
       orchestratorIntervalRef.current = null;
     };
-  }, [engineRunning, hypothesisService, addRationale, scheduleTimeout]);
+  }, [engineRunning, hypothesisService, addRationale, scheduleTimeout, continuousMode, sessionId]);
 
   // Helper function to research a hypothesis with paced API status updates
   const researchHypothesis = useCallback(async (hypothesis: Hypothesis, column: 'hypotheses' | 'solutions' | 'requirements') => {
@@ -1278,6 +1411,41 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
       {/* Stop Processing Button - Global */}
       <StopProcessingButton isProcessing={isProcessing} onStop={stopAllProcessing} />
       
+      {/* Continuous Mode Toggle */}
+      {state.nicheLocked && hypothesisService && (
+        <div className="fixed top-20 right-4 z-50">
+          <div className="bg-black/80 backdrop-blur-sm border border-cyan-500/30 rounded-lg px-4 py-2 shadow-lg">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <span className="text-sm text-cyan-400 font-medium">Continuous Mode</span>
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  checked={continuousMode}
+                  onChange={(e) => {
+                    const enabled = e.target.checked;
+                    setContinuousMode(enabled);
+                    if (!enabled) {
+                      // Clear session when disabling
+                      setSessionId(null);
+                    }
+                  }}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-cyan-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
+              </div>
+              {continuousMode && (
+                <span className="text-xs text-green-400 animate-pulse">● Active</span>
+              )}
+            </label>
+            {sessionId && (
+              <div className="text-xs text-gray-400 mt-1 font-mono">
+                Session: {sessionId.slice(0, 8)}...
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
       {/* Sidebar */}
       <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
       
@@ -1291,19 +1459,10 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
               geography={geography}
               onNicheChange={(niche) => setState(prev => ({ ...prev, niche }))}
               onGeographyChange={setGeography}
-              onStartProcessing={() => {
+              onStartValidation={(niche, canonicalDescription) => {
                 setActiveSection('PROCESSING');
-                handleEngineToggle();
+                startValidation(niche, canonicalDescription);
               }}
-              isProcessing={engineRunning}
-              problemsCount={state.hypotheses.length}
-              problemsValidated={countGreenFacts()}
-              solutionsCount={state.solutions.length}
-              solutionsValidated={countSolutionsGreenFacts()}
-              requirementsCount={state.requirements.length}
-              requirementsValidated={countRequirementsGreenFacts()}
-              prdStatus={isGeneratingPRD ? 'generating' : prdMarkdown ? 'complete' : 'pending'}
-              autoCoderStatus="idle"
             />
           )}
           
@@ -1313,51 +1472,34 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
               isOnline={!!hypothesisService}
               isProcessing={engineRunning}
             >
-              {/* Agent Console */}
-              <div className="mb-6">
-                <UnifiedAgentConsole
-                  rationale={[...state.agentRationale, currentRationaleStream].filter(Boolean)}
-                  onSendMessage={handleSendMessage}
-                  disabled={!engineRunning}
-                />
-              </div>
+              {/* Continuous Mode Indicator */}
+              {continuousMode && (
+                <div className="mb-4 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/50 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-cyan-400 font-medium">Continuous Mode Active</span>
+                      <span className="text-gray-400 text-sm">Backend executing cycles every 15s</span>
+                    </div>
+                    {sessionId && (
+                      <span className="text-xs text-gray-500 font-mono">
+                        Session: {sessionId.slice(0, 12)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
               
-              {/* Hypothesis columns - stack on mobile, row on desktop */}
-              <div className="flex flex-col md:flex-row gap-4">
-                <HypothesisColumn
-                  title="problems"
-                  hypotheses={state.hypotheses}
-                  score={state.problemsScore}
-                  percentage={state.slider}
-                  validatedCount={countGreenFacts()}
-                  requiredCount={3}
-                  onItemClick={handleItemClick}
-                  onItemRemove={(h) => handleItemRemove(h, 'hypotheses')}
-                />
-                
-                <HypothesisColumn
-                  title="solutions"
-                  hypotheses={state.solutions}
-                  score={state.solutionsScore}
-                  percentage={100 - state.slider}
-                  locked={countGreenFacts() < 2}
-                  validatedCount={countSolutionsGreenFacts()}
-                  requiredCount={2}
-                  onItemClick={handleItemClick}
-                  onItemRemove={(h) => handleItemRemove(h, 'solutions')}
-                />
-                
-                <HypothesisColumn
-                  title="requirements"
-                  hypotheses={state.requirements}
-                  score={state.requirements.filter(h => h.state === 'fact').reduce((sum, h) => sum + h.confidence, 0)}
-                  locked={!(countGreenFacts() >= 2 && countSolutionsGreenFacts() >= 2)}
-                  validatedCount={countRequirementsGreenFacts()}
-                  requiredCount={2}
-                  onItemClick={handleItemClick}
-                  onItemRemove={(h) => handleItemRemove(h, 'requirements')}
-                />
-              </div>
+              {/* Validation Dashboard - Always show */}
+              <ValidationDashboardV2
+                idea={validationData?.idea}
+                canonicalDescription={validationData?.canonicalDescription}
+                overallScore={validationData?.overallScore ?? null}
+                scoreLabel={validationData?.scoreLabel}
+                pillars={validationData?.pillars || []}
+                onSourceClick={setSelectedSource}
+                agentLogs={[...state.agentRationale, currentRationaleStream].filter(Boolean)}
+              />
             </ProcessingSection>
           )}
           
@@ -1445,6 +1587,12 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
         message="This hypothesis and related themes will be avoided in future AI generations"
         onConfirm={handleConfirmRemoval}
         onCancel={handleCancelRemoval}
+      />
+
+      {/* Source Modal for Validation */}
+      <SourceModal
+        source={selectedSource}
+        onClose={() => setSelectedSource(null)}
       />
 
       {/* Keyboard Shortcuts */}

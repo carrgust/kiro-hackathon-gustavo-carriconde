@@ -1,6 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import pg from 'pg';
 
 interface RetryConfig {
   maxRetries: number;
@@ -15,18 +13,21 @@ const DEFAULT_RETRY_CONFIG: RetryConfig = {
 };
 
 class DatabaseClient {
-  private prisma: PrismaClient;
+  private prisma: PrismaClient | null = null;
   private retryConfig: RetryConfig;
 
   constructor(config: RetryConfig = DEFAULT_RETRY_CONFIG) {
-    const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-    const adapter = new PrismaPg(pool);
-    
-    this.prisma = new PrismaClient({
-      adapter,
-      log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-    });
     this.retryConfig = config;
+    
+    if (process.env.DATABASE_URL) {
+      try {
+        this.prisma = new PrismaClient({
+          log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+        });
+      } catch (error) {
+        console.error('[DB] Failed to initialize Prisma:', error);
+      }
+    }
   }
 
   async withRetry<T>(operation: () => Promise<T>): Promise<T> {
@@ -65,11 +66,16 @@ class DatabaseClient {
   }
 
   getClient(): PrismaClient {
+    if (!this.prisma) {
+      throw new Error('Database client not initialized. DATABASE_URL may be missing.');
+    }
     return this.prisma;
   }
 
   async disconnect(): Promise<void> {
-    await this.prisma.$disconnect();
+    if (this.prisma) {
+      await this.prisma.$disconnect();
+    }
   }
 }
 

@@ -2,7 +2,6 @@ import { getProvider, Message } from '@/lib/api';
 import { Hypothesis } from '@/types/project';
 import { getTokenTracker } from './token-tracker';
 import { calculateConfidence } from '../confidence';
-import { getModelChain } from '@/lib/models/config';
 import { ScoringEngine } from '@/lib/research/engines/scoring-engine';
 import { processValidationResult } from '@/lib/wtp-atp-utils';
 
@@ -74,8 +73,8 @@ Keep under 60 characters.`;
       ];
 
       // Use fallback system for hypothesis generation
-      const modelChain = getModelChain('HYPOTHESIS')
-      const { response } = await (provider as any).chatWithFallback(messages, modelChain)
+      
+      const { response } = await (provider as any).chatWithFallback(messages)
       
       // Track token usage
       const tracker = getTokenTracker();
@@ -174,8 +173,8 @@ Format as JSON array with "text" field only. Keep under 80 characters.`;
       ];
 
       // Use fallback system for hypothesis generation
-      const modelChain = getModelChain('HYPOTHESIS')
-      const { response } = await (provider as any).chatWithFallback(messages, modelChain)
+      
+      const { response } = await (provider as any).chatWithFallback(messages)
       
       // Track token usage
       const tracker = getTokenTracker();
@@ -255,8 +254,8 @@ Format as JSON array with "text" field only. Keep under 60 characters.`;
       ];
 
       // Use fallback system for hypothesis generation
-      const modelChain = getModelChain('HYPOTHESIS')
-      const { response } = await (provider as any).chatWithFallback(messages, modelChain)
+      
+      const { response } = await (provider as any).chatWithFallback(messages)
       
       // Track token usage
       const tracker = getTokenTracker();

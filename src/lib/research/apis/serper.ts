@@ -1,11 +1,19 @@
 import { APIResult } from './types';
 
-const SERPER_API_KEY = process.env.SERPER_API_KEY || '030a2c49e285a4245d7ce4d6787f81bba0713274';
+const SERPER_API_KEY = process.env.SERPER_API_KEY;
 const BRAVE_API_KEY = process.env.BRAVE_API_KEY;
+
+if (!SERPER_API_KEY) {
+  console.warn('[Serper] WARNING: SERPER_API_KEY not set in environment variables');
+}
 
 export async function searchSerper(query: string): Promise<APIResult> {
   const start = Date.now();
   try {
+    if (!SERPER_API_KEY) {
+      throw new Error('SERPER_API_KEY not configured');
+    }
+    
     const res = await fetch('https://google.serper.dev/search', {
       method: 'POST',
       headers: { 'X-API-KEY': SERPER_API_KEY, 'Content-Type': 'application/json' },
@@ -17,7 +25,7 @@ export async function searchSerper(query: string): Promise<APIResult> {
     // Handle credit exhaustion or other API errors
     if (!res.ok || json.statusCode === 400) {
       const errorMsg = json.message || `HTTP ${res.status}`;
-      console.log(`[Serper] ⚠ ${errorMsg} - trying Brave Search fallback`);
+      console.log(`[Serper] [WARN] ${errorMsg} - trying Brave Search fallback`);
       return searchBrave(query);
     }
     
@@ -26,10 +34,10 @@ export async function searchSerper(query: string): Promise<APIResult> {
       snippet: item.snippet || '',
       url: item.link
     }));
-    console.log(`[Serper] ✓ ${results.length} results in ${Date.now() - start}ms`);
+    console.log(`[Serper] [OK] ${results.length} results in ${Date.now() - start}ms`);
     return { source: 'Serper', success: true, data: results, queryTime: Date.now() - start };
   } catch (e: any) {
-    console.error(`[Serper] ✗ ${e.message} - trying Brave Search fallback`);
+    console.error(`[Serper] [FAIL] ${e.message} - trying Brave Search fallback`);
     return searchBrave(query);
   }
 }
@@ -40,7 +48,7 @@ async function searchBrave(query: string): Promise<APIResult> {
   const start = Date.now();
   
   if (!BRAVE_API_KEY) {
-    console.log(`[Brave] ⚠ No BRAVE_API_KEY set. Add to .env.local to enable web search.`);
+    console.log(`[Brave] [WARN] No BRAVE_API_KEY set. Add to .env.local to enable web search.`);
     console.log(`[Brave] Get free API key at: https://brave.com/search/api/`);
     return { source: 'Brave', success: true, data: [], queryTime: Date.now() - start };
   }
@@ -66,10 +74,10 @@ async function searchBrave(query: string): Promise<APIResult> {
       url: item.url
     }));
     
-    console.log(`[Brave] ✓ ${results.length} results in ${Date.now() - start}ms`);
+    console.log(`[Brave] [OK] ${results.length} results in ${Date.now() - start}ms`);
     return { source: 'Brave', success: true, data: results, queryTime: Date.now() - start };
   } catch (e: any) {
-    console.error(`[Brave] ✗ ${e.message}`);
+    console.error(`[Brave] [FAIL] ${e.message}`);
     return { source: 'Brave', success: false, data: [], error: e.message, queryTime: Date.now() - start };
   }
 }

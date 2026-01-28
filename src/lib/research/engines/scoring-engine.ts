@@ -2,10 +2,9 @@ import { getProvider, Message } from '@/lib/api';
 import { getTokenTracker } from '@/lib/api/token-tracker';
 import { ChatResponse } from '@/lib/api/types';
 import { HypothesisCheck } from '@/types/project';
+import { FALLBACK_CHAIN } from '@/lib/config/models';
 
-const VALIDATION_MODELS = [
-  'deepseek/deepseek-chat',        // Primary - cheap and fast
-];
+const VALIDATION_MODELS = [...FALLBACK_CHAIN];
 const MAX_RETRIES = 2;
 const BASE_DELAY_MS = 10000;
 const MIN_REQUEST_INTERVAL_MS = 15000;

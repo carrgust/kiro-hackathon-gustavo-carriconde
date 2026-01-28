@@ -1,6 +1,7 @@
 import { getProvider, Message } from '@/lib/api';
 import { getTokenTracker } from '@/lib/api/token-tracker';
 import { EngineInput, EngineResult } from '../types';
+import { PRIMARY_MODEL } from '@/lib/config/models';
 
 export class SynthesisEngine {
   private apiKey: string;
@@ -45,7 +46,7 @@ Respond in JSON format:
       },
     ];
 
-    const response = await provider.chat(messages, 'deepseek/deepseek-chat');
+    const response = await provider.chat(messages, PRIMARY_MODEL);
 
     // Track tokens
     const tracker = getTokenTracker();

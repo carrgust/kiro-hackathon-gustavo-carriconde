@@ -19,7 +19,7 @@ export interface MachineGunResult {
 
 export async function fireAPIMachineGun(query: string): Promise<MachineGunResult> {
   const start = Date.now();
-  console.log(`\n[APIMachineGun] 🔫 Firing 8 APIs for: "${query}"`);
+  console.log(`\n[APIMachineGun] -- Firing 8 APIs for: "${query}"`);
 
   const results = await Promise.all([
     searchWikipedia(query),
@@ -36,8 +36,8 @@ export async function fireAPIMachineGun(query: string): Promise<MachineGunResult
   const totalResults = results.reduce((sum, r) => sum + r.data.length, 0);
   const totalTime = Date.now() - start;
 
-  console.log(`[APIMachineGun] ✓ ${successful.length}/8 sources, ${totalResults} results in ${totalTime}ms`);
-  results.filter(r => !r.success).forEach(r => console.log(`  ✗ ${r.source}: ${r.error}`));
+  console.log(`[APIMachineGun] [OK] ${successful.length}/8 sources, ${totalResults} results in ${totalTime}ms`);
+  results.filter(r => !r.success).forEach(r => console.log(`  [FAIL] ${r.source}: ${r.error}`));
 
   return {
     query,

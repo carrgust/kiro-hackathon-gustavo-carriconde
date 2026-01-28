@@ -23,10 +23,10 @@ export async function searchPullPush(query: string): Promise<APIResult> {
       snippet: `r/${item.data?.subreddit} • ${item.data?.score || 0} upvotes • ${item.data?.num_comments || 0} comments`,
       url: `https://reddit.com${item.data?.permalink}`
     }));
-    console.log(`[PullPush] ✓ ${results.length} results in ${Date.now() - start}ms`);
+    console.log(`[PullPush] [OK] ${results.length} results in ${Date.now() - start}ms`);
     return { source: 'Reddit', success: true, data: results, queryTime: Date.now() - start };
   } catch (e: any) {
-    console.error(`[PullPush] ✗ ${e.message}`);
+    console.error(`[PullPush] [FAIL] ${e.message}`);
     return searchPushshiftFallback(query, start);
   }
 }
@@ -38,19 +38,25 @@ async function searchPushshiftFallback(query: string, start: number): Promise<AP
     const res = await fetch(url, {
       headers: { 'User-Agent': 'CuratosDNA/1.0' }
     });
-    
+
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    
+
     const json = await res.json();
     const results = (json.data || []).map((item: any) => ({
       title: item.title || 'Reddit Post',
       snippet: `r/${item.subreddit} • ${item.score || 0} upvotes`,
       url: `https://reddit.com${item.permalink}`
     }));
-    console.log(`[PullPush/Pushshift] ✓ ${results.length} results in ${Date.now() - start}ms`);
+
+    if (results.length === 0) {
+      console.log(`[PullPush] [WARN] No results found`);
+      return { source: 'Reddit', success: false, data: [], error: 'No results found', queryTime: Date.now() - start };
+    }
+
+    console.log(`[PullPush/Pushshift] [OK] ${results.length} results in ${Date.now() - start}ms`);
     return { source: 'Reddit', success: true, data: results, queryTime: Date.now() - start };
   } catch (e: any) {
-    console.log(`[PullPush] ⚠ Reddit APIs unavailable`);
-    return { source: 'Reddit', success: true, data: [], queryTime: Date.now() - start };
+    console.log(`[PullPush] [FAIL] Reddit APIs unavailable: ${e.message}`);
+    return { source: 'Reddit', success: false, data: [], error: 'Reddit APIs blocked or unavailable', queryTime: Date.now() - start };
   }
 }

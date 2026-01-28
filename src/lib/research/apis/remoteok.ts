@@ -17,10 +17,10 @@ export async function searchRemoteOK(query: string): Promise<APIResult> {
       snippet: job.tags?.join(', ') || 'Remote job',
       url: job.url || 'https://remoteok.com'
     }));
-    console.log(`[RemoteOK] ✓ ${results.length} results in ${Date.now() - start}ms`);
+    console.log(`[RemoteOK] [OK] ${results.length} results in ${Date.now() - start}ms`);
     return { source: 'RemoteOK', success: true, data: results, queryTime: Date.now() - start };
   } catch (e: any) {
-    console.error(`[RemoteOK] ✗ ${e.message}`);
+    console.error(`[RemoteOK] [FAIL] ${e.message}`);
     return { source: 'RemoteOK', success: false, data: [], error: e.message, queryTime: Date.now() - start };
   }
 }

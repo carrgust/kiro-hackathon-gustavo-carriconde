@@ -12,10 +12,10 @@ export async function searchWikidata(query: string): Promise<APIResult> {
       snippet: item.description || '',
       url: item.concepturi
     }));
-    console.log(`[Wikidata] ✓ ${results.length} results in ${Date.now() - start}ms`);
+    console.log(`[Wikidata] [OK] ${results.length} results in ${Date.now() - start}ms`);
     return { source: 'Wikidata', success: true, data: results, queryTime: Date.now() - start };
   } catch (e: any) {
-    console.error(`[Wikidata] ✗ ${e.message}`);
+    console.error(`[Wikidata] [FAIL] ${e.message}`);
     return { source: 'Wikidata', success: false, data: [], error: e.message, queryTime: Date.now() - start };
   }
 }

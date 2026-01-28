@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getProvider } from '@/lib/api'
 import { AgentContext, AgentAction } from '@/types/orchestrator'
-import { getModelChain } from '@/lib/models/config'
+import { FALLBACK_CHAIN } from '@/lib/config/models'
 
 const AGENT_SYSTEM_PROMPT = `
 You are the Agent Console Orchestrator for Curatos DNA. Your role is to autonomously manage the hypothesis-to-PRD pipeline by analyzing card data and deciding the next optimal action.
@@ -49,10 +49,11 @@ interface AgentResponse {
 
 export async function POST(request: NextRequest) {
   try {
-    const { context, apiKey }: { context: AgentContext; apiKey: string } = await request.json()
+    const { context }: { context: AgentContext } = await request.json()
 
+    const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: 'API key required' }, { status: 400 })
+      return NextResponse.json({ error: 'Server not configured - no API key' }, { status: 500 })
     }
 
     if (!context) {
@@ -103,7 +104,7 @@ export async function POST(request: NextRequest) {
     ]
 
     // Use fallback system for orchestrator
-    const modelChain = getModelChain('ORCHESTRATOR')
+    const modelChain = FALLBACK_CHAIN
     const { response } = await (provider as any).chatWithFallback(messages, modelChain)
     
     // Parse the JSON response

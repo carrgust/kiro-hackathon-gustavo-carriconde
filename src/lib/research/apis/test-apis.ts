@@ -10,7 +10,7 @@ import { searchSerper } from './serper';
 const QUERY = 'fintech payments';
 
 async function testAllAPIs() {
-  console.log(`\n🔫 API MACHINE GUN TEST - Query: "${QUERY}"\n${'='.repeat(50)}\n`);
+  console.log(`\n-- API MACHINE GUN TEST - Query: "${QUERY}"\n${'='.repeat(50)}\n`);
 
   const apis = [
     { name: 'Wikipedia', fn: searchWikipedia },
@@ -25,7 +25,7 @@ async function testAllAPIs() {
 
   const results = await Promise.all(apis.map(api => api.fn(QUERY)));
 
-  console.log(`\n${'='.repeat(50)}\n📊 SUMMARY\n`);
+  console.log(`\n${'='.repeat(50)}\n SUMMARY\n`);
   
   let passed = 0, failed = 0;
   results.forEach(r => {

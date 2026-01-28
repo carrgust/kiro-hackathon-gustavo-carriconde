@@ -29,6 +29,32 @@
 | Gemini Flash | gemini-2.0-flash-exp:free | Landing page & PRD |
 | Exa.ai | via `:online` suffix | Web search validation |
 
+## Model Configuration
+
+**CRITICAL**: All AI model identifiers are centralized in `src/lib/config/models.ts`.
+
+**Single Fallback Chain**:
+```typescript
+FALLBACK_CHAIN = [
+  'x-ai/glm-4.7-flash',      // Primary
+  'deepseek/deepseek-chat',  // Secondary
+  'google/gemini-2.0-flash-001' // Tertiary
+]
+```
+
+**Rules**:
+- NEVER hardcode model strings elsewhere
+- ALWAYS import from central config: `import { PRIMARY_MODEL, FALLBACK_CHAIN } from '@/lib/config/models'`
+- Use `PRIMARY_MODEL` for single model references
+- Use `FALLBACK_CHAIN` for fallback logic
+- Use `MODELS.X` for specific model identifiers
+
+**Available Exports**:
+- `MODELS`: Individual model identifiers (XAI_GLM, DEEPSEEK_CHAT, GEMINI_FLASH)
+- `FALLBACK_CHAIN`: Universal 3-model fallback chain
+- `PRIMARY_MODEL`: First model in chain (x-ai/glm-4.7-flash)
+- `DEFAULT_MODEL`: Alias for PRIMARY_MODEL
+
 ### Testing
 | Tool | Version | Purpose |
 |------|---------|---------|

@@ -1,33 +1,5 @@
 // Resilient Model Configuration System
-
-export type UseCase = 'ORCHESTRATOR' | 'HYPOTHESIS' | 'RESEARCH' | 'STREAMING';
-
-export const MODEL_CHAINS: Record<UseCase, string[]> = {
-  ORCHESTRATOR: [
-    'google/gemini-2.0-flash-exp:free',
-    'meta-llama/llama-3.3-70b-instruct:free', 
-    'deepseek/deepseek-r1-0528:free',
-    'deepseek/deepseek-chat'
-  ],
-  HYPOTHESIS: [
-    'meta-llama/llama-3.3-70b-instruct:free',
-    'qwen/qwen3-coder:free',
-    'google/gemini-2.0-flash-exp:free',
-    'deepseek/deepseek-chat'
-  ],
-  RESEARCH: [
-    'qwen/qwen3-coder:free',
-    'mistralai/devstral-2512:free',
-    'deepseek/deepseek-r1-0528:free',
-    'deepseek/deepseek-chat'
-  ],
-  STREAMING: [
-    'deepseek/deepseek-r1-0528:free',
-    'meta-llama/llama-3.2-3b-instruct:free',
-    'google/gemma-3-27b-it:free',
-    'deepseek/deepseek-chat'
-  ]
-};
+import { FALLBACK_CHAIN } from '@/lib/config/models';
 
 interface FallbackResult {
   response: any;
@@ -47,13 +19,12 @@ interface Provider {
 export async function callWithFallback(
   provider: Provider,
   messages: Message[],
-  modelChain: string[],
   apiKeys: string[]
 ): Promise<FallbackResult> {
   const errors: string[] = [];
   
   for (const apiKey of apiKeys) {
-    for (const model of modelChain) {
+    for (const model of FALLBACK_CHAIN) {
       try {
         console.log(`[MODEL_FALLBACK] Trying ${model} with API key ${apiKey.substring(0, 10)}...`);
         
@@ -88,8 +59,4 @@ export async function callWithFallback(
   
   // All models and API keys failed
   throw new Error(`All models failed. Errors: ${errors.join('; ')}`);
-}
-
-export function getModelChain(useCase: UseCase): string[] {
-  return MODEL_CHAINS[useCase] || MODEL_CHAINS.ORCHESTRATOR;
 }

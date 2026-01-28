@@ -1,5 +1,6 @@
 import { getProvider, Message } from '@/lib/api';
 import { Hypothesis } from '@/types/project';
+import { PRIMARY_MODEL } from '@/lib/config/models';
 
 export class StreamingService {
   private apiKey: string;
@@ -45,7 +46,7 @@ export class StreamingService {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          model: 'deepseek/deepseek-chat',
+          model: PRIMARY_MODEL,
           messages,
           stream: !this.isLiveMode, // Server handles streaming flag for live mode
           temperature: 0.7,
@@ -154,7 +155,7 @@ Return ONLY the HTML code, no explanations.`;
       { role: 'user', content: prompt }
     ];
 
-    const response = await provider.chat(messages, 'deepseek/deepseek-chat');
+    const response = await provider.chat(messages, PRIMARY_MODEL);
     
     // Extract HTML from response (remove markdown code blocks if present)
     let html = response.content.trim();
@@ -240,7 +241,7 @@ IMPORTANT: Use the exact format FR-001, FR-002, NFR-001, NFR-002 for requirement
       { role: 'user', content: prompt }
     ];
 
-    const response = await provider.chat(messages, 'deepseek/deepseek-chat');
+    const response = await provider.chat(messages, PRIMARY_MODEL);
     
     // Extract markdown from response (remove markdown code blocks if present)
     let markdown = response.content.trim();

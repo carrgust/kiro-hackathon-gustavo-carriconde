@@ -1,6 +1,6 @@
 // FAST Confidence Algorithm - BOOSTED version for reaching 90%+
 export function calculateConfidence(sources: string[], hypothesisText: string): number {
-  if (!sources.length) return Math.floor(Math.random() * 20) + 15;
+  if (!sources.length) return 0;
   
   // Hash for consistent but varied base
   let hash = 0;

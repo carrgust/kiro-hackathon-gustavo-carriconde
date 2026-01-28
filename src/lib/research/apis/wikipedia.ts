@@ -12,10 +12,10 @@ export async function searchWikipedia(query: string): Promise<APIResult> {
       snippet: item.snippet.replace(/<[^>]+>/g, ''),
       url: `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title.replace(/ /g, '_'))}`
     }));
-    console.log(`[Wikipedia] ✓ ${results.length} results in ${Date.now() - start}ms`);
+    console.log(`[Wikipedia] [OK] ${results.length} results in ${Date.now() - start}ms`);
     return { source: 'Wikipedia', success: true, data: results, queryTime: Date.now() - start };
   } catch (e: any) {
-    console.error(`[Wikipedia] ✗ ${e.message}`);
+    console.error(`[Wikipedia] [FAIL] ${e.message}`);
     return { source: 'Wikipedia', success: false, data: [], error: e.message, queryTime: Date.now() - start };
   }
 }

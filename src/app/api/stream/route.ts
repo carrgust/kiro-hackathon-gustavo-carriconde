@@ -1,8 +1,9 @@
 import { NextRequest } from 'next/server';
+import { PRIMARY_MODEL } from '@/lib/config/models';
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages, model = 'deepseek/deepseek-r1-0528:free' } = await request.json();
+    const { messages, model = PRIMARY_MODEL } = await request.json();
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: 'Messages array required' }), { 

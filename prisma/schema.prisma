@@ -1,9 +1,11 @@
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "darwin-arm64"]
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -72,4 +74,111 @@ model Transaction {
   @@index([userId])
   @@index([type])
   @@index([createdAt])
+}
+
+model ContinuousSession {
+  id              String   @id @default(cuid())
+  niche           String
+  enabled         Boolean  @default(false)
+  cycleInterval   Int      @default(15000)  // milliseconds
+  tokensUsed      Int      @default(0)
+  pipelineState   Json     @default("{}")  // Stores full EngineState as JSON
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  lastCycleAt     DateTime?
+  
+  events SessionEvent[]
+  
+  @@index([enabled])
+  @@index([updatedAt])
+}
+
+model SessionEvent {
+  id              String   @id @default(cuid())
+  sessionId       String
+  session         ContinuousSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  eventType       String   // 'cycle_start', 'cycle_complete', 'cycle_error', 'pause', 'resume'
+  agentAction     String?  // AgentAction enum value
+  cardType        String?  // 'problem', 'solution', 'requirement'
+  cardId          String?
+  confidence      Float?
+  errorMessage    String?
+  tokensUsed      Int      @default(0)
+  metadata        Json     @default("{}")
+  createdAt       DateTime @default(now())
+  
+  @@index([sessionId, createdAt])
+  @@index([eventType])
+}
+
+model ValidationSession {
+  id                    String   @id @default(cuid())
+  originalInput         String   @db.Text
+  canonicalDescription  String?  @db.Text
+  overallScore          Int?
+  status                String   @default("pending")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  completedAt           DateTime?
+  pillars               PillarResult[]
+  @@index([status])
+  @@index([createdAt])
+}
+
+model PillarResult {
+  id            String   @id @default(cuid())
+  sessionId     String
+  pillarKey     String
+  pillarName    String
+  pillarIcon    String
+  pillarWeight  Float
+  score         Int?
+  status        String   @default("pending")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  session       ValidationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  subcategories SubcategoryResult[]
+  @@unique([sessionId, pillarKey])
+  @@index([sessionId])
+}
+
+model SubcategoryResult {
+  id              String   @id @default(cuid())
+  pillarId        String
+  subcategoryKey  String
+  subcategoryName String
+  score           Int?
+  status          String   @default("pending")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  pillar          PillarResult @relation(fields: [pillarId], references: [id], onDelete: Cascade)
+  sources         SourceResult[]
+  @@unique([pillarId, subcategoryKey])
+  @@index([pillarId])
+}
+
+model SourceResult {
+  id              String   @id @default(cuid())
+  subcategoryId   String
+  sourceType      String
+  sourceIcon      String
+  sourceColor     String?
+  sourceName      String?
+  status          String   @default("pending")
+  title           String?
+  url             String?
+  snippet         String?  @db.Text
+  publishedDate   String?
+  relevanceScore  Int?
+  supports        String[] @default([])
+  concerns        String[] @default([])
+  impactOnScore   Int?
+  confidence      Int?
+  rawResponse     Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  subcategory     SubcategoryResult @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
+  @@unique([subcategoryId, sourceType])
+  @@index([subcategoryId])
+  @@index([status])
 }
