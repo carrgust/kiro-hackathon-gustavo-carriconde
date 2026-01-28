@@ -1,48 +1,53 @@
 # Curatos Development Log
 
-> **Project:** Curatos - Autonomous AI Hypothesis Engine
-> **Hackathon:** Dynamous x Kiro Hackathon (January 2026)
+> **Project:** Curatos DNA - Autonomous SaaS Research Engine
+> **Hackathon:** AWS Kiro Hackathon 2026
 > **Developer:** Gustavo Martini Carriconde
 > **Started:** January 10, 2026
+> **Repository:** https://github.com/carrgust/kiro-hackathon-gustavo-carriconde
 
 ---
 
 ## Project Vision
 
-Curatos is an autonomous AI system that helps founders discover validated problem/solution hypotheses for SaaS products. It combines AI-powered generation with automated research to accelerate the idea validation phase of product development.
+Curatos DNA is an autonomous AI system that transforms market research into deployable products. It generates, validates, and converts market hypotheses into production-ready deliverables: HTML landing pages and comprehensive PRDs.
+
+**Core Innovation:** 7-pillar business validation system with real-time web research and structured scoring.
 
 ---
 
 ## Day 1 - January 10, 2026
 
 ### Initial Setup
-- Created Next.js 15 project with TypeScript
-- Set up Tailwind CSS for styling
-- Established project structure following Cole's 11-prompt template
-- Created .kiro/ folder with steering docs
+- Created Next.js 14.2 project with TypeScript (strict mode)
+- Set up Tailwind CSS + Framer Motion for animations
+- Established project structure with .kiro/ steering docs
+- Configured OpenRouter API integration
 
 ### Research Phase
 - Analyzed 51 GitHub repositories for hackathon patterns
 - Evaluated feasibility of different project ideas
-- Decided on "Curatos" - AI hypothesis engine concept
+- Decided on "Curatos DNA" - autonomous research engine
 
-**Kiro Usage:** Used Kiro CLI for project scaffolding and initial file generation.
+**Kiro Usage:** Project scaffolding, initial file generation
 
 ---
 
 ## Day 2 - January 11, 2026
 
 ### Dashboard Design v1
-- Created token-flow UI mockup
-- Designed hypothesis card components
-- Implemented basic state management
+- Created terminal-style UI with dark theme
+- Designed hypothesis card components with confidence indicators
+- Implemented basic state management with React hooks
+- Added token tracking visualization
 
 ### Architecture Decisions
-- Chose client-side API key storage for MVP (BYOK model)
-- Designed provider abstraction for multi-AI support
-- Planned token economy for gamification
+- BYOK (Bring Your Own Key) model for API keys
+- Provider abstraction pattern for multi-AI support
+- Client-side localStorage for API key storage
+- Free tier AI models only (DeepSeek R1, Gemini Flash)
 
-**Kiro Usage:** Kiro generated component boilerplate and TypeScript interfaces.
+**Kiro Usage:** Component boilerplate, TypeScript interfaces
 
 ---
 
@@ -428,19 +433,161 @@ Major feature: Multi-source hypothesis validation replacing expensive OpenRouter
 
 ---
 
-## Final Stats (Updated)
+## Day 8 - January 28, 2026
 
-- **Lines of Code:** ~9,500+ TypeScript/React
-- **Components:** 20 dashboard components
-- **API Routes:** 4 endpoints
-- **AI Models:** 3 (DeepSeek R1, Gemini Flash, Llama 3.3)
-- **External APIs:** 8 (Wikipedia, Wikidata, HN, OpenAlex, RemoteOK, PullPush, FRED, Serper)
-- **Features:** Research engine, web validation, landing page gen, PRD gen, scoring system, API Machine Gun
-- **Tests:** 47 passing
-- **Documentation Files:** 16+
-- **Development Time:** 7 days
-- **Kiro Prompts Used:** ~75 of 2,000 available
+### 7-Pillar Business Validation System 🎯
+Complete overhaul of the validation input system with premium UX and structured analysis.
+
+#### Core Features Implemented
+
+**1. JSON Normalization System**
+- Replaced paragraph-based input with structured 7-pillar analysis
+- Pillars: problem, market, competition, solution, monetization, gtm, timing
+- ONE sentence per pillar (15-25 words) for concise output
+- API endpoint: `/api/validate/normalize`
+- JSON parsing with validation for all 7 required fields
+
+**2. LLM Fallback Chain**
+- Centralized model configuration in `src/lib/config/models.ts`
+- Fallback order: Gemini Lite (primary) → GLM → DeepSeek
+- `response_format: { type: 'json_object' }` for JSON enforcement
+- Increased max_tokens to 2500 for complete responses
+- Empty response handling with automatic fallback
+
+**3. Premium UX Animations**
+- **Loading State:** Spinning circle with pulsing "Analyzing your idea..." text
+- **Sequential Reveal:** Pillars appear one-by-one with 400ms delay
+- **Typewriter Effect:** Text appears character-by-character (25ms/char)
+- **Animated Cursor:** Orange pulsing bar while typing
+- All animations powered by Framer Motion
+
+**4. Edit Functionality**
+- Pencil icon on each pillar card
+- Inline editing with textarea
+- Save/Cancel buttons
+- Edited text persists through validation flow
+
+**5. Regenerate Button**
+- Side-by-side layout: Regenerate + Confirm buttons
+- Regenerate calls API again with same inputs
+- Secondary style (outline) vs primary orange gradient
+- Disabled while generating
+
+**6. GDP-Based Geography Indicator**
+- Removed quality bars from Market Niche dropdown
+- Added GDP-based scoring for Target Geography
+- Scores reflect actual world GDP share:
+  - Global: 100% (full bars)
+  - Asia Pacific: 35%
+  - North America: 28%
+  - Europe: 22%
+  - Latin America: 6%
+  - Middle East: 4%
+  - Africa: 3%
+- Small "GDP" label next to bars
+
+**7. Visual Improvements**
+- OCR-B monospace font for technical aesthetic
+- Wider cards (max-w-4xl) for better readability
+- Consistent spacing and animations
+- Premium feel throughout
+
+#### Files Modified
+```
+src/components/sections/InputDashboard.tsx (major overhaul)
+  - Added typewriter effect state management
+  - Sequential pillar reveal logic
+  - Edit functionality with inline textarea
+  - Regenerate button
+  - GDP scoring system
+  - OCR-B font styling
+
+src/lib/validation/prompts.ts
+  - Updated to ONE sentence (15-25 words)
+  - Clear JSON structure requirements
+  - Factual, non-promotional tone
+
+src/lib/validation/model-client.ts
+  - Added response_format parameter
+  - Increased default max_tokens to 2500
+  - Model-specific JSON mode (Gemini, DeepSeek only)
+
+src/app/api/validate/normalize/route.ts
+  - JSON parsing with markdown code block stripping
+  - Validation for all 7 required fields
+  - Detailed logging for debugging
+  - maxTokens: 2500
+
+src/lib/config/models.ts
+  - Swapped model order: Gemini first (lower latency)
+  - Updated comments to reflect new priority
+
+src/app/layout.tsx
+  - Added OCR-B font CDN link
+```
+
+#### Technical Achievements
+- **Zero TypeScript errors** after major refactor
+- **Complete JSON responses** with proper token limits
+- **Smooth animations** without performance issues
+- **Fallback chain working** - Gemini responding faster than GLM
+- **Edit state management** preserving user changes
+
+#### API Registry Integration
+- 28 prompts across 8 APIs
+- 7 pillars × 4 APIs per pillar average
+- Registry-based source searching
+- Color-coded API results in UI
+
+#### Testing Results
+```bash
+# Normalize endpoint test
+curl -X POST /api/validate/normalize \
+  -d '{"userInput": "AI code review tool"}'
+
+Response: ✅ All 7 pillars populated
+Problem: "Developers struggle with time-consuming manual code reviews, 
+          leading to bugs and slower development cycles, impacting 
+          software quality and team efficiency." (24 words)
+```
+
+### Kiro CLI Usage Today
+| Task | Kiro Contribution |
+|------|-------------------|
+| Model configuration | Centralized config refactor |
+| UX animations | Framer Motion implementation |
+| JSON parsing | Error handling and validation |
+| Edit functionality | State management logic |
+| GDP scoring | Data structure and mapping |
+| Debugging | Log analysis and fixes |
+
+**Kiro Prompts Used Today:** ~25
+**Total Kiro Prompts:** ~100 of 2,000 available
+
+### Commit Summary
+```
+feat: 7-pillar business validation system with premium UX
+
+83 files changed, 10634 insertions(+), 1092 deletions(-)
+```
 
 ---
 
-*This devlog documents the complete development journey of Curatos for the Dynamous x Kiro Hackathon.*
+## Final Stats (Updated January 28)
+
+- **Lines of Code:** ~11,000+ TypeScript/React
+- **Components:** 20+ dashboard components
+- **API Routes:** 6 endpoints
+- **AI Models:** 3 (Gemini Lite, GLM, DeepSeek)
+- **External APIs:** 8 (Wikipedia, Wikidata, HN, OpenAlex, RemoteOK, PullPush, FRED, Serper)
+- **Features:** 7-pillar validation, research engine, web validation, landing page gen, PRD gen, scoring system, API Machine Gun
+- **Tests:** 47 passing
+- **Documentation Files:** 20+
+- **Development Time:** 8 days
+- **Kiro Prompts Used:** ~100 of 2,000 available
+- **TypeScript Errors:** 0
+- **npm Vulnerabilities:** 0
+
+---
+
+*This devlog documents the complete development journey of Curatos DNA for the AWS Kiro Hackathon 2026.*
