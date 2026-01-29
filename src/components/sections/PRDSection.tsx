@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { FileText, Copy, Download, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import GlassCard from '@/components/GlassCard';
 import { pageVariants } from '@/lib/animations';
 import { toast } from 'sonner';
@@ -19,6 +19,35 @@ export default function PRDSection({
   canGenerate,
 }: PRDSectionProps) {
   const [copied, setCopied] = useState(false);
+  const [revealedText, setRevealedText] = useState('');
+  const [isRevealing, setIsRevealing] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Typewriter effect
+  useEffect(() => {
+    if (!prdContent) return;
+    
+    setIsRevealing(true);
+    setRevealedText('');
+    let currentIndex = 0;
+    
+    const interval = setInterval(() => {
+      if (currentIndex < prdContent.length) {
+        setRevealedText(prdContent.substring(0, currentIndex + 1));
+        currentIndex++;
+        
+        // Auto-scroll to bottom
+        if (contentRef.current) {
+          contentRef.current.scrollTop = contentRef.current.scrollHeight;
+        }
+      } else {
+        clearInterval(interval);
+        setIsRevealing(false);
+      }
+    }, 15);
+    
+    return () => clearInterval(interval);
+  }, [prdContent]);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(prdContent);
@@ -76,7 +105,7 @@ export default function PRDSection({
             )}
           </button>
 
-          {prdContent && (
+          {prdContent && !isRevealing && (
             <>
               <button
                 onClick={handleCopy}
@@ -109,9 +138,15 @@ export default function PRDSection({
               ))}
             </div>
           ) : prdContent ? (
-            <div className="prose prose-invert max-w-none">
+            <div 
+              ref={contentRef}
+              className="prose prose-invert max-w-none max-h-[600px] overflow-y-auto"
+            >
               <pre className="whitespace-pre-wrap text-sm text-white/90 font-mono">
-                {prdContent}
+                {revealedText}
+                {isRevealing && (
+                  <span className="inline-block w-2 h-4 bg-orange-400 ml-1 animate-pulse" />
+                )}
               </pre>
             </div>
           ) : (

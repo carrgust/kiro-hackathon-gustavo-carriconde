@@ -1,15 +1,16 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Package, Users, AlertCircle, Lightbulb, DollarSign, Zap, Search, MessageCircle, Terminal, TrendingUp, BookOpen, Globe, Database, Briefcase } from 'lucide-react';
-import { UnifiedGauge } from './visualizations';
+import { Search, MessageCircle, Terminal, TrendingUp, BookOpen, Globe, Database, Briefcase, RotateCcw, Target, CheckCircle2 } from 'lucide-react';
+import { getSourceFavicon, getSourceLabel } from '@/lib/source-favicons';
+import { useRef, useEffect, useState } from 'react';
 import '@/styles/validation-dashboard.css';
 
 /**
  * ValidationDashboardV2 - Steve Jobs Edition
  *
  * Design Principles:
- * 1. ONE gauge style - UnifiedGauge used everywhere
+ * 1. Horizontal progress bars - Consistent across all scores
  * 2. Consistent sizing - Every card same width
  * 3. Single accent color - Amber (#F59E0B)
  * 4. Perfect typography - SF Pro hierarchy
@@ -63,6 +64,14 @@ interface Pillar {
   subcategories: Subcategory[];
 }
 
+interface GapAnalysis {
+  pillarName: string;
+  score: number;
+  diagnosis: string;
+  actions: string[];
+  priority: 'HIGH' | 'MEDIUM' | 'LOW';
+}
+
 interface ValidationDashboardV2Props {
   idea?: string;
   canonicalDescription?: string;
@@ -71,6 +80,12 @@ interface ValidationDashboardV2Props {
   pillars: Pillar[];
   onSourceClick: (source: Source) => void;
   agentLogs?: string[];
+  onStartOver?: () => void;
+  onCloseGaps?: () => void;
+  gapAnalysis?: GapAnalysis[];
+  isAnalyzingGaps?: boolean;
+  improvedIdea?: Record<string, string>;
+  onNavigateToPRD?: () => void;
 }
 
 // Score label based on value
@@ -83,44 +98,6 @@ function getScoreVerdict(score: number): string {
   return 'Critical';
 }
 
-// Parse business concept into structured sections
-function parseBusinessConcept(text: string) {
-  const sections = {
-    product: '',
-    target: '',
-    problem: '',
-    solution: '',
-    revenue: '',
-    edge: ''
-  };
-
-  if (!text) return sections;
-
-  const sentences = text.split(/\.\s+/);
-
-  sentences.forEach(sentence => {
-    const lower = sentence.toLowerCase();
-    if (!sections.product && (lower.includes('product') || lower.includes('saas') || lower.includes('platform') || lower.includes('service'))) {
-      sections.product = sentence + '.';
-    } else if (!sections.target && (lower.includes('customer') || lower.includes('target') || lower.includes('user'))) {
-      sections.target = sentence + '.';
-    } else if (!sections.problem && (lower.includes('problem') || lower.includes('pain') || lower.includes('struggle'))) {
-      sections.problem = sentence + '.';
-    } else if (!sections.solution && (lower.includes('solution') || lower.includes('feature') || lower.includes('provide'))) {
-      sections.solution = sentence + '.';
-    } else if (!sections.revenue && (lower.includes('monetization') || lower.includes('revenue') || lower.includes('subscription'))) {
-      sections.revenue = sentence + '.';
-    } else if (!sections.edge && (lower.includes('differentiation') || lower.includes('unique') || lower.includes('competitive'))) {
-      sections.edge = sentence + '.';
-    }
-  });
-
-  // Fallback
-  if (!sections.product) sections.product = text.substring(0, 150) + '...';
-
-  return sections;
-}
-
 export default function ValidationDashboardV2({
   idea,
   canonicalDescription,
@@ -128,129 +105,114 @@ export default function ValidationDashboardV2({
   scoreLabel,
   pillars,
   onSourceClick,
-  agentLogs = []
+  agentLogs = [],
+  onStartOver,
+  onCloseGaps,
+  gapAnalysis = [],
+  isAnalyzingGaps = false,
+  improvedIdea,
+  onNavigateToPRD
 }: ValidationDashboardV2Props) {
-  const businessSections = parseBusinessConcept(canonicalDescription || '');
   const verdict = overallScore ? getScoreVerdict(overallScore) : '';
+  const gapPillars = pillars.filter(p => (p.score ?? 0) < 70);
+  
+  const closeGapsRef = useRef<HTMLDivElement>(null);
+  const improvedIdeaRef = useRef<HTMLDivElement>(null);
+  const [revealedPillars, setRevealedPillars] = useState<string[]>([]);
+  const [typewriterTexts, setTypewriterTexts] = useState<Record<string, string>>({});
+
+  // Auto-scroll to Close the Gaps button when it appears
+  useEffect(() => {
+    if (gapPillars.length > 0 && gapAnalysis.length === 0 && closeGapsRef.current) {
+      setTimeout(() => {
+        closeGapsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 500);
+    }
+  }, [gapPillars.length, gapAnalysis.length]);
+
+  // Scroll to improved idea and start typewriter when it appears
+  useEffect(() => {
+    if (improvedIdea && improvedIdeaRef.current) {
+      setTimeout(() => {
+        improvedIdeaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+      
+      // Start sequential reveal with typewriter
+      const pillars = ['problem', 'market', 'competition', 'solution', 'monetization', 'gtm', 'timing'];
+      setRevealedPillars([]);
+      setTypewriterTexts({});
+      
+      pillars.forEach((pillar, index) => {
+        setTimeout(() => {
+          setRevealedPillars(prev => [...prev, pillar]);
+          
+          const text = improvedIdea[pillar] || '';
+          let charIndex = 0;
+          const typeInterval = setInterval(() => {
+            if (charIndex <= text.length) {
+              setTypewriterTexts(prev => ({
+                ...prev,
+                [pillar]: text.substring(0, charIndex)
+              }));
+              charIndex++;
+            } else {
+              clearInterval(typeInterval);
+            }
+          }, 25);
+        }, index * 400);
+      });
+    }
+  }, [improvedIdea]);
 
   return (
     <div className="vd-container">
-      {/* Header */}
-      <header className="vd-header">
-        <h1 className="vd-title">Idea Validation</h1>
-        <p className="vd-subtitle">7-pillar analysis with 105 data points</p>
-      </header>
-
-      {/* Top Section: Concept + Console side by side */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px', maxWidth: '1400px', margin: '0 auto 32px' }}>
-        {/* Business Concept Card */}
-        {canonicalDescription && (
-          <motion.div
-            className="vd-concept-card"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="vd-concept-title">Business Concept</div>
-            <div className="vd-concept-grid">
-              {businessSections.product && (
-                <div className="vd-concept-item">
-                  <Package className="vd-concept-icon" size={18} />
-                  <div>
-                    <div className="vd-concept-label">Product</div>
-                    <div className="vd-concept-text">{businessSections.product}</div>
-                  </div>
-                </div>
-              )}
-              {businessSections.target && (
-                <div className="vd-concept-item">
-                  <Users className="vd-concept-icon" size={18} />
-                  <div>
-                    <div className="vd-concept-label">Target</div>
-                    <div className="vd-concept-text">{businessSections.target}</div>
-                  </div>
-                </div>
-              )}
-              {businessSections.problem && (
-                <div className="vd-concept-item">
-                  <AlertCircle className="vd-concept-icon" size={18} />
-                  <div>
-                    <div className="vd-concept-label">Problem</div>
-                    <div className="vd-concept-text">{businessSections.problem}</div>
-                  </div>
-                </div>
-              )}
-              {businessSections.solution && (
-                <div className="vd-concept-item">
-                  <Lightbulb className="vd-concept-icon" size={18} />
-                  <div>
-                    <div className="vd-concept-label">Solution</div>
-                    <div className="vd-concept-text">{businessSections.solution}</div>
-                  </div>
-                </div>
-              )}
-              {businessSections.revenue && (
-                <div className="vd-concept-item">
-                  <DollarSign className="vd-concept-icon" size={18} />
-                  <div>
-                    <div className="vd-concept-label">Revenue</div>
-                    <div className="vd-concept-text">{businessSections.revenue}</div>
-                  </div>
-                </div>
-              )}
-              {businessSections.edge && (
-                <div className="vd-concept-item">
-                  <Zap className="vd-concept-icon" size={18} />
-                  <div>
-                    <div className="vd-concept-label">Edge</div>
-                    <div className="vd-concept-text">{businessSections.edge}</div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Agent Console */}
-        <motion.div
-          className="vd-console-card"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <div className="vd-console-header">
-            <div className="vd-console-dot" />
-            <span className="vd-console-title">Agent Console</span>
-          </div>
-          <div className="vd-console-content">
-            {agentLogs.length > 0 ? (
-              agentLogs.slice(-8).map((log, i) => (
-                <div key={i} className="vd-console-line">{log}</div>
-              ))
-            ) : (
-              <>
-                <div className="vd-console-line">&gt; Initializing validation...</div>
-                <div className="vd-console-line">&gt; Analyzing 7 pillars...</div>
-              </>
-            )}
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Overall Score Card */}
+      {/* Overall Score Progress Bar */}
       <motion.div
         className="vd-overall-card"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.2 }}
-        style={{ maxWidth: '800px', margin: '0 auto 32px' }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        style={{ maxWidth: '100%', margin: '0 auto 32px', padding: '0 20px' }}
       >
-        <div className="vd-overall-label">Overall Score</div>
-        <UnifiedGauge
-          score={overallScore || 0}
-          size="large"
-          showLabel={true}
-          label={verdict}
-        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '16px' }}>
+          <div>
+            <div style={{ fontSize: '48px', fontWeight: '700', color: '#F59E0B', lineHeight: '1' }}>
+              {overallScore ?? 0}
+            </div>
+            <div style={{ fontSize: '14px', fontWeight: '600', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '4px' }}>
+              {verdict}
+            </div>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ 
+              height: '24px', 
+              background: 'rgba(255, 255, 255, 0.05)', 
+              borderRadius: '12px', 
+              overflow: 'hidden',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${overallScore ?? 0}%` }}
+                transition={{ duration: 1.5, ease: 'easeOut' }}
+                style={{
+                  height: '100%',
+                  background: (overallScore ?? 0) >= 70 
+                    ? 'linear-gradient(90deg, #10B981, #34D399)' 
+                    : (overallScore ?? 0) >= 50 
+                    ? 'linear-gradient(90deg, #F59E0B, #FBBF24)' 
+                    : 'linear-gradient(90deg, #EF4444, #F87171)',
+                  boxShadow: (overallScore ?? 0) >= 70 
+                    ? '0 0 20px rgba(16, 185, 129, 0.4)' 
+                    : (overallScore ?? 0) >= 50 
+                    ? '0 0 20px rgba(245, 158, 11, 0.4)' 
+                    : '0 0 20px rgba(239, 68, 68, 0.4)',
+                  borderRadius: '12px'
+                }}
+              />
+            </div>
+          </div>
+        </div>
         <div className="vd-overall-mini-scores">
           {pillars.slice(0, 7).map((pillar) => (
             <div key={pillar.key} className="vd-mini-score">
@@ -263,15 +225,224 @@ export default function ValidationDashboardV2({
 
       {/* Pillar Grid */}
       <div className="vd-pillar-grid">
-        {pillars.map((pillar, idx) => (
-          <PillarCard
-            key={pillar.key}
-            pillar={pillar}
-            onSourceClick={onSourceClick}
-            delay={0.3 + idx * 0.05}
-          />
-        ))}
+        {pillars.map((pillar, idx) => {
+          const hasData = (pillar.score ?? 0) > 0 || pillar.status === 'completed';
+          const isProcessing = pillar.status === 'processing';
+          
+          if (!hasData && !isProcessing) return null;
+          
+          if (isProcessing) {
+            return (
+              <motion.div
+                key={pillar.key}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="vd-pillar-card"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '200px' }}
+              >
+                <div className="text-center">
+                  <div className="w-8 h-8 border-4 border-orange-500/30 border-t-orange-500 rounded-full animate-spin mx-auto mb-3" />
+                  <p className="text-white/60 text-sm">Researching {pillar.name}...</p>
+                </div>
+              </motion.div>
+            );
+          }
+          
+          return (
+            <PillarCard
+              key={pillar.key}
+              pillar={pillar}
+              onSourceClick={onSourceClick}
+              delay={0.3 + idx * 0.05}
+            />
+          );
+        })}
       </div>
+
+      {/* Close the Gaps Button */}
+      {onCloseGaps && gapPillars.length > 0 && gapAnalysis.length === 0 && (
+        <div ref={closeGapsRef} className="flex justify-center mt-8 mb-4">
+          <motion.button
+            onClick={onCloseGaps}
+            disabled={isAnalyzingGaps}
+            className="flex items-center gap-3 px-6 py-3 rounded-xl text-base font-semibold text-white transition-all"
+            style={{
+              background: isAnalyzingGaps 
+                ? 'rgba(245, 158, 11, 0.5)' 
+                : 'linear-gradient(135deg, #F59E0B, #D97706)',
+              cursor: isAnalyzingGaps ? 'not-allowed' : 'pointer',
+              animation: isAnalyzingGaps ? 'none' : 'gapGlow 1.5s ease-in-out infinite'
+            }}
+            whileHover={!isAnalyzingGaps ? { scale: 1.05 } : {}}
+            whileTap={!isAnalyzingGaps ? { scale: 0.95 } : {}}
+          >
+            <Target size={20} />
+            {isAnalyzingGaps ? 'Analyzing Gaps...' : `Close the Gaps (${gapPillars.length})`}
+          </motion.button>
+          <style jsx>{`
+            @keyframes gapGlow {
+              0%, 100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
+              50% { box-shadow: 0 0 40px rgba(245, 158, 11, 0.8), 0 0 80px rgba(245, 158, 11, 0.4); }
+            }
+          `}</style>
+        </div>
+      )}
+
+      {/* Gap Analysis Results */}
+      {gapAnalysis.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-8 space-y-4"
+          style={{ maxWidth: '1200px', margin: '32px auto 0' }}
+        >
+          <h3 className="text-xl font-bold text-white mb-4 px-4">Gap Analysis & Action Plan</h3>
+          {gapAnalysis.map((gap, idx) => (
+            <motion.div
+              key={gap.pillarName}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: idx * 0.1 }}
+              className="p-6 rounded-xl"
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)'
+              }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <h4 className="text-lg font-semibold text-white">{gap.pillarName}</h4>
+                  <span 
+                    className="text-2xl font-bold"
+                    style={{ 
+                      color: gap.score >= 50 ? '#F59E0B' : '#EF4444' 
+                    }}
+                  >
+                    {gap.score}
+                  </span>
+                </div>
+                <span 
+                  className="px-3 py-1 rounded-full text-xs font-bold"
+                  style={{
+                    background: gap.priority === 'HIGH' 
+                      ? 'rgba(239, 68, 68, 0.2)' 
+                      : gap.priority === 'MEDIUM' 
+                      ? 'rgba(245, 158, 11, 0.2)' 
+                      : 'rgba(156, 163, 175, 0.2)',
+                    color: gap.priority === 'HIGH' 
+                      ? '#EF4444' 
+                      : gap.priority === 'MEDIUM' 
+                      ? '#F59E0B' 
+                      : '#9CA3AF'
+                  }}
+                >
+                  {gap.priority} PRIORITY
+                </span>
+              </div>
+              
+              <p className="text-sm italic text-gray-400 mb-4">{gap.diagnosis}</p>
+              
+              <div className="space-y-2">
+                {gap.actions.map((action, actionIdx) => (
+                  <div key={actionIdx} className="flex items-start gap-2">
+                    <CheckCircle2 size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-300">{action}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
+
+      {/* Improved Business Idea */}
+      {improvedIdea && (
+        <motion.div
+          ref={improvedIdeaRef}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-12 space-y-4"
+          style={{ maxWidth: '1200px', margin: '48px auto 0', padding: '0 20px' }}
+        >
+          <h3 className="text-2xl font-bold text-white mb-6">✨ Improved Business Idea</h3>
+          <div className="space-y-4">
+            {['problem', 'market', 'competition', 'solution', 'monetization', 'gtm', 'timing'].map((pillar) => {
+              if (!revealedPillars.includes(pillar)) return null;
+              
+              const displayText = typewriterTexts[pillar] || '';
+              const fullText = improvedIdea[pillar] || '';
+              
+              return (
+                <motion.div
+                  key={pillar}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="p-4 rounded-xl"
+                  style={{
+                    background: 'rgba(245, 158, 11, 0.1)',
+                    border: '1px solid rgba(245, 158, 11, 0.3)'
+                  }}
+                >
+                  <h4 className="text-sm font-semibold text-orange-400 uppercase mb-2">{pillar}</h4>
+                  <p className="text-sm text-white leading-relaxed">
+                    {displayText}
+                    {displayText.length < fullText.length && (
+                      <span className="inline-block w-1 h-4 bg-orange-400 ml-1 animate-pulse" />
+                    )}
+                  </p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+
+      {/* PRD Ready Banner */}
+      {gapAnalysis.length > 0 && improvedIdea && onNavigateToPRD && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="mt-12"
+          style={{ maxWidth: '1200px', margin: '48px auto 0', padding: '0 20px' }}
+        >
+          <div 
+            className="p-6 rounded-2xl flex items-center justify-between"
+            style={{
+              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(251, 191, 36, 0.1))',
+              border: '2px solid rgba(245, 158, 11, 0.4)',
+              boxShadow: '0 0 30px rgba(245, 158, 11, 0.2)'
+            }}
+          >
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-white mb-2">📋 PRD Ready to Generate</h3>
+              <p className="text-sm text-gray-300">
+                Your validation is complete. Click the PRD tab to generate a full Product Requirements Document.
+              </p>
+            </div>
+            <button
+              onClick={onNavigateToPRD}
+              className="px-6 py-3 rounded-xl font-semibold text-white transition-all flex items-center gap-2"
+              style={{
+                background: 'linear-gradient(135deg, #F59E0B, #FBBF24)',
+                boxShadow: '0 4px 20px rgba(245, 158, 11, 0.4)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.05)';
+                e.currentTarget.style.boxShadow = '0 6px 30px rgba(245, 158, 11, 0.6)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(245, 158, 11, 0.4)';
+              }}
+            >
+              Go to PRD →
+            </button>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
@@ -299,8 +470,29 @@ function PillarCard({
         <span className="vd-pillar-score">{pillar.score || 0}</span>
       </div>
 
-      {/* Gauge - SAME SIZE FOR ALL */}
-      <UnifiedGauge score={pillar.score || 0} size="medium" />
+      {/* Progress Bar */}
+      <div style={{ 
+        height: '8px', 
+        background: 'rgba(255, 255, 255, 0.05)', 
+        borderRadius: '4px', 
+        overflow: 'hidden',
+        margin: '16px 0'
+      }}>
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${pillar.score || 0}%` }}
+          transition={{ duration: 1, delay: delay + 0.2 }}
+          style={{
+            height: '100%',
+            background: (pillar.score || 0) >= 70 
+              ? 'linear-gradient(90deg, #10B981, #34D399)' 
+              : (pillar.score || 0) >= 50 
+              ? 'linear-gradient(90deg, #F59E0B, #FBBF24)' 
+              : 'linear-gradient(90deg, #EF4444, #F87171)',
+            borderRadius: '4px'
+          }}
+        />
+      </div>
 
       {/* Separator */}
       <div className="vd-pillar-separator" />
@@ -330,24 +522,55 @@ function SubcategoryRow({
   return (
     <div className="vd-subcategory-row">
       <span className="vd-subcategory-name">{subcategory.name}</span>
-      <div className="vd-subcategory-sources">
-        {subcategory.sources.map((source, idx) => {
-          // Support both new API-based and legacy fields
-          const iconKey = source.apiIcon || source.icon || 'globe';
-          const IconComponent = API_ICONS[iconKey] || Globe;
-          const displayName = source.apiName || source.name || source.type || 'Unknown';
-          const displayColor = source.apiColor || source.color;
+      <div className="vd-subcategory-sources" style={{ display: 'flex', alignItems: 'center' }}>
+        {subcategory.sources.filter(s => s.status === 'found').map((source, idx) => {
+          // Get source identifier from various possible fields
+          const sourceId = source.apiId || source.apiName || source.type || source.name || '';
+          const faviconUrl = getSourceFavicon(sourceId, source.url);
+          const sourceLabel = getSourceLabel(sourceId);
+          const isActive = source.status === 'found';
           
           return (
             <button
               key={idx}
-              className={`vd-source-icon ${source.status === 'found' ? 'active' : source.status === 'pending' ? 'pending' : ''}`}
-              onClick={() => source.status === 'found' && onSourceClick(source)}
-              disabled={source.status !== 'found'}
-              title={`${displayName}: ${source.title || source.status}`}
-              style={source.status === 'found' && displayColor ? { borderColor: displayColor, color: displayColor } : undefined}
+              onClick={() => isActive && onSourceClick(source)}
+              disabled={!isActive}
+              title={`${sourceLabel}: ${source.title || source.status}`}
+              style={{
+                marginLeft: idx === 0 ? '0' : '-8px',
+                position: 'relative',
+                zIndex: subcategory.sources.length - idx,
+                cursor: isActive ? 'pointer' : 'default',
+                opacity: isActive ? 1 : 0.4,
+                transition: 'all 0.2s',
+                background: 'transparent',
+                border: 'none',
+                padding: 0
+              }}
+              onMouseEnter={(e) => {
+                if (isActive) {
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                  e.currentTarget.style.zIndex = '100';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.zIndex = String(subcategory.sources.length - idx);
+              }}
             >
-              <IconComponent size={12} />
+              <img
+                src={faviconUrl}
+                alt={sourceLabel}
+                className="rounded-full"
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  border: '2px solid rgba(255, 255, 255, 0.2)',
+                  background: '#1a1a1a',
+                  objectFit: 'contain',
+                  padding: '2px'
+                }}
+              />
             </button>
           );
         })}

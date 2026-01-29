@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Brain, FileText, Code2 } from 'lucide-react';
+import { LayoutDashboard, Brain, FileText, Code2, Lock } from 'lucide-react';
 import { SectionKey } from '@/lib/colors';
-import '@/styles/glassmorphism.css';
 
 interface SidebarProps {
   activeSection: SectionKey;
   onSectionChange: (section: SectionKey) => void;
+  unlockedSections?: SectionKey[];
+  newlyUnlocked?: SectionKey[];
 }
 
 const SECTIONS = [
@@ -15,33 +16,80 @@ const SECTIONS = [
   { key: 'AUTOCODER' as SectionKey, icon: Code2, label: 'Auto Coder' },
 ];
 
-export default function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
+// Solid colors matching the darker end of each dashboard gradient
+const ACTIVE_COLORS: Record<SectionKey, string> = {
+  INPUT: '#1e40af',        // blue-800
+  PROCESSING: '#b45309',   // amber-700
+  PRD: '#166534',          // green-800
+  AUTOCODER: '#312e81',    // indigo-900
+};
+
+export default function Sidebar({ activeSection, onSectionChange, unlockedSections = ['INPUT', 'PROCESSING'], newlyUnlocked = [] }: SidebarProps) {
   return (
-    <aside className="glass-sidebar fixed left-0 top-0 h-screen w-16 sm:w-20 flex flex-col items-center py-6 gap-6 z-50">
-      {SECTIONS.map(({ key, icon: Icon, label }) => {
-        const isActive = activeSection === key;
-        return (
-          <motion.button
-            key={key}
-            onClick={() => onSectionChange(key)}
-            className={`relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl transition-all ${
-              isActive ? 'opacity-100' : 'opacity-70 hover:opacity-100'
-            }`}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            aria-label={label}
-          >
-            <Icon size={24} className={isActive ? 'text-white' : 'text-gray-400'} />
-            {isActive && (
-              <motion.div
-                layoutId="activeIndicator"
-                className="absolute inset-0 bg-white/10 rounded-xl border border-white/20"
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+    <aside 
+      className="fixed left-0 top-0 h-screen w-56 flex flex-col py-8 z-50"
+      style={{
+        background: 'rgba(0, 0, 0, 0.85)',
+        backdropFilter: 'blur(20px)',
+        boxShadow: '2px 0 20px rgba(0, 0, 0, 0.3)'
+      }}
+    >
+      {/* Brand/Logo Area */}
+      <div className="mb-12 px-6">
+        <h2 className="text-xl font-bold text-white">Curatos DNA</h2>
+        <p className="text-xs text-gray-500 mt-1">Business Validation</p>
+      </div>
+
+      {/* Navigation Items */}
+      <nav className="flex flex-col gap-2 px-3">
+        {SECTIONS.map(({ key, icon: Icon, label }) => {
+          const isActive = activeSection === key;
+          const isUnlocked = unlockedSections.includes(key);
+          const isNewlyUnlocked = newlyUnlocked.includes(key);
+          
+          return (
+            <motion.button
+              key={key}
+              onClick={() => isUnlocked && onSectionChange(key)}
+              className="flex items-center gap-3 px-4 py-3 transition-all text-left relative"
+              whileHover={isUnlocked ? { scale: 1.02 } : {}}
+              whileTap={isUnlocked ? { scale: 0.98 } : {}}
+              style={{
+                background: isActive && isUnlocked ? ACTIVE_COLORS[key] : 'transparent',
+                borderRadius: isActive && isUnlocked ? '12px 0 0 12px' : '12px',
+                marginRight: isActive && isUnlocked ? '-12px' : '0',
+                paddingRight: isActive && isUnlocked ? '24px' : '16px',
+                opacity: isUnlocked ? 1 : 0.3,
+                cursor: isUnlocked ? 'pointer' : 'not-allowed',
+                animation: isNewlyUnlocked ? 'unlockGlow 2s ease-in-out 3' : 'none'
+              }}
+              disabled={!isUnlocked}
+            >
+              <Icon 
+                size={20} 
+                className={isActive && isUnlocked ? 'text-white' : isUnlocked ? 'text-gray-500' : 'text-gray-600'} 
               />
-            )}
-          </motion.button>
-        );
-      })}
+              <span 
+                className={`text-sm whitespace-nowrap ${isActive && isUnlocked ? 'text-white font-semibold' : isUnlocked ? 'text-gray-400 font-medium' : 'text-gray-600 font-medium'}`}
+              >
+                {label}
+              </span>
+              {!isUnlocked && <Lock size={14} className="text-gray-600 ml-auto" />}
+              {isNewlyUnlocked && (
+                <span className="ml-auto px-2 py-0.5 text-xs font-bold rounded-full bg-orange-500 text-white">
+                  NEW
+                </span>
+              )}
+            </motion.button>
+          );
+        })}
+      </nav>
+      <style jsx>{`
+        @keyframes unlockGlow {
+          0%, 100% { box-shadow: 0 0 0 rgba(245, 158, 11, 0); }
+          50% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.6), inset 0 0 20px rgba(245, 158, 11, 0.2); }
+        }
+      `}</style>
     </aside>
   );
 }

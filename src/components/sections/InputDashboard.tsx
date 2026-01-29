@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
-import { FlaskConical, CheckCircle, Pencil } from 'lucide-react';
-import { useState } from 'react';
+import { FlaskConical, CheckCircle, Pencil, RotateCcw } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import GlassCard from '@/components/GlassCard';
 import QualityIndicator from '@/components/QualityIndicator';
 import { pageVariants } from '@/lib/animations';
@@ -63,6 +63,24 @@ export default function InputDashboard({
 
   const geographyQuality = geography ? (GDP_SCORES[geography] || 50) : 0;
 
+  // Restore from localStorage on mount
+  useEffect(() => {
+    const savedAnalysis = localStorage.getItem('curatos_analysis');
+    const savedNiche = localStorage.getItem('curatos_niche');
+    
+    if (savedAnalysis) {
+      const parsed = JSON.parse(savedAnalysis);
+      setAnalysis(parsed);
+      setShowCanonical(true);
+      setRevealedPillars(['problem', 'market', 'competition', 'solution', 'monetization', 'gtm', 'timing']);
+      setTypewriterTexts(parsed);
+    }
+    
+    if (savedNiche && !niche) {
+      onNicheChange(savedNiche);
+    }
+  }, []);
+
   const handleValidateIdea = async () => {
     if (!niche) return;
     
@@ -81,6 +99,10 @@ export default function InputDashboard({
       if (data.analysis) {
         setAnalysis(data.analysis);
         setShowCanonical(true);
+        
+        // Save to localStorage
+        localStorage.setItem('curatos_analysis', JSON.stringify(data.analysis));
+        localStorage.setItem('curatos_niche', niche);
         
         // Sequential reveal with typewriter effect
         const pillars = ['problem', 'market', 'competition', 'solution', 'monetization', 'gtm', 'timing'];
@@ -128,9 +150,25 @@ export default function InputDashboard({
   };
 
   const handleSaveEdit = (pillar: string) => {
-    setAnalysis({ ...analysis, [pillar]: editText });
+    const updatedAnalysis = { ...analysis, [pillar]: editText };
+    setAnalysis(updatedAnalysis);
     setEditingPillar(null);
     setEditText('');
+    
+    // Update localStorage with edited version
+    localStorage.setItem('curatos_analysis', JSON.stringify(updatedAnalysis));
+  };
+
+  const handleStartOver = () => {
+    // Clear all analysis data
+    setAnalysis(null);
+    setShowCanonical(false);
+    setRevealedPillars([]);
+    setTypewriterTexts({});
+    
+    // Clear localStorage
+    localStorage.removeItem('curatos_analysis');
+    localStorage.removeItem('curatos_niche');
   };
 
   return (
@@ -143,9 +181,20 @@ export default function InputDashboard({
       style={{ fontFamily: "'OCR-B', monospace" }}
     >
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Input Configuration</h1>
-          <p className="text-blue-200 text-sm sm:text-base">Configure your research parameters</p>
+        <div className="flex items-center justify-between mb-8">
+          <div className="text-center flex-1">
+            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Input Configuration</h1>
+            <p className="text-blue-200 text-sm sm:text-base">Configure your research parameters</p>
+          </div>
+          {showCanonical && (
+            <button
+              onClick={handleStartOver}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm border border-white/20 rounded-lg text-white/60 hover:text-white hover:border-white/40 transition-all"
+            >
+              <RotateCcw size={14} />
+              Start Over
+            </button>
+          )}
         </div>
 
         {/* Configuration Card */}

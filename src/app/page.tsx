@@ -157,6 +157,8 @@ export default function Dashboard() {
 
   const [apiError, setApiError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<SectionKey>('INPUT');
+  const [unlockedSections, setUnlockedSections] = useState<SectionKey[]>(['INPUT', 'PROCESSING']);
+  const [newlyUnlocked, setNewlyUnlocked] = useState<SectionKey[]>([]);
   const [engineRunning, setEngineRunning] = useState(false);
   const [engineStartTime, setEngineStartTime] = useState<Date | null>(null);
   const [runningTime, setRunningTime] = useState('00:00');
@@ -188,6 +190,9 @@ export default function Dashboard() {
   const [isValidating, setIsValidating] = useState(false);
   const [selectedSource, setSelectedSource] = useState<any | null>(null);
   const [showValidation, setShowValidation] = useState(false);
+  const [gapAnalysis, setGapAnalysis] = useState<any[]>([]);
+  const [isAnalyzingGaps, setIsAnalyzingGaps] = useState(false);
+  const [improvedIdea, setImprovedIdea] = useState<any>(null);
 
   // Scoring hook for stage progression
   const scoring = useScoring({
@@ -1067,6 +1072,76 @@ Respond ONLY with valid JSON, no other text.`;
     setState(prev => ({ ...prev, selectedRegions: regions }));
   }, []);
 
+  const handleStartOver = useCallback(() => {
+    // Clear validation data
+    setValidationData(null);
+    setValidationSessionId(null);
+    setIsValidating(false);
+    setShowValidation(false);
+    setGapAnalysis([]);
+    setImprovedIdea(null);
+    
+    // Clear localStorage
+    localStorage.removeItem('curatos_validation_session');
+    localStorage.removeItem('curatos_validation_data');
+    
+    // Navigate back to INPUT
+    setActiveSection('INPUT');
+  }, []);
+
+  const handleCloseGaps = useCallback(async () => {
+    console.log('[CloseGaps] Starting...', { hasValidationData: !!validationData });
+    
+    if (!validationData) {
+      console.error('[CloseGaps] No validation data');
+      return;
+    }
+    
+    setIsAnalyzingGaps(true);
+    console.log('[CloseGaps] Calling API...');
+    
+    try {
+      const response = await fetch('/api/validate/close-gaps', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          idea: validationData.idea,
+          canonicalDescription: validationData.canonicalDescription,
+          pillars: validationData.pillars
+        })
+      });
+      
+      console.log('[CloseGaps] Response status:', response.status);
+      
+      const data = await response.json();
+      console.log('[CloseGaps] Response data:', data);
+      
+      if (data.gaps) {
+        setGapAnalysis(data.gaps);
+      }
+      if (data.improvedIdea) {
+        setImprovedIdea(data.improvedIdea);
+      }
+      
+      // Unlock PRD after successful gap analysis
+      if (data.gaps && data.gaps.length > 0) {
+        setUnlockedSections(prev => {
+          const newSet = new Set<SectionKey>([...prev, 'PRD']);
+          return Array.from(newSet);
+        });
+        setNewlyUnlocked(['PRD']);
+        setTimeout(() => setNewlyUnlocked([]), 5000);
+      }
+    } catch (error) {
+      console.error('[CloseGaps] Error:', error);
+    } finally {
+      setIsAnalyzingGaps(false);
+      console.log('[CloseGaps] Finished');
+    }
+  }, [validationData]);
+
   const handleItemClick = useCallback((hypothesis: Hypothesis) => {
     setSelectedHypothesis(hypothesis);
   }, []);
@@ -1275,32 +1350,41 @@ Respond ONLY with valid JSON, no other text.`;
   };
 
   const handleGeneratePRD = async () => {
-    if (!streamingService) {
-      toast.error('Service not initialized', { description: 'Please refresh the page' });
+    if (!validationData) {
+      toast.error('No validation data', { description: 'Please complete validation first' });
       return;
     }
 
     setIsGeneratingPRD(true);
-    addRationale('Generating PRD...');
+    console.log('[GeneratePRD] Starting...');
 
     try {
-      const validatedProblems = state.hypotheses.filter(h => h.state === 'fact');
-      const validatedSolutions = state.solutions.filter(h => h.state === 'fact');
+      const response = await fetch('/api/validate/generate-prd', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          idea: validationData.idea,
+          canonicalDescription: validationData.canonicalDescription,
+          pillars: validationData.pillars,
+          gapAnalysis,
+          improvedIdea
+        })
+      });
 
-      const markdown = await streamingService.generatePRD(
-        state.niche,
-        validatedProblems,
-        validatedSolutions
-      );
+      const data = await response.json();
+      console.log('[GeneratePRD] Response:', data);
 
-      setPrdMarkdown(markdown);
-      setShowDNAModal(false);
-      setShowPRDModal(true);
-      addRationale('✓ PRD ready');
+      if (data.prd) {
+        setPrdMarkdown(data.prd);
+        toast.success('PRD generated successfully');
+      } else {
+        throw new Error(data.error || 'Failed to generate PRD');
+      }
     } catch (error) {
-      console.error('PRD generation failed:', error);
+      console.error('[GeneratePRD] Error:', error);
       toast.error('PRD generation failed', { description: String(error) });
-      addRationale('✗ PRD generation failed');
     } finally {
       setIsGeneratingPRD(false);
     }
@@ -1447,10 +1531,15 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
       )}
       
       {/* Sidebar */}
-      <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+      <Sidebar 
+        activeSection={activeSection} 
+        onSectionChange={setActiveSection}
+        unlockedSections={unlockedSections}
+        newlyUnlocked={newlyUnlocked}
+      />
       
       {/* Main Content with offset for sidebar */}
-      <main className="flex-1 ml-16 sm:ml-20">
+      <main className="flex-1 ml-56">
         <AnimatePresence mode="wait">
           {activeSection === 'INPUT' && (
             <InputDashboard
@@ -1499,6 +1588,11 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
                 pillars={validationData?.pillars || []}
                 onSourceClick={setSelectedSource}
                 agentLogs={[...state.agentRationale, currentRationaleStream].filter(Boolean)}
+                onCloseGaps={handleCloseGaps}
+                gapAnalysis={gapAnalysis}
+                isAnalyzingGaps={isAnalyzingGaps}
+                improvedIdea={improvedIdea}
+                onNavigateToPRD={() => setActiveSection('PRD')}
               />
             </ProcessingSection>
           )}
@@ -1509,7 +1603,7 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
               prdContent={prdMarkdown}
               isGenerating={isGeneratingPRD}
               onGenerate={handleGeneratePRD}
-              canGenerate={validatedProblems.length >= 3 && validatedSolutions.length >= 3}
+              canGenerate={!!validationData && gapAnalysis.length > 0}
             />
           )}
           

@@ -573,18 +573,131 @@ feat: 7-pillar business validation system with premium UX
 
 ---
 
-## Final Stats (Updated January 28)
+## Day 9 - January 29, 2026
+
+### Sidebar Redesign - CleanMyMac Style
+- Redesigned sidebar from narrow icon-only (w-16) to wide (w-56) with icon + text labels
+- Added 'Curatos DNA' brand area with subtitle
+- Solid active colors matching each dashboard gradient (blue/amber/green/indigo)
+- Active item extends flush to right edge with borderRadius 12px 0 0 12px
+- Removed sidebar border-right, added boxShadow instead
+- Progressive lock/unlock system: locked tabs show Lock icon, 30% opacity, cursor not-allowed
+- NEW badge with orange glow animation (CSS keyframes unlockGlow) for freshly unlocked tabs
+
+### Real Source Favicons
+- Created src/lib/source-favicons.ts with Google favicon proxy service
+- URL: https://www.google.com/s2/favicons?domain=DOMAIN&sz=32
+- For Serper results: extracts actual website domain from source URL for real favicons
+- Overlapping avatar-group display style with -8px margin-left
+- Filter to only show sources with status === 'found' (hide locked/dimmed icons)
+
+### Close the Gaps Feature
+- New API endpoint: POST /api/validate/close-gaps/route.ts
+- Analyzes pillars with score < 70 using LLM
+- Generates per-gap: diagnosis (30 words), 3 action items (20 words each), priority (HIGH/MEDIUM/LOW)
+- Additional LLM call to rewrite improved business idea addressing all gaps
+- Orange gradient button with Target icon showing gap count badge
+- Auto-scroll to button with gapGlow CSS keyframe animation
+- Gap analysis cards with animated sequential reveal (400ms delay)
+- Improved business idea section with character-by-character typewriter (25ms/char, orange cursor)
+- Uses server-side process.env.OPENROUTER_API_KEY (not client-side header)
+
+### PRD Unlock Flow
+- Progressive section unlock: INPUT and PROCESSING default unlocked
+- After successful gap analysis: PRD tab unlocks with 5-second glow animation
+- PRD Ready banner on Processing Dashboard with 'Go to PRD' button
+- New API endpoint: POST /api/validate/generate-prd/route.ts
+- LLM generates 11-section PRD: Executive Summary, Problem, Market, Overview, Features, KPIs, Advantage, GTM, Revenue, Risks, Timeline
+- Uses callWithFallback with 3000 maxTokens
+- PRD content displayed with typewriter effect (15ms/char, orange blinking cursor)
+- Copy/Download buttons hidden during typewriter, shown after completion
+- Content area with max-h-600px and overflow-y-auto with auto-scroll
+
+### UI/UX Polish
+- Removed 'Idea Validation' header and subtitle from Processing Dashboard
+- Replaced circular gauge with horizontal progress bar
+- Responsive grid: auto-fill minmax(380px/300px/1fr) with breakpoints at 900px and 650px
+- Text truncation for subcategory names with flex-wrap for mini scores
+- Start Over button moved to Input Configuration page (only visible when analysis exists)
+- Sequential pillar reveal during processing: completed pillars show normally, processing pillar shows spinner, pending pillars hidden
+- State management: handleStartOver clears all validation data, localStorage, and navigates to INPUT
+
+### Bug Fixes
+- Fixed Close Gaps API: changed from request.headers.get('x-api-key') to process.env.OPENROUTER_API_KEY
+- Fixed callModel to callWithFallback import in generate-prd route
+- Fixed null overallScore with nullish coalescing (overallScore ?? 0)
+- Fixed remaining UnifiedGauge reference in pillar cards (replaced with progress bars)
+- Fixed OpenAlex favicon using universal Google favicon proxy
+- Fixed 'Input Configuration' label wrapping by shortening to 'Input'
+- Fixed Set iteration in page.tsx using Array.from(new Set()) instead of spread
+
+### Files Modified
+```
+src/app/page.tsx (+132 lines)
+  - unlockedSections, newlyUnlocked state management
+  - handleStartOver, handleCloseGaps, handleGeneratePRD handlers
+  - Sidebar props wiring, wider ml-56 main content offset
+  - canGenerate condition updated for gap analysis
+
+src/components/Sidebar.tsx (complete rewrite)
+  - CleanMyMac style with ACTIVE_COLORS map
+  - Lock/unlock system with NEW badge and glow animation
+
+src/components/dashboard/ValidationDashboardV2.tsx (+344 lines)
+  - Real favicons with source-favicons.ts
+  - Close the Gaps button, gap analysis cards, improved idea section
+  - Sequential pillar reveal, PRD Ready banner
+  - Typewriter effect for improved business idea
+
+src/components/sections/InputDashboard.tsx (+61 lines)
+  - Start Over button placement and logic
+  
+src/components/sections/PRDSection.tsx (+43 lines)
+  - Typewriter effect with auto-scroll and orange cursor
+  - Copy/Download buttons hidden during reveal
+
+src/styles/validation-dashboard.css (+32 lines)
+  - Responsive breakpoints at 900px and 650px
+  - Text truncation, flex-wrap for mini scores
+
+src/app/api/validate/close-gaps/route.ts (NEW)
+  - Gap analysis API with LLM scoring
+
+src/app/api/validate/generate-prd/route.ts (NEW)
+  - PRD generation API with 11-section template
+
+src/lib/source-favicons.ts (NEW)
+  - Google favicon proxy service with domain extraction
+```
+
+### Kiro CLI Usage Today
+| Task | Kiro Contribution |
+|------|-------------------|
+| Sidebar redesign | Full component rewrite with lock system |
+| Source favicons | Favicon service creation and integration |
+| Close the Gaps | API route + UI components + typewriter |
+| PRD unlock flow | Multi-file state management wiring |
+| PRD generation | API endpoint + typewriter display |
+| Bug fixes | TypeScript error resolution |
+| UI polish | Responsive CSS, progress bars, sequential reveal |
+
+**Kiro Prompts Used Today:** ~40
+**Total Kiro Prompts:** ~140 of 2,000 available
+
+---
+
+## Final Stats (Updated January 29)
 
 - **Lines of Code:** ~11,000+ TypeScript/React
 - **Components:** 20+ dashboard components
-- **API Routes:** 6 endpoints
+- **API Routes:** 8 endpoints
 - **AI Models:** 3 (Gemini Lite, GLM, DeepSeek)
 - **External APIs:** 8 (Wikipedia, Wikidata, HN, OpenAlex, RemoteOK, PullPush, FRED, Serper)
-- **Features:** 7-pillar validation, research engine, web validation, landing page gen, PRD gen, scoring system, API Machine Gun
+- **Features:** 7-pillar validation, research engine, web validation, landing page gen, PRD gen, scoring system, API Machine Gun, close-gaps analysis, source favicons, progressive unlock system, PRD generation with typewriter
 - **Tests:** 47 passing
 - **Documentation Files:** 20+
-- **Development Time:** 8 days
-- **Kiro Prompts Used:** ~100 of 2,000 available
+- **Development Time:** 9 days
+- **Kiro Prompts Used:** ~140 of 2,000 available
 - **TypeScript Errors:** 0
 - **npm Vulnerabilities:** 0
 
