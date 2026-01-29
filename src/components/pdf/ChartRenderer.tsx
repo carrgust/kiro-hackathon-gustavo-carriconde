@@ -15,6 +15,10 @@ interface ChartRendererProps {
   onChartsReady: (images: { pieChart: string; barChart: string }) => void;
 }
 
+/**
+ * Renders charts off-screen with explicit dimensions (440x320) and captures them as base64 images.
+ * Does not use ResponsiveContainer to ensure consistent sizing for PDF embedding.
+ */
 export default function ChartRenderer({ chartData, onChartsReady }: ChartRendererProps) {
   const pieRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
@@ -99,7 +103,7 @@ export default function ChartRenderer({ chartData, onChartsReady }: ChartRendere
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis dataKey="year" tick={{ fontSize: 11 }} />
           <YAxis tick={{ fontSize: 11 }} label={{ value: 'Millions ($)', angle: -90, position: 'insideLeft', style: { fontSize: 10 } }} />
-          <Tooltip formatter={(value: number) => [`$${value}M`]} />
+          <Tooltip />
           <Legend />
           <Bar dataKey="revenue" fill="#059669" name="Revenue" isAnimationActive={false} radius={[4, 4, 0, 0]} />
           <Bar dataKey="costs" fill="#f59e0b" name="Costs" isAnimationActive={false} radius={[4, 4, 0, 0]} />

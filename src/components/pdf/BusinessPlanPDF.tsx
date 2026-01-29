@@ -295,6 +295,10 @@ interface BusinessPlanPDFProps {
   barChartImage?: string;
 }
 
+/**
+ * @react-pdf/renderer Document component for business plan PDF generation.
+ * Includes cover page, 4 content sections, embedded chart images, and financial tables.
+ */
 export default function BusinessPlanPDF({
   ideaName,
   executiveSummary,

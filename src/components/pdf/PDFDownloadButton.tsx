@@ -26,6 +26,10 @@ interface PDFDownloadButtonProps {
   ideaName: string;
 }
 
+/**
+ * PDF download button with chart rendering pipeline.
+ * Uses useRef guard to prevent duplicate generation during async operations.
+ */
 export default function PDFDownloadButton({ businessPlan, chartData, ideaName }: PDFDownloadButtonProps) {
   const [isPreparingCharts, setIsPreparingCharts] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);

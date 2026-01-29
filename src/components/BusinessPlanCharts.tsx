@@ -73,6 +73,10 @@ function PieTooltip({ active, payload }: any) {
 
 // ─── Section: Executive Summary ──────────────────────────────────────────────
 
+/**
+ * Renders key metric cards for the Executive Summary section.
+ * Displays 2-4 metric cards with icons, values, and labels in a responsive grid.
+ */
 export function ExecutiveSummaryCharts({ chartData }: { chartData: ChartData }) {
   const metrics = chartData.key_metrics;
   if (!metrics || metrics.length === 0) return null;
@@ -107,6 +111,10 @@ export function ExecutiveSummaryCharts({ chartData }: { chartData: ChartData }) 
 
 // ─── Section: Market & Sales ─────────────────────────────────────────────────
 
+/**
+ * Renders market analysis visualizations including market breakdown pie chart,
+ * go-to-market channel bars, and competitive positioning radar chart.
+ */
 export function MarketSalesCharts({ chartData }: { chartData: ChartData }) {
   return (
     <motion.div {...fadeUp} transition={{ duration: 0.6, delay: 0.2 }} className="mt-4 space-y-5">
@@ -207,6 +215,10 @@ export function MarketSalesCharts({ chartData }: { chartData: ChartData }) {
 
 // ─── Section: Team & Operations ──────────────────────────────────────────────
 
+/**
+ * Renders team and operations visualizations including 12-month milestone timeline
+ * and team composition donut chart with role breakdown.
+ */
 export function TeamOperationsCharts({ chartData }: { chartData: ChartData }) {
   const hasMilestones = chartData.milestones && chartData.milestones.length > 0;
   const hasTeam = chartData.team_composition && chartData.team_composition.length > 0;
@@ -310,6 +322,10 @@ export function TeamOperationsCharts({ chartData }: { chartData: ChartData }) {
 
 // ─── Section: Financial Plan ─────────────────────────────────────────────────
 
+/**
+ * Renders financial visualizations including revenue/costs/profit bar chart,
+ * key financial metrics table, and detailed revenue breakdown table.
+ */
 export function FinancialPlanCharts({ chartData }: { chartData: ChartData }) {
   const revenueWithProfit = chartData.revenue_projections.map(r => ({
     ...r,
