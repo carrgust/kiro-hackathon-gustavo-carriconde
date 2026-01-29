@@ -164,7 +164,7 @@
   body {
     @apply text-white;
     background: #1a1a1a;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'OCR-B', monospace;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -569,7 +569,7 @@
   color: #000;
   padding: 8px 16px;
   z-index: 100;
-  font-family: monospace;
+  font-family: 'OCR-B', monospace;
   font-size: 14px;
   border-radius: 0 0 8px 0;
   transition: top 0.2s;

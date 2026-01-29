@@ -1,11 +1,8 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import './globals.css'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Curatos DNA - Autonomous SaaS Development',
@@ -30,7 +27,7 @@ export default function RootLayout({
         <meta name="color-scheme" content="dark" />
         <link href="https://fonts.cdnfonts.com/css/ocr-b" rel="stylesheet" />
       </head>
-      <body className={inter.className}>
+      <body>
         {/* Skip to main content link for keyboard users */}
         <a 
           href="#main-content" 

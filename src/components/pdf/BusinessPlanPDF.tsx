@@ -17,14 +17,14 @@ const EMERALD = {
 const styles = StyleSheet.create({
   page: {
     padding: 40,
-    fontFamily: 'Helvetica',
+    fontFamily: 'Courier',
     fontSize: 10,
     color: '#1f2937',
     backgroundColor: '#ffffff',
   },
   coverPage: {
     padding: 0,
-    fontFamily: 'Helvetica',
+    fontFamily: 'Courier',
     backgroundColor: '#ffffff',
   },
   coverHeader: {
@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   },
   coverTitle: {
     fontSize: 36,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Courier-Bold',
     color: '#ffffff',
     marginBottom: 8,
   },
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 8,
     color: EMERALD[700],
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Courier-Bold',
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
@@ -105,11 +105,11 @@ const styles = StyleSheet.create({
   pageNumber: {
     fontSize: 7,
     color: EMERALD[600],
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Courier-Bold',
   },
   sectionTitle: {
     fontSize: 16,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Courier-Bold',
     color: EMERALD[700],
     marginBottom: 12,
     textTransform: 'uppercase',
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: EMERALD[500],
     marginRight: 8,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Courier-Bold',
   },
   bulletText: {
     fontSize: 10,
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   boldText: {
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Courier-Bold',
     color: '#111827',
   },
   chartsContainer: {
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   },
   chartTitle: {
     fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Courier-Bold',
     color: EMERALD[700],
     marginBottom: 8,
     textTransform: 'uppercase',
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   },
   tableHeaderText: {
     fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Courier-Bold',
     color: '#ffffff',
     textTransform: 'uppercase',
   },
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
   tableValue: {
     flex: 1,
     fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Courier-Bold',
     color: EMERALD[700],
     textAlign: 'right',
   },

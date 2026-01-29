@@ -16,6 +16,11 @@ module.exports = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["'OCR-B'", 'monospace'],
+        mono: ["'OCR-B'", 'monospace'],
+        serif: ["'OCR-B'", 'monospace'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

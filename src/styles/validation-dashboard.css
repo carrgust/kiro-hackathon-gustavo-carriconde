@@ -30,7 +30,7 @@
   --vd-danger: #EF4444;
 
   /* Typography */
-  --vd-font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  --vd-font: 'OCR-B', monospace;
 
   /* Spacing (8px grid) */
   --vd-space-1: 4px;
@@ -501,7 +501,7 @@
 }
 
 .vd-console-content {
-  font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+  font-family: 'OCR-B', monospace;
   font-size: 12px;
   color: var(--vd-text-muted);
   line-height: 1.6;
