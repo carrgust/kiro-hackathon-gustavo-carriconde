@@ -1426,6 +1426,10 @@ Respond ONLY with valid JSON, no other text.`;
     }
   };
 
+  const handleUpdateBusinessPlanSection = (key: string, value: string) => {
+    setBusinessPlanData(prev => prev ? { ...prev, [key]: value } : prev);
+  };
+
   const handleDNAModalClose = () => {
     setShowDNAModal(false);
   };
@@ -1639,6 +1643,7 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
               businessPlan={businessPlanData}
               isGenerating={isGeneratingBusinessPlan}
               onGenerate={handleGenerateBusinessPlan}
+              onUpdateSection={handleUpdateBusinessPlanSection}
               canGenerate={!!improvedIdea}
             />
           )}

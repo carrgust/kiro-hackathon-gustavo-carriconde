@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { FileText, Copy, Download, Loader2 } from 'lucide-react';
+import { FileText, Copy, Download, Loader2, Pencil } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import GlassCard from '@/components/GlassCard';
 import { pageVariants } from '@/lib/animations';
@@ -17,6 +17,7 @@ interface BusinessPlanSectionProps {
   isGenerating: boolean;
   onGenerate: () => void;
   canGenerate: boolean;
+  onUpdateSection?: (key: string, value: string) => void;
 }
 
 const SECTIONS = [
@@ -26,16 +27,66 @@ const SECTIONS = [
   { key: 'financial_plan', label: 'Financial Plan' },
 ];
 
+// Helper to render text with bold markers and line breaks safely
+function renderFormattedText(text: string) {
+  // Split by **bold** markers and newlines
+  const parts: React.ReactNode[] = [];
+  let remaining = text;
+  let keyIdx = 0;
+
+  while (remaining.length > 0) {
+    const boldStart = remaining.indexOf('**');
+    if (boldStart === -1) {
+      // No more bold markers - render remaining with line breaks
+      remaining.split('\n').forEach((line, i, arr) => {
+        parts.push(<span key={keyIdx++}>{line}</span>);
+        if (i < arr.length - 1) parts.push(<br key={keyIdx++} />);
+      });
+      break;
+    }
+
+    // Text before bold
+    const before = remaining.substring(0, boldStart);
+    if (before) {
+      before.split('\n').forEach((line, i, arr) => {
+        parts.push(<span key={keyIdx++}>{line}</span>);
+        if (i < arr.length - 1) parts.push(<br key={keyIdx++} />);
+      });
+    }
+
+    // Find closing **
+    const boldEnd = remaining.indexOf('**', boldStart + 2);
+    if (boldEnd === -1) {
+      // No closing ** - render rest as-is
+      const rest = remaining.substring(boldStart);
+      rest.split('\n').forEach((line, i, arr) => {
+        parts.push(<span key={keyIdx++}>{line}</span>);
+        if (i < arr.length - 1) parts.push(<br key={keyIdx++} />);
+      });
+      break;
+    }
+
+    const boldText = remaining.substring(boldStart + 2, boldEnd);
+    parts.push(<strong key={keyIdx++}>{boldText}</strong>);
+    remaining = remaining.substring(boldEnd + 2);
+  }
+
+  return parts;
+}
+
 export default function BusinessPlanSection({
   businessPlan,
   isGenerating,
   onGenerate,
   canGenerate,
+  onUpdateSection,
 }: BusinessPlanSectionProps) {
   const [copied, setCopied] = useState(false);
   const [revealedSections, setRevealedSections] = useState<string[]>([]);
   const [typewriterTexts, setTypewriterTexts] = useState<Record<string, string>>({});
   const [isRevealing, setIsRevealing] = useState(false);
+  const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [editSectionText, setEditSectionText] = useState('');
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Check localStorage on mount
@@ -102,8 +153,8 @@ export default function BusinessPlanSection({
 
   const handleCopy = async () => {
     if (!businessPlan) return;
-    const fullText = SECTIONS.map(s => 
-      `## ${s.label}\n\n${businessPlan[s.key as keyof typeof businessPlan]}`
+    const fullText = SECTIONS.map(s =>
+      `## ${s.label}\n\n${typewriterTexts[s.key] || businessPlan[s.key as keyof typeof businessPlan]}`
     ).join('\n\n---\n\n');
     await navigator.clipboard.writeText(fullText);
     setCopied(true);
@@ -113,8 +164,8 @@ export default function BusinessPlanSection({
 
   const handleDownload = () => {
     if (!businessPlan) return;
-    const fullText = SECTIONS.map(s => 
-      `## ${s.label}\n\n${businessPlan[s.key as keyof typeof businessPlan]}`
+    const fullText = SECTIONS.map(s =>
+      `## ${s.label}\n\n${typewriterTexts[s.key] || businessPlan[s.key as keyof typeof businessPlan]}`
     ).join('\n\n---\n\n');
     const blob = new Blob([fullText], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
@@ -140,53 +191,8 @@ export default function BusinessPlanSection({
           <p className="text-emerald-100">AI-generated lean business plan from validated research</p>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4">
-          <button
-            onClick={onGenerate}
-            disabled={!canGenerate || isGenerating}
-            className={`flex-1 py-4 rounded-lg font-semibold text-white transition-all flex items-center justify-center gap-2 ${
-              canGenerate && !isGenerating
-                ? 'bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-700 hover:to-green-800 shadow-lg hover:shadow-xl'
-                : 'bg-gray-600 cursor-not-allowed opacity-50'
-            }`}
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 size={20} className="animate-spin" />
-                Generating Business Plan...
-              </>
-            ) : (
-              <>
-                <FileText size={20} />
-                Generate Business Plan
-              </>
-            )}
-          </button>
-
-          {businessPlan && !isRevealing && (
-            <>
-              <button
-                onClick={handleCopy}
-                className="px-6 py-4 bg-white/10 hover:bg-white/20 rounded-lg font-semibold text-white transition-all flex items-center gap-2"
-              >
-                <Copy size={20} />
-                {copied ? 'Copied!' : 'Copy'}
-              </button>
-              <button
-                onClick={handleDownload}
-                className="px-6 py-4 bg-white/10 hover:bg-white/20 rounded-lg font-semibold text-white transition-all flex items-center gap-2"
-              >
-                <Download size={20} />
-                Download
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Business Plan Content */}
-        <div ref={contentRef} className="space-y-6 max-h-[70vh] overflow-y-auto">
-          {isGenerating ? (
+        {isGenerating ? (
+          <GlassCard className="p-6">
             <div className="space-y-4">
               {[...Array(8)].map((_, i) => (
                 <div
@@ -196,41 +202,147 @@ export default function BusinessPlanSection({
                 />
               ))}
             </div>
-          ) : businessPlan ? (
-            SECTIONS.map((section) => {
-              if (!revealedSections.includes(section.key)) return null;
+          </GlassCard>
+        ) : businessPlan ? (
+          <div ref={contentRef} style={{ maxWidth: '1000px', width: '100%', margin: '0 auto' }}>
+            <GlassCard className="p-6 space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white">Business Plan (4 Sections)</label>
+                <div className="space-y-4">
+                  {SECTIONS.map((section) => {
+                    if (!revealedSections.includes(section.key)) return null;
 
-              const displayText = typewriterTexts[section.key] || '';
-              const fullText = businessPlan[section.key as keyof typeof businessPlan] || '';
+                    const displayText = typewriterTexts[section.key] || '';
+                    const fullText = businessPlan[section.key as keyof typeof businessPlan] || '';
 
-              return (
-                <motion.div
-                  key={section.key}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4 }}
-                >
-                  <GlassCard className="p-6 space-y-3">
-                    <h2 className="text-lg font-bold text-emerald-400 uppercase">{section.label}</h2>
-                    <div
-                      className="text-base text-white/90 leading-relaxed prose prose-invert max-w-none"
-                      style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
-                      dangerouslySetInnerHTML={{ __html: displayText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>') }}
-                    />
-                    {displayText.length < fullText.length && (
-                      <span className="inline-block w-2 h-5 bg-orange-400 ml-1 animate-pulse" />
-                    )}
-                  </GlassCard>
-                </motion.div>
-              );
-            })
-          ) : (
+                    return (
+                      <motion.div
+                        key={section.key}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                        className="bg-white/5 border border-white/10 rounded-lg p-4"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-lg font-bold text-emerald-400 uppercase">{section.label}</h3>
+                          {!isRevealing && (
+                            <button
+                              onClick={() => { setEditingSection(section.key); setEditSectionText(fullText); }}
+                              className="text-white/60 hover:text-white transition-colors"
+                            >
+                              <Pencil size={16} />
+                            </button>
+                          )}
+                        </div>
+                        {editingSection === section.key ? (
+                          <div className="space-y-2">
+                            <textarea
+                              value={editSectionText}
+                              onChange={(e) => setEditSectionText(e.target.value)}
+                              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+                              rows={6}
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => {
+                                  setTypewriterTexts(prev => ({ ...prev, [section.key]: editSectionText }));
+                                  if (onUpdateSection) onUpdateSection(section.key, editSectionText);
+                                  setEditingSection(null);
+                                }}
+                                className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs rounded"
+                              >Save</button>
+                              <button
+                                onClick={() => setEditingSection(null)}
+                                className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white text-xs rounded"
+                              >Cancel</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p
+                            className="text-base text-white/90 leading-relaxed"
+                            style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
+                          >
+                            {renderFormattedText(displayText)}
+                            {displayText.length < fullText.length && (
+                              <span className="inline-block w-2 h-5 bg-orange-400 ml-1 animate-pulse" />
+                            )}
+                          </p>
+                        )}
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {!isRevealing && (
+                <div className="flex gap-3 pt-2">
+                  <motion.button
+                    onClick={onGenerate}
+                    disabled={!canGenerate || isGenerating}
+                    className="flex-1 py-3 rounded-lg font-medium text-white transition-all flex items-center justify-center gap-2 bg-white/10 border border-white/20 hover:bg-white/20"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <FileText size={18} />
+                    Regenerate
+                  </motion.button>
+                  <motion.button
+                    onClick={handleCopy}
+                    className="px-6 py-3 rounded-lg font-medium text-white transition-all flex items-center justify-center gap-2 bg-white/10 border border-white/20 hover:bg-white/20"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Copy size={18} />
+                    {copied ? 'Copied!' : 'Copy'}
+                  </motion.button>
+                  <motion.button
+                    onClick={handleDownload}
+                    className="px-6 py-3 rounded-lg font-medium text-white transition-all flex items-center justify-center gap-2 bg-white/10 border border-white/20 hover:bg-white/20"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Download size={18} />
+                    Download
+                  </motion.button>
+                </div>
+              )}
+            </GlassCard>
+          </div>
+        ) : (
+          <GlassCard className="p-6">
             <div className="text-center py-12 text-white/60">
               <FileText size={48} className="mx-auto mb-4 opacity-50" />
               <p>No business plan generated yet. Click &quot;Generate Business Plan&quot; to create one.</p>
             </div>
-          )}
-        </div>
+          </GlassCard>
+        )}
+
+        {/* Generate button always visible when no plan */}
+        {!businessPlan && (
+          <div className="flex gap-4">
+            <button
+              onClick={onGenerate}
+              disabled={!canGenerate || isGenerating}
+              className={`flex-1 py-4 rounded-lg font-semibold text-white transition-all flex items-center justify-center gap-2 ${
+                canGenerate && !isGenerating
+                  ? 'bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-700 hover:to-green-800 shadow-lg hover:shadow-xl'
+                  : 'bg-gray-600 cursor-not-allowed opacity-50'
+              }`}
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 size={20} className="animate-spin" />
+                  Generating Business Plan...
+                </>
+              ) : (
+                <>
+                  <FileText size={20} />
+                  Generate Business Plan
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
     </motion.div>
   );
