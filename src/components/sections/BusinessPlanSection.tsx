@@ -9,6 +9,7 @@ import { pageVariants } from '@/lib/animations';
 import { toast } from 'sonner';
 
 const PDFDownloadButton = dynamic(() => import('@/components/pdf/PDFDownloadButton'), { ssr: false });
+const BusinessPlanCharts = dynamic(() => import('@/components/BusinessPlanCharts'), { ssr: false });
 
 interface BusinessPlanSectionProps {
   businessPlan: {
@@ -269,6 +270,17 @@ export default function BusinessPlanSection({
                   })}
                 </div>
               </div>
+
+              {/* Visual Charts & Tables */}
+              {!isRevealing && chartData && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                >
+                  <BusinessPlanCharts chartData={chartData} />
+                </motion.div>
+              )}
 
               {!isRevealing && (
                 <div className="flex gap-3 pt-2">
