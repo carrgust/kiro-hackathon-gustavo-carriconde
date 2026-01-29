@@ -704,3 +704,137 @@ src/lib/source-favicons.ts (NEW)
 ---
 
 *This devlog documents the complete development journey of Curatos DNA for the AWS Kiro Hackathon 2026.*
+
+
+## Day 10 — January 29, 2026 (Afternoon Session)
+
+### Business Plan Visual Charts & PDF Download
+
+**Theme:** Transform the Business Plan from a text-only page into a visually rich, investor-grade experience with interactive charts, animated data visualizations, and professional PDF export.
+
+---
+
+### What Was Built
+
+#### 1. Professional PDF Download (`b23c864`)
+
+Added a complete client-side PDF generation pipeline using `@react-pdf/renderer`:
+
+- **BusinessPlanPDF.tsx** — Full @react-pdf Document with cover page, 4 formatted text sections, embedded chart images (pie + bar), financial tables, page numbers, and emerald branding
+- **ChartRenderer.tsx** — Hidden Recharts renderer that captures pie chart and bar chart as base64 PNG images using `html-to-image` (toPng), then passes them to the PDF generator
+- **PDFDownloadButton.tsx** — Orchestrator component with `useRef` guard to prevent duplicate generation, handles both chart-present and chart-absent flows
+
+**Technical decisions:**
+- Client-side PDF generation (zero server dependency) via `pdf().toBlob()` + programmatic `<a>` download
+- Removed `ResponsiveContainer` from ChartRenderer (causes -1 width/height when offscreen) — used explicit dimensions instead
+- `position: fixed; left: -9999px` for hidden chart rendering
+- Dynamic imports with `{ ssr: false }` for all @react-pdf components
+- Added `transpilePackages` in next.config.js for @react-pdf compatibility
+
+**Dependencies added:** `@react-pdf/renderer`, `html-to-image`
+
+#### 2. Initial Inline Charts (`5515983`)
+
+First iteration of visual charts directly on the Business Plan page:
+- Recharts donut PieChart for market breakdown (TAM/SAM/SOM)
+- BarChart with revenue/costs/profit for 3-year projections
+- Two styled financial tables with emerald glass theme
+- Framer Motion entrance animations on all elements
+
+#### 3. Section-Specific Charts for All 4 Sections (`77f83d0`)
+
+Complete rewrite of BusinessPlanCharts.tsx from monolithic to 4 named exports, each tailored to its section:
+
+**Executive Summary → `ExecutiveSummaryCharts`**
+- 4 key metric cards (TAM, Year 1 Revenue, Breakeven, LTV/CAC ratio)
+- Gradient backgrounds, icon mapping (Target, DollarSign, Clock, TrendingUp, etc.)
+- Hover scale effects, staggered entrance animations
+
+**Market & Sales → `MarketSalesCharts`**
+- Donut PieChart — TAM/SAM/SOM market breakdown with emerald color palette
+- Animated horizontal bars — Go-to-market channel allocation (must sum to 100%)
+- RadarChart — Competitive positioning across 4-6 dimensions (us vs competitor_avg)
+- Custom tooltips with dark glass styling
+
+**Team & Operations → `TeamOperationsCharts`**
+- Vertical timeline with gradient connector line — Q1-Q4 milestone roadmap
+- Team composition donut chart with color-coded legend and total headcount
+- Staggered entrance animations per milestone/department
+
+**Financial Plan → `FinancialPlanCharts`**
+- Revenue projections BarChart (Revenue/Costs/Profit with 3 colors)
+- Key Financial Metrics table (TAM, SAM, SOM, CAC, LTV, breakeven)
+- Revenue Breakdown table (per-year Revenue/Costs/Profit with color coding)
+- Alternating row backgrounds, hover highlights
+
+**API Changes:**
+- Extended LLM prompt to generate 8 structured `chart_data` fields alongside text
+- Added per-field fallback defaults (if LLM omits any field, sensible defaults kick in)
+- Increased `maxTokens` from 4096 → 8192 for the larger JSON payload
+- Added markdown code fence stripping for JSON parse robustness
+
+---
+
+### Files Changed
+
+```
+src/components/pdf/BusinessPlanPDF.tsx          (NEW — @react-pdf document)
+src/components/pdf/ChartRenderer.tsx            (NEW — hidden Recharts → PNG capture)
+src/components/pdf/PDFDownloadButton.tsx         (NEW — download orchestrator)
+src/components/BusinessPlanCharts.tsx            (REWRITTEN — 4 section-specific exports)
+src/components/sections/BusinessPlanSection.tsx  (MODIFIED — inline section charts, expanded types)
+src/app/api/validate/generate-business-plan/route.ts (MODIFIED — extended prompt, 8 chart fields, 8192 tokens)
+src/app/page.tsx                                (MODIFIED — chartData state, pass-through)
+next.config.js                                  (MODIFIED — transpilePackages for @react-pdf)
+package.json                                    (MODIFIED — new dependencies)
+```
+
+### Commits Pushed
+
+| Hash | Description |
+|------|-------------|
+| `b23c864` | feat: add professional PDF download with charts and tables |
+| `5515983` | feat: add inline visual charts and tables to Business Plan page |
+| `77f83d0` | feat: add section-specific charts for all 4 business plan sections |
+
+### Bugs Found & Fixed
+
+1. **PDFDownloadButton not rendering** — Condition `{businessPlan && chartData && (` blocked render when chartData was null before API returned; fixed to `{businessPlan && (`
+2. **PDF generation running twice** — `onChartsComplete` callback firing duplicate; fixed with `useRef(false)` guard
+3. **ChartRenderer -1 dimensions** — `ResponsiveContainer` produces invalid dimensions when rendered offscreen; replaced with explicit `width={400} height={300}`
+4. **JSON parse failures** — Some LLMs wrap response in `` ```json `` fences; added stripping logic
+
+### E2E Verification
+
+Full flow tested via Playwright (automated browser):
+1. Input → Select HealthTech niche
+2. Processing → 7-pillar validation completes
+3. Close Gaps → Gap analysis and improved idea
+4. Confirm → Business Plan confirmation modal
+5. Business Plan renders with all 4 section charts
+6. Zero JavaScript exceptions in console
+7. Regenerate, Copy, Download PDF buttons all functional
+
+### Technical Notes
+
+- **Recharts library** (v3.7.0, already installed) powers all inline charts
+- **@react-pdf/renderer** (newly installed) powers PDF generation
+- **html-to-image** (newly installed) bridges Recharts DOM → PNG for PDF embedding
+- **LLM response grew** from ~4900 chars to ~6600 chars with the extended chart_data
+- All chart components use `dynamic(() => import(...), { ssr: false })` to avoid SSR hydration issues
+- Named exports use `.then(m => ({ default: m.NamedExport }))` pattern for Next.js dynamic imports
+
+---
+
+### Updated Stats
+
+- **Lines of Code:** ~12,500+ TypeScript/React
+- **Components:** 25+ (added 4 chart components + 3 PDF components)
+- **API Routes:** 8 endpoints
+- **Chart Types:** 6 (PieChart, BarChart, RadarChart, metric cards, timeline, tables)
+- **Dependencies:** Added @react-pdf/renderer, html-to-image
+- **Features:** 7-pillar validation, research engine, web validation, landing page gen, business plan gen, scoring system, API Machine Gun, close-gaps analysis, source favicons, progressive unlock, PDF download with charts, inline section-specific visualizations
+- **TypeScript Errors:** 0
+- **npm Vulnerabilities:** 0
+
+---
