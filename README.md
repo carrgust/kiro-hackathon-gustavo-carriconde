@@ -1,173 +1,206 @@
-d# Curatos DNA 🧬
+# Curatos DNA
 
-> **Autonomous SaaS Research Engine** - Transform market research into deployable products with AI-powered validation and generation
+> **7-Pillar AI Business Idea Validator** — Transform any business idea into a validated, investor-ready business plan with real-time web research, gap analysis, and professional PDF export.
 
 [![Next.js](https://img.shields.io/badge/Next.js-14.2-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/Tests-47%20passing-brightgreen)](./src/__tests__)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue?logo=postgresql)](https://www.postgresql.org/)
 [![OpenRouter](https://img.shields.io/badge/OpenRouter-API-cyan)](https://openrouter.ai/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
 
-## 🎯 What It Does
+## What It Does
 
-Curatos accelerates SaaS product validation by autonomously generating, researching, and validating market hypotheses. In minutes, transform a niche idea into validated problems, solutions, and production-ready deliverables: **HTML landing pages** and **comprehensive PRDs**.
+Curatos DNA validates business ideas through a structured 7-pillar framework powered by AI and real-time web research. Input any business idea and get:
 
-Stop spending weeks on manual market research. Let AI discover validated opportunities while you focus on building.
+1. **Canonical normalization** — AI interprets your idea into a structured description
+2. **7-pillar validation** — Market Viability, Technical Feasibility, Revenue Potential, Competitive Landscape, Scalability, Regulatory Risk, and Team Fit — each scored 0-100
+3. **Gap analysis** — Identifies weak pillars and generates actionable improvements
+4. **Business plan generation** — 4-section investor-ready plan with interactive charts
+5. **PDF export** — Professional PDF with embedded pie charts, bar charts, radar charts, and financial tables
 
----
-
-## ✨ Features
-
-### 🔍 **Autonomous Research Engine**
-- AI-powered hypothesis generation using DeepSeek R1
-- Real-time web validation via Exa.ai search
-- Automatic confidence scoring (0-100%)
-- Source attribution with real URLs
-
-### 📊 **Smart Validation System**
-- Problems and solutions validated against real market data
-- Visual confidence indicators (empty → researching → validated)
-- Unlock DNA generation at 5+ validated hypotheses
-- Token tracking with consumption rate monitoring
-
-### 🏠 **Landing Page Generator**
-- Generate professional HTML landing pages from validated research
-- Self-contained with inline CSS (no dependencies)
-- Preview and code tabs
-- One-click download or copy to clipboard
-- Ready to deploy immediately
-
-### 📋 **PRD Generator**
-- Create comprehensive Product Requirements Documents
-- Markdown format (Notion, GitHub, Confluence compatible)
-- Includes: Executive Summary, Requiremen
-- ts, Success Metrics, Risks
-- Preview rendered markdown or raw source
-- Download as .md file
-
-### 🎯 **Stage Progression System**
-- 6-stage quality gates with thresholds
-- Visual progress bar
-- Unlocks outputs at validated milestones
-
-### 🎨 **Terminal Aesthetic**
-- Hacker-style UI with dark theme
-- Real-time agent rationale streaming
-- Token flow visualization
-- Problem ↔ Solution steering slider
+Stop guessing if your idea has legs. Let AI validate it against 105 real web sources in minutes.
 
 ---
 
-## 🚀 Quick Start
+## Features
+
+### 7-Pillar Validation Engine
+- AI-powered scoring across 7 business dimensions (3 subcategories each = 21 total)
+- Real-time web research via API Machine Gun (5 sources per subcategory = 105 searches)
+- Live progress tracking with animated pillar cards and score gauges
+- Source attribution with favicons and clickable URLs
+
+### Close-Gaps Analysis
+- Identifies lowest-scoring pillars automatically
+- Generates an improved business idea addressing each weakness
+- Side-by-side before/after comparison
+- Confidence-weighted gap prioritization
+
+### Business Plan Generator
+- 4-section plan: Executive Summary, Market & Sales, Team & Operations, Financial Plan
+- Interactive charts per section (6 chart types: pie, bar, radar, metric cards, timeline, donut)
+- Sequential typewriter animation on first render
+- Inline editing with save/cancel for each section
+
+### PDF Download
+- Professional investor-grade PDF with emerald branding
+- Embedded chart images (Recharts → PNG → PDF)
+- Cover page, formatted sections, financial tables, page numbers
+- Client-side generation (zero server dependency)
+
+### Progressive Unlock Flow
+- Tabbed sidebar navigation: Input → Processing → Close Gaps → Business Plan
+- Each stage unlocks after the previous completes
+- Visual progress indicators throughout
+
+---
+
+## Quick Start
 
 ### Prerequisites
-- Node.js 18+
-- OpenRouter API key ([get one free](https://openrouter.ai))
-- Serper API key ([get 2,500 free searches](https://serper.dev)) - Optional but recommended for web search
 
-### Installation
+- **Node.js 18+**
+- **Docker** (for PostgreSQL database)
+- **OpenRouter API key** — [Get one free](https://openrouter.ai) (required for AI features)
+- **Serper API key** — [Get 2,500 free searches](https://serper.dev) (optional, enhances web research)
+
+### 1. Clone and Install
 
 ```bash
-# Clone the repository
-git clone https://github.com/gustavocarriconde/kiro-hackathon-gustavo-carriconde
+git clone https://github.com/carrgust/kiro-hackathon-gustavo-carriconde.git
 cd kiro-hackathon-gustavo-carriconde
-
-# Install dependencies
 npm install
+```
 
-# Copy environment template and add your API keys
+### 2. Start the Database
+
+```bash
+# Start PostgreSQL via Docker
+docker-compose up -d
+
+# Generate Prisma client
+npx prisma generate
+
+# Run database migrations
+npx prisma migrate dev
+```
+
+### 3. Configure Environment
+
+```bash
 cp .env.local.example .env.local
-# Edit .env.local and add your OPENROUTER_API_KEY and SERPER_API_KEY
+```
 
-# Start development server
+Edit `.env.local` and add your API keys:
+
+```env
+# Database (default works with docker-compose)
+DATABASE_URL="postgresql://curatos:curatos_dev_password@localhost:5432/curatos_dev"
+
+# Required - Get free key at https://openrouter.ai
+OPENROUTER_API_KEY="your_openrouter_api_key_here"
+
+# Optional - Enhances web research (https://serper.dev)
+SERPER_API_KEY="your_serper_api_key_here"
+```
+
+### 4. Start Development Server
+
+```bash
 npm run dev
 ```
 
-Open [http://localhost:5001](http://localhost:5001) and start researching!
-
-### Demo Mode (No API Key Required)
-
-Click **"Try Demo Mode"** to explore all features with pre-generated data.
+Open [http://localhost:5001](http://localhost:5001) and start validating!
 
 ---
 
-## 🏗️ Architecture
+## How It Works
+
+### Step 1: Input Your Idea
+Type any business idea (e.g., "AI-powered fitness coaching app for seniors"). The system normalizes it into a canonical description.
+
+### Step 2: 7-Pillar Validation
+Click **Validate** and watch as AI researches your idea across 7 pillars:
+- **Market Viability** — TAM/SAM/SOM, demand signals
+- **Technical Feasibility** — Tech stack complexity, build timeline
+- **Revenue Potential** — Pricing models, unit economics
+- **Competitive Landscape** — Existing players, differentiation
+- **Scalability** — Growth potential, infrastructure needs
+- **Regulatory Risk** — Compliance, legal barriers
+- **Team Fit** — Required expertise, hiring needs
+
+Each pillar gets a 0-100 score with real web sources.
+
+### Step 3: Close the Gaps
+AI identifies weak pillars and generates an improved version of your idea that addresses each gap. Review the before/after comparison and approve.
+
+### Step 4: Business Plan
+Generate a 4-section business plan with interactive charts:
+- Executive Summary with key metric cards
+- Market & Sales with pie charts, channel bars, and radar charts
+- Team & Operations with milestone timeline and team composition donut
+- Financial Plan with revenue projections and financial tables
+
+### Step 5: Export
+- **Copy** — Clipboard text of the full business plan
+- **Download PDF** — Professional PDF with charts, tables, and emerald branding
+- **Regenerate** — Create a new version with different AI output
+
+---
+
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        CLIENT (Browser)                          │
 ├─────────────────────────────────────────────────────────────────┤
-│  Dashboard  │  Hypothesis Columns  │  Modals (DNA/PRD/LP)       │
-│             │  (Problems/Solutions) │                            │
+│  Tabbed Sidebar    │  Validation Dashboard  │  Business Plan     │
+│  (Input/Process/   │  (7-Pillar Cards,      │  (Charts, PDF,     │
+│   Gaps/Plan)       │   Score Gauges)        │   Inline Edit)     │
 ├─────────────────────────────────────────────────────────────────┤
 │                    State Management                              │
-│  • EngineState (hypotheses, solutions, requirements)            │
-│  • useScoring hook (stage progression)                          │
-│  • localStorage (API key, total spent)                          │
+│  • Validation state (pillars, scores, sources)                  │
+│  • Business plan state (4 sections + chart_data)                │
+│  • Progressive unlock (stage gating)                            │
+│  • localStorage (session persistence)                           │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                      API LAYER (Next.js)                         │
 ├─────────────────────────────────────────────────────────────────┤
-│  /api/health          GET   Health check                        │
-│  /api/chat            POST  AI chat completion                  │
-│  /api/research/start  POST  Start research pipeline             │
-│  /api/research/status GET   Get research status                 │
+│  /api/validate              POST  Start 7-pillar validation     │
+│  /api/validate/[id]         GET   Poll validation progress      │
+│  /api/validate/normalize    POST  Canonical idea normalization  │
+│  /api/validate/close-gaps   POST  Gap analysis + improvements   │
+│  /api/validate/generate-business-plan  POST  Business plan gen  │
+│  /api/validate/generate-prd POST  PRD document generation       │
+│  /api/research/machine-gun  POST  Multi-source web research     │
+│  /api/research/cycle        POST  Continuous research cycle     │
+│  /api/health                GET   Health check                  │
+│  + 9 more endpoints                                             │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                    SERVICE LAYER                                 │
 ├─────────────────────────────────────────────────────────────────┤
-│  HypothesisService  │  StreamingService  │  ScoringEngine       │
-│  • generate()       │  • generateLP()    │  • scoreProblem()    │
-│  • research()       │  • generatePRD()   │  • scoreSolution()   │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    OpenRouter API                                │
-│  DeepSeek R1 (generation) │ Gemini Flash (LP/PRD) │ Exa.ai     │
+│  ValidationEngine   │  ModelClient        │  RegistryLoader     │
+│  • 7-pillar scoring │  • Fallback chain   │  • API source map   │
+│  • Source analysis  │  • JSON mode        │  • Per-pillar APIs  │
+│  • Gap detection    │  • Token management │  • Rate limiting    │
+├─────────────────────────────────────────────────────────────────┤
+│  PostgreSQL (Prisma) │ OpenRouter API     │ Serper API          │
+│  • Sessions, Pillars │ • GLM / DeepSeek   │ • Web search        │
+│  • Scores, Sources   │ • Gemini Flash     │ • Source validation  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📖 How It Works
-
-### 1. **Enter Your Niche**
-Type your market niche (e.g., "fintech payments", "developer tools", "healthcare tech")
-
-### 2. **Start the Engine**
-Click START ENGINE and watch as AI:
-- Generates problem hypotheses
-- Generates solution hypotheses
-- Researches each with real web search
-- Assigns confidence scores based on findings
-
-### 3. **Watch Validation**
-Hypotheses move through states:
-- **Empty** (just generated)
-- **Researching** (being validated)
-- **Validated** (confidence score assigned with sources)
-
-### 4. **Create DNA**
-Once 5+ hypotheses reach 80%+ confidence:
-- Click **CREATE DNA** to unlock outputs
-- Choose **GENERATE LANDING PAGE** for HTML marketing page
-- Choose **GENERATE PRD** for markdown requirements doc
-
-### 5. **Export & Deploy**
-- Download HTML landing page (ready to deploy)
-- Download PRD markdown (ready to share with team)
-- Both generated in ~5-10 seconds
-
----
-
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Category | Technology | Version |
 |----------|------------|---------|
@@ -176,206 +209,141 @@ Once 5+ hypotheses reach 80%+ confidence:
 | **UI** | React | 18.2.0 |
 | **Styling** | Tailwind CSS | 3.4.0 |
 | **Animations** | Framer Motion | 12.26.2 |
+| **Charts** | Recharts | 3.7.0 |
+| **PDF** | @react-pdf/renderer | 4.3.2 |
+| **Database** | PostgreSQL + Prisma | 15 + 6.19.2 |
 | **Notifications** | Sonner | 2.0.7 |
-| **Database** | PostgreSQL + Prisma | 6.19.2 |
-| **Testing** | Vitest | 4.0.17 |
+| **Testing** | Vitest + Playwright | 4.0.17 + 1.57.0 |
 | **AI Gateway** | OpenRouter | - |
-| **AI Models** | DeepSeek R1, Gemini Flash | Free tier |
-| **Web Search** | Exa.ai | via OpenRouter |
+| **AI Models** | GLM 4.7 Flash, DeepSeek Chat, Gemini Flash | Free tier |
+| **Web Search** | Serper API | - |
 
 ---
 
-## 🎥 Screenshots
-
-### Main Dashboard
-![Main Dashboard](./public/screenshots/main-dashboard.png)
-*Terminal-style interface with real-time hypothesis generation and validation*
-
-### DNA Analysis Modal
-![DNA Analysis](./public/screenshots/demo-mode-populated.png)
-*DNA modal showing validated research with generation options*
-
-### Landing Page Generator
-![Landing Page Generator](./public/screenshots/landing-page-generated.png)
-*Generate professional HTML landing pages from validated research*
-
-### PRD Generator
-![PRD Generator](./public/screenshots/prd-generated.png)
-*Create comprehensive Product Requirements Documents in markdown*
-
----
-
-## 📁 Project Structure
+## Project Structure
 
 ```
 curatos-dna/
 ├── src/
-│   ├── app/                    # Next.js App Router
-│   │   ├── api/               # API routes (4 endpoints)
-│   │   └── page.tsx           # Main dashboard
-│   ├── components/dashboard/   # 20 React components
-│   ├── hooks/                 # Custom hooks (useScoring)
+│   ├── app/                           # Next.js App Router
+│   │   ├── api/                       # 18 API route handlers
+│   │   │   ├── validate/             # 7-pillar validation endpoints
+│   │   │   ├── research/             # Web research pipeline
+│   │   │   └── ...                   # Chat, health, stream, etc.
+│   │   └── page.tsx                  # Main application (1600+ lines)
+│   ├── components/                    # 57 React components
+│   │   ├── sections/                 # Page section components
+│   │   ├── pdf/                      # PDF generation pipeline
+│   │   └── ...                       # UI components
 │   ├── lib/
-│   │   ├── api/              # OpenRouter integration
-│   │   ├── research/         # 3-engine pipeline
-│   │   └── scoring/          # Stage progression
-│   └── __tests__/            # 47 tests
+│   │   ├── validation/              # 7-pillar scoring engine
+│   │   ├── config/                  # Model configuration
+│   │   ├── research/                # Web research engines
+│   │   └── db/                      # Database client
+│   └── types/                        # TypeScript definitions
 ├── .kiro/
-│   ├── steering/             # Product context docs
-│   ├── specs/                # Feature specifications
-│   └── DEVLOG.md            # Development timeline
-├── docs/                      # API documentation
-└── prisma/                    # Database schema
+│   ├── steering/                     # Product, tech, structure docs
+│   ├── specs/                        # Feature specifications
+│   ├── prompts/                      # Reusable Kiro prompts
+│   ├── settings/                     # LSP and MCP config
+│   └── DEVLOG.md                    # Development timeline (840+ lines)
+├── prisma/
+│   └── schema.prisma                 # Database schema (10 models)
+├── public/screenshots/               # Application screenshots
+└── docker-compose.yml                # PostgreSQL setup
 ```
 
 ---
 
-## 🧪 Testing
-
-```bash
-# Run all tests
-npm test
-
-# Run with UI
-npm run test:ui
-
-# Run with coverage
-npm run test:coverage
-```
-
-**Test Coverage:**
-- API health checks
-- Demo mode isolation
-- Streaming service
-- Scoring engine
-
----
-
-## 📊 Scoring System
-
-### Quality Gates
-| Stage | Threshold | Unlocks |
-|-------|-----------|---------|
-| Hypothesis | 80% avg, 5+ facts | Problem Quality |
-| Problem Quality | 70% | Solution Quality |
-| Solution Quality | 70% | Requirements |
-| Requirements | 75% | PRD |
-| PRD | 80% | DNA |
-
-### Scoring Criteria
-
-**Problems:**
-- Market Size (25 pts)
-- Pain Intensity (25 pts)
-- Existing Solutions (25 pts)
-- Willingness to Pay (25 pts)
-
-**Solutions:**
-- Technical Feasibility (25 pts)
-- Competitive Advantage (25 pts)
-- Time to Market (25 pts)
-- Market Validation (25 pts)
-
----
-
-## 🏆 Built With Kiro
-
-This project was built using [Kiro CLI](https://kiro.dev) for the **AWS Kiro Hackathon 2026**.
-
-### Kiro Usage Highlights
-| Task | Kiro Contribution |
-|------|-------------------|
-| Project Scaffolding | Initial Next.js setup |
-| Component Generation | All 20 dashboard components |
-| API Integration | OpenRouter provider with retry logic |
-| Test Suite | 47 tests with assertions |
-| Documentation | Steering docs, specs, API docs |
-
-**Kiro Prompts Used:** ~70 of 2,000 available
-
----
-
-## 📈 Development Stats
+## Development Stats
 
 | Metric | Value |
 |--------|-------|
-| Lines of Code | ~9,000+ |
-| Components | 20 |
-| API Routes | 4 |
-| Tests | 47 passing |
-| AI Models | 3 |
-| Development Time | 6 days |
+| Lines of Code | ~19,700 TypeScript/React |
+| Components | 57 |
+| API Routes | 18 endpoints |
+| Database Models | 10 (Prisma) |
+| Chart Types | 6 (Pie, Bar, Radar, Cards, Timeline, Donut) |
+| .kiro/ Files | 131 |
+| Git Commits | 80 |
 | TypeScript Errors | 0 |
-| npm Vulnerabilities | 0 |
 
 ---
 
-## 🚧 Roadmap
+## Testing
 
-### Phase 1: MVP ✅
-- [x] Hypothesis generation
-- [x] Web search validation
-- [x] Landing page generator
-- [x] PRD generator
-- [x] Demo mode
-- [x] Scoring system
+```bash
+# Unit tests
+npm test
 
-### Phase 2: Enhancement
-- [ ] Streaming generation
-- [ ] Multiple landing page templates
-- [ ] A/B testing variations
-- [ ] Export to Notion/Jira/Linear
+# E2E tests (Playwright)
+npm run test:e2e
 
-### Phase 3: Scale
-- [ ] User authentication
-- [ ] Project persistence
-- [ ] Team collaboration
-- [ ] API for programmatic access
+# Test with UI
+npm run test:ui
+```
 
 ---
 
-## 📄 Documentation
+## Screenshots
 
-- [API Documentation](./docs/API.md)
-- [Development Log](./.kiro/DEVLOG.md)
-- [Technical Architecture](./.kiro/steering/tech.md)
-- [Product Overview](./.kiro/steering/product.md)
-- [Feature Specs](./.kiro/specs/)
+### Main Dashboard
+![Main Dashboard](./public/screenshots/main-dashboard.png)
 
----
+### Validation in Progress
+![Validation](./public/screenshots/demo-mode-populated.png)
 
-## 🤝 Contributing
+### Landing Page Generator
+![Landing Page](./public/screenshots/landing-page-generated.png)
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing`)
-5. Open a Pull Request
+### PRD Generator
+![PRD](./public/screenshots/prd-generated.png)
 
 ---
 
-## 📄 License
+## Built With Kiro
 
-MIT License - see [LICENSE](LICENSE) for details.
+This project was built using [Kiro CLI](https://kiro.dev) for the **Dynamous x Kiro Hackathon 2026**.
+
+### Kiro Usage
+- **Steering Documents**: Product vision, technical architecture, project structure
+- **Feature Specs**: 6 detailed specifications (hypothesis engine, demo mode, API machine gun, database setup, OpenRouter validation, PRD generator)
+- **Prompts**: 12 reusable prompts (code review, feature planning, execution, RCA, system review)
+- **Code Generation**: Components, API routes, TypeScript interfaces, test suites
+- **Code Reviews**: Automated review with JSDoc additions and TypeScript fixes
+- **Documentation**: DEVLOG, architecture docs, API documentation
+
+### Development Timeline
+- **Day 1-2**: Project scaffolding, dashboard design, architecture decisions
+- **Day 3-6**: Research engine, hypothesis validation, scoring system, demo mode
+- **Day 7-8**: 7-pillar validation system, API Machine Gun, glassmorphism UI
+- **Day 9**: Close-gaps analysis, business plan generation, sidebar navigation
+- **Day 10**: Interactive charts (6 types), PDF download, section-specific visualizations
+
+See [.kiro/DEVLOG.md](./.kiro/DEVLOG.md) for the full development journal.
 
 ---
 
-## 👤 Author
+## Documentation
+
+- [Development Log](./.kiro/DEVLOG.md) — Full development timeline
+- [Product Overview](./.kiro/steering/product.md) — Product vision and user journey
+- [Technical Architecture](./.kiro/steering/tech.md) — Stack, models, and architecture
+- [Project Structure](./.kiro/steering/structure.md) — File organization guide
+- [Feature Specs](./.kiro/specs/) — Detailed feature specifications
+
+---
+
+## License
+
+MIT License — see [LICENSE](LICENSE) for details.
+
+---
+
+## Author
 
 **Gustavo Martini Carriconde**
 
-- GitHub: [@gustavocarriconde](https://github.com/gustavocarriconde)
-- Project: Dynamous x Kiro Hackathon Entry
+- GitHub: [@carrgust](https://github.com/carrgust)
+- Project: Dynamous x Kiro Hackathon 2026
 - Built with: [Kiro CLI](https://kiro.dev)
-
----
-
-<div align="center">
-
-**⭐ Star this repo if you find it useful!**
-
-Built with ❤️ using Kiro CLI for the AWS Kiro Hackathon 2026
-
-[Demo Mode](#demo-mode-no-api-key-required) • [Documentation](./docs/API.md) • [Report Bug](https://github.com/gustavocarriconde/kiro-hackathon-gustavo-carriconde/issues)
-
-</div>
