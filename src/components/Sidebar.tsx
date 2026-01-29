@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Brain, FileText, Code2, Lock } from 'lucide-react';
+import { LayoutDashboard, Brain, FileText, ClipboardList, Code2, Lock } from 'lucide-react';
 import { SectionKey } from '@/lib/colors';
 
 interface SidebarProps {
@@ -13,6 +13,7 @@ const SECTIONS = [
   { key: 'INPUT' as SectionKey, icon: LayoutDashboard, label: 'Input' },
   { key: 'PROCESSING' as SectionKey, icon: Brain, label: 'Processing' },
   { key: 'BUSINESS_PLAN' as SectionKey, icon: FileText, label: 'Business Plan' },
+  { key: 'PRD' as SectionKey, icon: ClipboardList, label: 'PRD' },
   { key: 'AUTOCODER' as SectionKey, icon: Code2, label: 'Auto Coder' },
 ];
 
@@ -21,6 +22,7 @@ const ACTIVE_COLORS: Record<SectionKey, string> = {
   INPUT: '#1e40af',        // blue-800
   PROCESSING: '#b45309',   // amber-700
   BUSINESS_PLAN: '#166534', // green-800
+  PRD: '#0e7490',          // cyan-700
   AUTOCODER: '#312e81',    // indigo-900
 };
 

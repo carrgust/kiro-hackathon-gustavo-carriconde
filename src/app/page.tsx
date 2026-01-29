@@ -15,7 +15,7 @@ import { buildAgentContext } from '@/lib/orchestrator/context-builder';
 import { AgentAction } from '@/types/orchestrator';
 import { SectionKey } from '@/lib/colors';
 import { PRIMARY_MODEL } from '@/lib/config/models';
-import { DEMO_IDEA, DEMO_CANONICAL, DEMO_VALIDATION_DATA, DEMO_GAP_ANALYSIS, DEMO_IMPROVED_IDEA, DEMO_BUSINESS_PLAN } from '@/lib/demo-data';
+import { DEMO_IDEA, DEMO_CANONICAL, DEMO_VALIDATION_DATA, DEMO_GAP_ANALYSIS, DEMO_IMPROVED_IDEA, DEMO_BUSINESS_PLAN, DEMO_PRD_MARKDOWN } from '@/lib/demo-data';
 import Sidebar from '@/components/Sidebar';
 import InputDashboard from '@/components/sections/InputDashboard';
 import ProcessingSection from '@/components/sections/ProcessingSection';
@@ -160,7 +160,7 @@ export default function Dashboard() {
 
   const [apiError, setApiError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<SectionKey>('INPUT');
-  const [unlockedSections, setUnlockedSections] = useState<SectionKey[]>(['INPUT', 'PROCESSING']);
+  const [unlockedSections, setUnlockedSections] = useState<SectionKey[]>(['INPUT']);
   const [newlyUnlocked, setNewlyUnlocked] = useState<SectionKey[]>([]);
   const [engineRunning, setEngineRunning] = useState(false);
   const [engineStartTime, setEngineStartTime] = useState<Date | null>(null);
@@ -383,6 +383,9 @@ export default function Dashboard() {
     // Set showValidation immediately to hide 3 columns
     setShowValidation(true);
     console.log('[DEBUG] showValidation set to TRUE');
+
+    // Unlock PROCESSING section
+    setUnlockedSections(prev => { const s = new Set([...prev, 'PROCESSING']); return Array.from(s) as SectionKey[]; });
 
     try {
       let canonical = canonicalDescription;
@@ -1358,6 +1361,13 @@ Respond ONLY with valid JSON, no other text.`;
     }
   };
 
+  const handleProceedToPRD = () => {
+    setActiveSection('PRD');
+    if (!prdMarkdown && !isGeneratingPRD) {
+      handleGeneratePRD();
+    }
+  };
+
   const handleGeneratePRD = async () => {
     if (!validationData) {
       toast.error('No validation data', { description: 'Please complete validation first' });
@@ -1387,6 +1397,9 @@ Respond ONLY with valid JSON, no other text.`;
 
       if (data.prd) {
         setPrdMarkdown(data.prd);
+        setUnlockedSections(prev => { const s = new Set([...prev, 'AUTOCODER']); return Array.from(s) as SectionKey[]; });
+        setNewlyUnlocked(['AUTOCODER']);
+        setTimeout(() => setNewlyUnlocked([]), 5000);
         toast.success('PRD generated successfully');
       } else {
         throw new Error(data.error || 'Failed to generate PRD');
@@ -1420,6 +1433,9 @@ Respond ONLY with valid JSON, no other text.`;
         if (data.businessPlan.chart_data) {
           setChartData(data.businessPlan.chart_data);
         }
+        setUnlockedSections(prev => { const s = new Set([...prev, 'BUSINESS_PLAN', 'PRD']); return Array.from(s) as SectionKey[]; });
+        setNewlyUnlocked(['PRD']);
+        setTimeout(() => setNewlyUnlocked([]), 5000);
         toast.success('Business plan generated');
       } else {
         throw new Error(data.error || 'Failed');
@@ -1449,7 +1465,8 @@ Respond ONLY with valid JSON, no other text.`;
       financial_plan: DEMO_BUSINESS_PLAN.financial_plan
     });
     setChartData(DEMO_BUSINESS_PLAN.chart_data);
-    setUnlockedSections(['INPUT', 'PROCESSING', 'BUSINESS_PLAN']);
+    setPrdMarkdown(DEMO_PRD_MARKDOWN);
+    setUnlockedSections(['INPUT', 'PROCESSING', 'BUSINESS_PLAN', 'PRD']);
     setActiveSection('PROCESSING');
     toast.success('Demo mode loaded');
   };
@@ -1669,9 +1686,20 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
               isGenerating={isGeneratingBusinessPlan}
               onGenerate={handleGenerateBusinessPlan}
               onUpdateSection={handleUpdateBusinessPlanSection}
+              onProceedToPRD={handleProceedToPRD}
               chartData={chartData}
               ideaName={validationData?.idea || 'Business'}
               canGenerate={!!improvedIdea}
+            />
+          )}
+          
+          {activeSection === 'PRD' && (
+            <PRDSection
+              key="prd"
+              prdContent={prdMarkdown}
+              isGenerating={isGeneratingPRD}
+              onGenerate={handleGeneratePRD}
+              canGenerate={!!businessPlanData}
             />
           )}
           

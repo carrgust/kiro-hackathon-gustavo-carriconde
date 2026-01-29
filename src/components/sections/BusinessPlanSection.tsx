@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { FileText, Copy, Loader2, Pencil } from 'lucide-react';
+import { FileText, Copy, Loader2, Pencil, ArrowRight } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import GlassCard from '@/components/GlassCard';
@@ -25,6 +25,7 @@ interface BusinessPlanSectionProps {
   onGenerate: () => void;
   canGenerate: boolean;
   onUpdateSection?: (key: string, value: string) => void;
+  onProceedToPRD?: () => void;
   chartData?: {
     market_breakdown: Array<{ name: string; value: number; color: string }>;
     revenue_projections: Array<{ year: string; revenue: number; costs: number }>;
@@ -98,6 +99,7 @@ export default function BusinessPlanSection({
   onGenerate,
   canGenerate,
   onUpdateSection,
+  onProceedToPRD,
   chartData,
   ideaName,
 }: BusinessPlanSectionProps) {
@@ -322,6 +324,18 @@ export default function BusinessPlanSection({
                     />
                   )}
                 </div>
+              )}
+
+              {!isRevealing && businessPlan && onProceedToPRD && (
+                <motion.button
+                  onClick={onProceedToPRD}
+                  className="w-full mt-6 py-4 rounded-xl font-semibold text-white bg-gradient-to-r from-cyan-500 to-teal-600 hover:from-cyan-400 hover:to-teal-500 shadow-lg flex items-center justify-center gap-2"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Generate PRD - Next Step
+                  <ArrowRight size={20} />
+                </motion.button>
               )}
             </GlassCard>
           </div>

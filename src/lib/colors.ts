@@ -33,6 +33,16 @@ export const SECTION_COLORS = {
     rgb: 'rgb(16, 185, 129)',
     rgba: 'rgba(16, 185, 129, 0.1)',
   },
+  PRD: {
+    name: 'PRD',
+    gradient: 'from-cyan-500 to-teal-700',
+    bg: 'bg-cyan-500',
+    text: 'text-cyan-400',
+    border: 'border-cyan-500',
+    glow: 'shadow-cyan-500/50',
+    rgb: 'rgb(6, 182, 212)',
+    rgba: 'rgba(6, 182, 212, 0.1)',
+  },
   AUTOCODER: {
     name: 'Auto Coder',
     gradient: 'from-purple-600 to-indigo-900',

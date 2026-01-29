@@ -443,3 +443,139 @@ export const DEMO_BUSINESS_PLAN = {
     ],
   },
 };
+
+export const DEMO_PRD_MARKDOWN = `# Product Requirements Document (PRD)
+## FitSenior AI — AI-Powered Fitness Coaching Platform
+
+---
+
+### 1. Executive Summary
+
+FitSenior AI is a B2C SaaS platform that delivers AI-powered, personalized fitness coaching for adults 60+. The system adapts exercise routines based on mobility level, health conditions, and real-time progress tracking. Target launch: Q2 2026.
+
+**Business Goal:** Capture 0.5% of the $3.1B senior fitness market within 18 months, reaching $500K ARR by month 12.
+
+---
+
+### 2. Problem Statement
+
+72% of seniors cannot maintain exercise routines due to:
+- **Fear of injury** from generic workout programs not adapted to their conditions
+- **Lack of personalization** — most fitness apps target ages 18-45
+- **No medical context** — existing apps ignore arthritis, joint replacements, balance disorders
+- **Social isolation** — 40% of seniors report loneliness as barrier to exercise
+
+Current solutions (personal trainers, group classes) cost $60-150/session with limited availability.
+
+---
+
+### 3. Target Users
+
+| Persona | Description | Key Need |
+|---------|-------------|----------|
+| **Primary:** Active Senior | Age 60-75, mobile, wants to stay fit | Adaptive routines, injury prevention |
+| **Secondary:** Recovery Senior | Age 65-80, post-surgery/injury | Gentle rehabilitation, medical-safe exercises |
+| **Tertiary:** Caregiver | Adult child managing parent's health | Remote monitoring, progress reports |
+
+---
+
+### 4. Functional Requirements
+
+| ID | Requirement | Priority | Sprint |
+|----|-------------|----------|--------|
+| FR-001 | User onboarding with health assessment questionnaire | P0 | S1 |
+| FR-002 | AI generates personalized weekly exercise plan | P0 | S1 |
+| FR-003 | Video-guided exercise sessions with voice cues | P0 | S1 |
+| FR-004 | Real-time form correction via device camera | P1 | S2 |
+| FR-005 | Progress dashboard with mobility score tracking | P0 | S1 |
+| FR-006 | Integration with Apple Health / Google Fit | P1 | S2 |
+| FR-007 | Emergency contact alert if user falls during session | P1 | S2 |
+| FR-008 | Social community: group classes, buddy system | P2 | S3 |
+| FR-009 | Caregiver dashboard with remote progress view | P2 | S3 |
+| FR-010 | PDF export of progress reports for doctor visits | P1 | S2 |
+
+---
+
+### 5. Non-Functional Requirements
+
+| ID | Requirement | Target |
+|----|-------------|--------|
+| NFR-001 | App launch to first exercise | < 3 taps |
+| NFR-002 | Video streaming latency | < 200ms |
+| NFR-003 | Camera AI inference time | < 100ms per frame |
+| NFR-004 | Accessibility (WCAG 2.1 AA) | Full compliance |
+| NFR-005 | Minimum font size | 18px (large text mode default) |
+| NFR-006 | Voice control support | Full navigation |
+| NFR-007 | Offline mode | Core exercises available offline |
+| NFR-008 | Data encryption | AES-256 at rest, TLS 1.3 in transit |
+
+---
+
+### 6. Technical Architecture
+
+\`\`\`
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│   Frontend   │────▶│   Backend    │────▶│  Database    │
+│  Next.js 15  │     │  Node.js API │     │  PostgreSQL  │
+│  TypeScript  │     │  Prisma ORM  │     │  + Redis     │
+└─────────────┘     └──────────────┘     └─────────────┘
+       │                    │
+       ▼                    ▼
+┌─────────────┐     ┌──────────────┐
+│  AI Engine   │     │  Media CDN   │
+│  OpenRouter  │     │  Cloudflare  │
+│  Multi-model │     │  R2 Storage  │
+└─────────────┘     └──────────────┘
+\`\`\`
+
+**Stack:**
+- **Frontend:** Next.js 15, TypeScript, Tailwind CSS, Framer Motion
+- **Backend:** Next.js API Routes, Prisma ORM, PostgreSQL
+- **AI:** OpenRouter API (GPT-4o for coaching, Gemini for vision)
+- **Video:** WebRTC for real-time camera, HLS for exercise videos
+- **Infrastructure:** Vercel (frontend), Railway (DB), Cloudflare R2 (media)
+
+---
+
+### 7. MVP Scope (Sprint 1-2)
+
+**In Scope:**
+- Health assessment onboarding (FR-001)
+- AI-generated weekly exercise plans (FR-002)
+- Video-guided sessions with voice cues (FR-003)
+- Progress dashboard with mobility score (FR-005)
+- PDF progress reports (FR-010)
+
+**Out of Scope (Post-MVP):**
+- Real-time camera form correction (FR-004)
+- Social features and group classes (FR-008)
+- Caregiver dashboard (FR-009)
+
+---
+
+### 8. Success Metrics
+
+| Metric | Target | Timeframe |
+|--------|--------|-----------|
+| Weekly Active Users | 2,000 | Month 6 |
+| Exercise Completion Rate | > 70% | Month 3 |
+| User Retention (30-day) | > 45% | Month 3 |
+| NPS Score | > 50 | Month 6 |
+| Conversion (free → paid) | > 8% | Month 6 |
+| Monthly Recurring Revenue | $42K | Month 12 |
+
+---
+
+### 9. Risks & Mitigations
+
+| Risk | Impact | Probability | Mitigation |
+|------|--------|-------------|------------|
+| Seniors struggle with app UX | High | Medium | Voice-first design, 18px+ fonts, max 3 taps |
+| AI recommends unsafe exercise | Critical | Low | Medical review board, conservative defaults |
+| Low organic acquisition | Medium | High | Partner with senior centers, Medicare Advantage |
+| Camera AI accuracy insufficient | Medium | Medium | Fallback to manual rep counting |
+
+---
+
+*Generated by Curatos DNA — AI-Powered Business Validation Platform*
+`;
