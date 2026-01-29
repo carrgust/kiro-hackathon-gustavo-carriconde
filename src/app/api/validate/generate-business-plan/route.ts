@@ -19,11 +19,42 @@ JSON STRUCTURE:
   "team_and_operations": "Founder background, team composition, product delivery plan, tech stack, 12-month milestones (200-250 words)",
   "financial_plan": "Revenue model, 3-year projections (Y1/Y2/Y3 revenue), unit economics, breakeven timeline, key risks (200-250 words)",
   "chart_data": {
+    "key_metrics": [
+      {"label": "TAM", "value": "$600B", "icon": "target"},
+      {"label": "Year 1 Revenue", "value": "$5M", "icon": "dollar"},
+      {"label": "Breakeven", "value": "24 months", "icon": "clock"},
+      {"label": "LTV/CAC Ratio", "value": "30x", "icon": "trending"}
+    ],
     "market_breakdown": [
       {"name": "TAM", "value": 600, "color": "#047857"},
       {"name": "SAM", "value": 150, "color": "#059669"},
       {"name": "SOM", "value": 5, "color": "#10b981"},
       {"name": "Year 1 Target", "value": 0.5, "color": "#34d399"}
+    ],
+    "channels": [
+      {"name": "Direct Sales", "percentage": 40},
+      {"name": "Partnerships", "percentage": 30},
+      {"name": "Digital Marketing", "percentage": 20},
+      {"name": "Referrals", "percentage": 10}
+    ],
+    "competitive_landscape": [
+      {"name": "Innovation", "us": 90, "competitor_avg": 50},
+      {"name": "Market Reach", "us": 30, "competitor_avg": 70},
+      {"name": "Price Value", "us": 85, "competitor_avg": 55},
+      {"name": "Technology", "us": 95, "competitor_avg": 45},
+      {"name": "Support", "us": 80, "competitor_avg": 60}
+    ],
+    "milestones": [
+      {"quarter": "Q1", "milestone": "MVP launch and beta testing"},
+      {"quarter": "Q2", "milestone": "First 100 paying customers"},
+      {"quarter": "Q3", "milestone": "Series A fundraise"},
+      {"quarter": "Q4", "milestone": "Scale to 1,000 users"}
+    ],
+    "team_composition": [
+      {"role": "Engineering", "count": 4, "color": "#047857"},
+      {"role": "Sales & Marketing", "count": 3, "color": "#059669"},
+      {"role": "Operations", "count": 2, "color": "#10b981"},
+      {"role": "Leadership", "count": 2, "color": "#34d399"}
     ],
     "revenue_projections": [
       {"year": "Year 1", "revenue": 5, "costs": 3},
@@ -43,10 +74,15 @@ JSON STRUCTURE:
   }
 }
 
-IMPORTANT for chart_data:
-- market_breakdown: Use the actual TAM/SAM/SOM numbers from the analysis (in billions). Keep the colors as provided.
-- revenue_projections: Use realistic Year 1/2/3 revenue AND cost numbers (in millions)
-- financial_table: Include 6-10 rows of key financial metrics with actual values
+IMPORTANT for chart_data - Generate ALL of these with realistic data:
+- key_metrics: 4 highlight cards for executive summary. Icons must be one of: target, dollar, clock, trending, users, zap, trophy, rocket
+- market_breakdown: TAM/SAM/SOM numbers (in billions). Keep the colors as provided.
+- channels: 3-5 go-to-market channels with percentage allocation (must sum to 100)
+- competitive_landscape: 4-6 dimensions comparing "us" vs "competitor_avg" (scores 0-100)
+- milestones: 4-6 quarterly milestones for 12-month roadmap
+- team_composition: 3-5 departments with headcount. Keep the colors as provided.
+- revenue_projections: Year 1/2/3 revenue AND cost numbers (in millions)
+- financial_table: 6-10 rows of key financial metrics with actual values
 
 Each text section must be markdown-formatted with bullet points and bold numbers.`;
 
@@ -98,7 +134,7 @@ Generate a comprehensive business plan with chart data based on this validated d
         { role: 'system', content: BUSINESS_PLAN_PROMPT },
         { role: 'user', content: context }
       ],
-      { maxTokens: 4096, temperature: 0.4, jsonMode: true }
+      { maxTokens: 8192, temperature: 0.4, jsonMode: true }
     );
 
     console.log('[GenerateBusinessPlan] Response received, parsing JSON...');
@@ -133,23 +169,73 @@ Generate a comprehensive business plan with chart data based on this validated d
 
     // Ensure chart_data exists with defaults if LLM didn't provide it
     if (!businessPlan.chart_data) {
-      businessPlan.chart_data = {
-        market_breakdown: [
-          { name: 'TAM', value: 100, color: '#047857' },
-          { name: 'SAM', value: 30, color: '#059669' },
-          { name: 'SOM', value: 5, color: '#10b981' },
-        ],
-        revenue_projections: [
-          { year: 'Year 1', revenue: 5, costs: 3 },
-          { year: 'Year 2', revenue: 12, costs: 7 },
-          { year: 'Year 3', revenue: 25, costs: 14 },
-        ],
-        financial_table: [
-          { metric: 'Revenue Target (Y1)', value: '$5M' },
-          { metric: 'Revenue Target (Y3)', value: '$25M' },
-          { metric: 'Breakeven', value: '24 months' },
-        ],
-      };
+      businessPlan.chart_data = {};
+    }
+    const cd = businessPlan.chart_data;
+    if (!cd.key_metrics) {
+      cd.key_metrics = [
+        { label: 'TAM', value: '$100B', icon: 'target' },
+        { label: 'Year 1 Revenue', value: '$5M', icon: 'dollar' },
+        { label: 'Breakeven', value: '24 months', icon: 'clock' },
+        { label: 'LTV/CAC Ratio', value: '30x', icon: 'trending' },
+      ];
+    }
+    if (!cd.market_breakdown) {
+      cd.market_breakdown = [
+        { name: 'TAM', value: 100, color: '#047857' },
+        { name: 'SAM', value: 30, color: '#059669' },
+        { name: 'SOM', value: 5, color: '#10b981' },
+        { name: 'Year 1 Target', value: 0.5, color: '#34d399' },
+      ];
+    }
+    if (!cd.channels) {
+      cd.channels = [
+        { name: 'Direct Sales', percentage: 40 },
+        { name: 'Partnerships', percentage: 30 },
+        { name: 'Digital Marketing', percentage: 20 },
+        { name: 'Referrals', percentage: 10 },
+      ];
+    }
+    if (!cd.competitive_landscape) {
+      cd.competitive_landscape = [
+        { name: 'Innovation', us: 85, competitor_avg: 50 },
+        { name: 'Market Reach', us: 40, competitor_avg: 70 },
+        { name: 'Price Value', us: 80, competitor_avg: 55 },
+        { name: 'Technology', us: 90, competitor_avg: 45 },
+        { name: 'Support', us: 75, competitor_avg: 60 },
+      ];
+    }
+    if (!cd.milestones) {
+      cd.milestones = [
+        { quarter: 'Q1', milestone: 'MVP launch and beta testing' },
+        { quarter: 'Q2', milestone: 'First 100 paying customers' },
+        { quarter: 'Q3', milestone: 'Series A fundraise' },
+        { quarter: 'Q4', milestone: 'Scale to 1,000 users' },
+      ];
+    }
+    if (!cd.team_composition) {
+      cd.team_composition = [
+        { role: 'Engineering', count: 4, color: '#047857' },
+        { role: 'Sales & Marketing', count: 3, color: '#059669' },
+        { role: 'Operations', count: 2, color: '#10b981' },
+        { role: 'Leadership', count: 2, color: '#34d399' },
+      ];
+    }
+    if (!cd.revenue_projections) {
+      cd.revenue_projections = [
+        { year: 'Year 1', revenue: 5, costs: 3 },
+        { year: 'Year 2', revenue: 12, costs: 7 },
+        { year: 'Year 3', revenue: 25, costs: 14 },
+      ];
+    }
+    if (!cd.financial_table) {
+      cd.financial_table = [
+        { metric: 'Revenue Target (Y1)', value: '$5M' },
+        { metric: 'Revenue Target (Y3)', value: '$25M' },
+        { metric: 'CAC', value: '$500' },
+        { metric: 'LTV', value: '$15,000' },
+        { metric: 'Breakeven', value: '24 months' },
+      ];
     }
 
     console.log('[GenerateBusinessPlan] Business plan generated successfully with chart data');

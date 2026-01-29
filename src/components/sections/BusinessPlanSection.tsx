@@ -9,7 +9,10 @@ import { pageVariants } from '@/lib/animations';
 import { toast } from 'sonner';
 
 const PDFDownloadButton = dynamic(() => import('@/components/pdf/PDFDownloadButton'), { ssr: false });
-const BusinessPlanCharts = dynamic(() => import('@/components/BusinessPlanCharts'), { ssr: false });
+const ExecutiveSummaryCharts = dynamic(() => import('@/components/BusinessPlanCharts').then(m => ({ default: m.ExecutiveSummaryCharts })), { ssr: false });
+const MarketSalesCharts = dynamic(() => import('@/components/BusinessPlanCharts').then(m => ({ default: m.MarketSalesCharts })), { ssr: false });
+const TeamOperationsCharts = dynamic(() => import('@/components/BusinessPlanCharts').then(m => ({ default: m.TeamOperationsCharts })), { ssr: false });
+const FinancialPlanCharts = dynamic(() => import('@/components/BusinessPlanCharts').then(m => ({ default: m.FinancialPlanCharts })), { ssr: false });
 
 interface BusinessPlanSectionProps {
   businessPlan: {
@@ -26,6 +29,11 @@ interface BusinessPlanSectionProps {
     market_breakdown: Array<{ name: string; value: number; color: string }>;
     revenue_projections: Array<{ year: string; revenue: number; costs: number }>;
     financial_table: Array<{ metric: string; value: string }>;
+    key_metrics?: Array<{ label: string; value: string; icon?: string }>;
+    competitive_landscape?: Array<{ name: string; [key: string]: any }>;
+    channels?: Array<{ name: string; percentage: number }>;
+    milestones?: Array<{ quarter: string; milestone: string }>;
+    team_composition?: Array<{ role: string; count: number; color?: string }>;
   };
   ideaName?: string;
 }
@@ -265,22 +273,25 @@ export default function BusinessPlanSection({
                             )}
                           </p>
                         )}
+
+                        {/* Inline section charts */}
+                        {!isRevealing && chartData && section.key === 'executive_summary' && (
+                          <ExecutiveSummaryCharts chartData={chartData} />
+                        )}
+                        {!isRevealing && chartData && section.key === 'market_and_sales' && (
+                          <MarketSalesCharts chartData={chartData} />
+                        )}
+                        {!isRevealing && chartData && section.key === 'team_and_operations' && (
+                          <TeamOperationsCharts chartData={chartData} />
+                        )}
+                        {!isRevealing && chartData && section.key === 'financial_plan' && (
+                          <FinancialPlanCharts chartData={chartData} />
+                        )}
                       </motion.div>
                     );
                   })}
                 </div>
               </div>
-
-              {/* Visual Charts & Tables */}
-              {!isRevealing && chartData && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.3 }}
-                >
-                  <BusinessPlanCharts chartData={chartData} />
-                </motion.div>
-              )}
 
               {!isRevealing && (
                 <div className="flex gap-3 pt-2">
