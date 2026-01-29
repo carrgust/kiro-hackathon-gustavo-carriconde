@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { FlaskConical, CheckCircle, Pencil, RotateCcw } from 'lucide-react';
+import { FlaskConical, CheckCircle, Pencil, RotateCcw, Play } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import GlassCard from '@/components/GlassCard';
 import QualityIndicator from '@/components/QualityIndicator';
@@ -11,6 +11,7 @@ interface InputDashboardProps {
   onNicheChange: (niche: string) => void;
   onGeographyChange: (geo: string) => void;
   onStartValidation?: (niche: string, canonicalDescription: string) => void;
+  onDemoMode?: () => void;
 }
 
 const NICHE_OPTIONS = [
@@ -42,6 +43,7 @@ export default function InputDashboard({
   onNicheChange,
   onGeographyChange,
   onStartValidation,
+  onDemoMode,
 }: InputDashboardProps) {
   const [analysis, setAnalysis] = useState<any>(null);
   const [showCanonical, setShowCanonical] = useState(false);
@@ -248,6 +250,19 @@ export default function InputDashboard({
                   ))}
                 </select>
               </div>
+
+              {/* Demo Mode Button */}
+              {onDemoMode && !showCanonical && (
+                <motion.button
+                  onClick={onDemoMode}
+                  className="w-full py-3 rounded-lg font-medium text-emerald-400 border-2 border-emerald-500/50 hover:border-emerald-400 hover:bg-emerald-500/10 transition-all flex items-center justify-center gap-2"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Play size={20} />
+                  Try Demo Mode
+                </motion.button>
+              )}
 
               {/* Validate Idea Button */}
               {onStartValidation && !showCanonical && (

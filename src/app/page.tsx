@@ -15,6 +15,7 @@ import { buildAgentContext } from '@/lib/orchestrator/context-builder';
 import { AgentAction } from '@/types/orchestrator';
 import { SectionKey } from '@/lib/colors';
 import { PRIMARY_MODEL } from '@/lib/config/models';
+import { DEMO_IDEA, DEMO_CANONICAL, DEMO_VALIDATION_DATA, DEMO_GAP_ANALYSIS, DEMO_IMPROVED_IDEA, DEMO_BUSINESS_PLAN } from '@/lib/demo-data';
 import Sidebar from '@/components/Sidebar';
 import InputDashboard from '@/components/sections/InputDashboard';
 import ProcessingSection from '@/components/sections/ProcessingSection';
@@ -1432,7 +1433,25 @@ Respond ONLY with valid JSON, no other text.`;
   };
 
   const handleUpdateBusinessPlanSection = (key: string, value: string) => {
-    setBusinessPlanData(prev => prev ? { ...prev, [key]: value } : prev);
+    setBusinessPlanData((prev: any) => prev ? { ...prev, [key]: value } : prev);
+  };
+
+  const loadDemoMode = () => {
+    setState(prev => ({ ...prev, niche: DEMO_IDEA }));
+    setValidationData(DEMO_VALIDATION_DATA);
+    setShowValidation(true);
+    setGapAnalysis(DEMO_GAP_ANALYSIS);
+    setImprovedIdea(DEMO_IMPROVED_IDEA);
+    setBusinessPlanData({
+      executive_summary: DEMO_BUSINESS_PLAN.executive_summary,
+      market_and_sales: DEMO_BUSINESS_PLAN.market_and_sales,
+      team_and_operations: DEMO_BUSINESS_PLAN.team_and_operations,
+      financial_plan: DEMO_BUSINESS_PLAN.financial_plan
+    });
+    setChartData(DEMO_BUSINESS_PLAN.chart_data);
+    setUnlockedSections(['INPUT', 'PROCESSING', 'BUSINESS_PLAN']);
+    setActiveSection('PROCESSING');
+    toast.success('Demo mode loaded');
   };
 
   const handleDNAModalClose = () => {
@@ -1597,6 +1616,7 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
                 setActiveSection('PROCESSING');
                 startValidation(niche, canonicalDescription);
               }}
+              onDemoMode={loadDemoMode}
             />
           )}
           
