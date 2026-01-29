@@ -196,6 +196,7 @@ export default function Dashboard() {
   const [isAnalyzingGaps, setIsAnalyzingGaps] = useState(false);
   const [improvedIdea, setImprovedIdea] = useState<any>(null);
   const [businessPlanData, setBusinessPlanData] = useState<any>(null);
+  const [chartData, setChartData] = useState<any>(null);
   const [isGeneratingBusinessPlan, setIsGeneratingBusinessPlan] = useState(false);
   const [showBusinessPlanConfirm, setShowBusinessPlanConfirm] = useState(false);
 
@@ -1086,6 +1087,7 @@ Respond ONLY with valid JSON, no other text.`;
     setGapAnalysis([]);
     setImprovedIdea(null);
     setBusinessPlanData(null);
+    setChartData(null);
     
     // Clear localStorage
     localStorage.removeItem('curatos_validation_session');
@@ -1414,6 +1416,9 @@ Respond ONLY with valid JSON, no other text.`;
       const data = await response.json();
       if (data.businessPlan) {
         setBusinessPlanData(data.businessPlan);
+        if (data.businessPlan.chart_data) {
+          setChartData(data.businessPlan.chart_data);
+        }
         toast.success('Business plan generated');
       } else {
         throw new Error(data.error || 'Failed');
@@ -1644,6 +1649,8 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
               isGenerating={isGeneratingBusinessPlan}
               onGenerate={handleGenerateBusinessPlan}
               onUpdateSection={handleUpdateBusinessPlanSection}
+              chartData={chartData}
+              ideaName={validationData?.idea || 'Business'}
               canGenerate={!!improvedIdea}
             />
           )}

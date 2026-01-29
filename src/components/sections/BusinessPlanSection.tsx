@@ -1,11 +1,14 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { FileText, Copy, Download, Loader2, Pencil } from 'lucide-react';
+import { FileText, Copy, Loader2, Pencil } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import GlassCard from '@/components/GlassCard';
 import { pageVariants } from '@/lib/animations';
 import { toast } from 'sonner';
+
+const PDFDownloadButton = dynamic(() => import('@/components/pdf/PDFDownloadButton'), { ssr: false });
 
 interface BusinessPlanSectionProps {
   businessPlan: {
@@ -18,6 +21,12 @@ interface BusinessPlanSectionProps {
   onGenerate: () => void;
   canGenerate: boolean;
   onUpdateSection?: (key: string, value: string) => void;
+  chartData?: {
+    market_breakdown: Array<{ name: string; value: number; color: string }>;
+    revenue_projections: Array<{ year: string; revenue: number; costs: number }>;
+    financial_table: Array<{ metric: string; value: string }>;
+  };
+  ideaName?: string;
 }
 
 const SECTIONS = [
@@ -80,6 +89,8 @@ export default function BusinessPlanSection({
   onGenerate,
   canGenerate,
   onUpdateSection,
+  chartData,
+  ideaName,
 }: BusinessPlanSectionProps) {
   const [copied, setCopied] = useState(false);
   const [revealedSections, setRevealedSections] = useState<string[]>([]);
@@ -160,21 +171,6 @@ export default function BusinessPlanSection({
     setCopied(true);
     toast.success('Business plan copied to clipboard');
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleDownload = () => {
-    if (!businessPlan) return;
-    const fullText = SECTIONS.map(s =>
-      `## ${s.label}\n\n${typewriterTexts[s.key] || businessPlan[s.key as keyof typeof businessPlan]}`
-    ).join('\n\n---\n\n');
-    const blob = new Blob([fullText], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'business-plan.md';
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success('Business plan downloaded');
   };
 
   return (
@@ -295,15 +291,13 @@ export default function BusinessPlanSection({
                     <Copy size={18} />
                     {copied ? 'Copied!' : 'Copy'}
                   </motion.button>
-                  <motion.button
-                    onClick={handleDownload}
-                    className="px-6 py-3 rounded-lg font-medium text-white transition-all flex items-center justify-center gap-2 bg-white/10 border border-white/20 hover:bg-white/20"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Download size={18} />
-                    Download
-                  </motion.button>
+                  {businessPlan && (
+                    <PDFDownloadButton
+                      businessPlan={businessPlan}
+                      chartData={chartData}
+                      ideaName={ideaName || 'Business'}
+                    />
+                  )}
                 </div>
               )}
             </GlassCard>
