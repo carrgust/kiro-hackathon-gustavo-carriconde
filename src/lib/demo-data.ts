@@ -17,7 +17,7 @@ function makeSource(type: string, title: string, url: string, snippet: string, c
     icon: null,
     color: null,
     name: type,
-    status: 'complete',
+    status: 'found',
     title,
     url,
     snippet,
@@ -47,7 +47,7 @@ export const DEMO_VALIDATION_DATA = {
       name: 'Problem Severity',
       icon: '🎯',
       score: 85,
-      status: 'complete',
+      status: 'completed',
       subcategories: [
         makeSub('pain_intensity', 'Pain Intensity', 88, [
           makeSource('serper', 'Senior Fitness Challenges Survey 2025', 'https://ncbi.nlm.nih.gov/pmc/articles/fitness-aging', 'Over 60% of adults 65+ report difficulty maintaining exercise routines due to fear of injury and lack of personalized guidance.', 90),
@@ -77,7 +77,7 @@ export const DEMO_VALIDATION_DATA = {
       name: 'Market Opportunity',
       icon: '📊',
       score: 82,
-      status: 'complete',
+      status: 'completed',
       subcategories: [
         makeSub('market_size', 'Market Size (TAM)', 90, [
           makeSource('serper', 'Global Fitness App Market Report', 'https://statista.com/fitness-app-market', 'Global fitness app market: $14.7B in 2025, projected $32B by 2030.', 92),
@@ -107,7 +107,7 @@ export const DEMO_VALIDATION_DATA = {
       name: 'Competitive Landscape',
       icon: '⚔️',
       score: 74,
-      status: 'complete',
+      status: 'completed',
       subcategories: [
         makeSub('direct_competitors', 'Direct Competitors', 70, [
           makeSource('serper', 'SilverSneakers Overview', 'https://silversneakers.com', 'SilverSneakers: 17M eligible members, group classes only, no AI personalization.', 82),
@@ -137,7 +137,7 @@ export const DEMO_VALIDATION_DATA = {
       name: 'Solution Fit',
       icon: '💡',
       score: 80,
-      status: 'complete',
+      status: 'completed',
       subcategories: [
         makeSub('problem_solution_match', 'Problem-Solution Match', 84, [
           makeSource('serper', 'AI Exercise Adaptation Study', 'https://pubmed.gov/ai-exercise-adaptation', 'Machine learning models can predict optimal exercise intensity with 89% accuracy.', 86),
@@ -167,7 +167,7 @@ export const DEMO_VALIDATION_DATA = {
       name: 'Monetization',
       icon: '💰',
       score: 76,
-      status: 'complete',
+      status: 'completed',
       subcategories: [
         makeSub('pricing_benchmarks', 'Pricing Benchmarks', 78, [
           makeSource('serper', 'Fitness App Pricing Survey', 'https://businessofapps.com/fitness-app-pricing', 'Premium fitness apps average $12.99/mo consumer, $4.99-8.99 for basic.', 80),
@@ -197,7 +197,7 @@ export const DEMO_VALIDATION_DATA = {
       name: 'Go-to-Market',
       icon: '🚀',
       score: 72,
-      status: 'complete',
+      status: 'completed',
       subcategories: [
         makeSub('channel_viability', 'Channel Viability', 74, [
           makeSource('serper', 'Senior Marketing Channels', 'https://seniormarketing.com/channels-2025', 'Facebook, YouTube, and email are top 3 channels for reaching seniors.', 78),
@@ -227,7 +227,7 @@ export const DEMO_VALIDATION_DATA = {
       name: 'Timing',
       icon: '⏰',
       score: 77,
-      status: 'complete',
+      status: 'completed',
       subcategories: [
         makeSub('technology_enablers', 'Technology Enablers', 82, [
           makeSource('serper', 'AI Health Coaching Models', 'https://arxiv.org/ai-health-coaching', 'GPT-4 class models now score 89% on medical exercise safety assessments.', 84),
@@ -262,27 +262,38 @@ export const DEMO_VALIDATION_DATA = {
 export const DEMO_GAP_ANALYSIS = [
   {
     pillarName: 'Go-to-Market',
-    pillarKey: 'gtm',
     score: 72,
-    priority: 'HIGH',
+    priority: 'HIGH' as const,
     diagnosis: 'Channel strategy lacks concrete partnerships. Need specific go-to-market partnerships with senior living facilities, Medicare Advantage plans, and healthcare providers to scale customer acquisition beyond organic channels.',
-    recommendation: 'Establish B2B2C distribution via Medicare Advantage plan partnerships and senior living facility licensing deals, supplemented by AARP endorsement and provider referral programs.',
+    actions: [
+      'Establish B2B2C distribution via Medicare Advantage plan partnerships',
+      'Pursue senior living facility licensing deals (28,900 facilities in US)',
+      'Secure AARP endorsement for trust and credibility boost',
+      'Build provider referral program targeting 500+ primary care physicians',
+    ],
   },
   {
     pillarName: 'Competitive Landscape',
-    pillarKey: 'competition',
     score: 74,
-    priority: 'HIGH',
+    priority: 'HIGH' as const,
     diagnosis: 'Several funded competitors exist (Bold: $17M, SilverSneakers: 17M members) but none combine AI personalization with medical condition awareness. Differentiation needs to be sharper on the AI + medical integration angle.',
-    recommendation: 'Position as the only AI coaching platform that integrates with electronic health records (EHR) to create medically-aware, adaptive exercise plans — a capability no competitor offers.',
+    actions: [
+      'Position as the only AI coaching platform with EHR integration',
+      'Build medically-aware adaptive exercise plans as core differentiator',
+      'Partner with geriatricians for clinical validation and credibility',
+      'Create defensible moat through medical data partnerships',
+    ],
   },
   {
     pillarName: 'Monetization',
-    pillarKey: 'monetization',
     score: 76,
-    priority: 'MEDIUM',
+    priority: 'MEDIUM' as const,
     diagnosis: 'Pricing strategy is viable but needs validation with the specific B2B2C model. Insurance partnerships are the highest-value channel but require compliance infrastructure.',
-    recommendation: 'Launch with consumer DTC at $24.99/mo, simultaneously pursuing Medicare Advantage partnerships at $8-15/member/month which provides predictable recurring revenue.',
+    actions: [
+      'Launch consumer DTC at $24.99/mo as initial revenue stream',
+      'Pursue Medicare Advantage partnerships at $8-15/member/month',
+      'Build compliance infrastructure for insurance billing',
+    ],
   },
 ];
 
