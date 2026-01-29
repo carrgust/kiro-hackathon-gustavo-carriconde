@@ -12,7 +12,7 @@ interface SidebarProps {
 const SECTIONS = [
   { key: 'INPUT' as SectionKey, icon: LayoutDashboard, label: 'Input' },
   { key: 'PROCESSING' as SectionKey, icon: Brain, label: 'Processing' },
-  { key: 'PRD' as SectionKey, icon: FileText, label: 'PRD' },
+  { key: 'BUSINESS_PLAN' as SectionKey, icon: FileText, label: 'Business Plan' },
   { key: 'AUTOCODER' as SectionKey, icon: Code2, label: 'Auto Coder' },
 ];
 
@@ -20,7 +20,7 @@ const SECTIONS = [
 const ACTIVE_COLORS: Record<SectionKey, string> = {
   INPUT: '#1e40af',        // blue-800
   PROCESSING: '#b45309',   // amber-700
-  PRD: '#166534',          // green-800
+  BUSINESS_PLAN: '#166534', // green-800
   AUTOCODER: '#312e81',    // indigo-900
 };
 

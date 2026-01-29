@@ -19,11 +19,13 @@ import Sidebar from '@/components/Sidebar';
 import InputDashboard from '@/components/sections/InputDashboard';
 import ProcessingSection from '@/components/sections/ProcessingSection';
 import PRDSection from '@/components/sections/PRDSection';
+import BusinessPlanSection from '@/components/sections/BusinessPlanSection';
 import AutoCoderSection from '@/components/sections/AutoCoderSection';
 import ConfirmationModal from '@/components/dashboard/ConfirmationModal';
 import HypothesisModal from '@/components/dashboard/HypothesisModal';
 import ValidationDashboardV2 from '@/components/dashboard/ValidationDashboardV2';
 import SourceModal from '@/components/dashboard/SourceModal';
+import BusinessPlanConfirmModal from '@/components/dashboard/BusinessPlanConfirmModal';
 import ModalLoading from '@/components/ui/ModalLoading';
 import { KeyboardShortcuts } from '@/components/ui/KeyboardShortcuts';
 import StopProcessingButton from '@/components/dashboard/StopProcessingButton';
@@ -193,6 +195,9 @@ export default function Dashboard() {
   const [gapAnalysis, setGapAnalysis] = useState<any[]>([]);
   const [isAnalyzingGaps, setIsAnalyzingGaps] = useState(false);
   const [improvedIdea, setImprovedIdea] = useState<any>(null);
+  const [businessPlanData, setBusinessPlanData] = useState<any>(null);
+  const [isGeneratingBusinessPlan, setIsGeneratingBusinessPlan] = useState(false);
+  const [showBusinessPlanConfirm, setShowBusinessPlanConfirm] = useState(false);
 
   // Scoring hook for stage progression
   const scoring = useScoring({
@@ -1080,6 +1085,7 @@ Respond ONLY with valid JSON, no other text.`;
     setShowValidation(false);
     setGapAnalysis([]);
     setImprovedIdea(null);
+    setBusinessPlanData(null);
     
     // Clear localStorage
     localStorage.removeItem('curatos_validation_session');
@@ -1125,13 +1131,13 @@ Respond ONLY with valid JSON, no other text.`;
         setImprovedIdea(data.improvedIdea);
       }
       
-      // Unlock PRD after successful gap analysis
+      // Unlock Business Plan after successful gap analysis
       if (data.gaps && data.gaps.length > 0) {
         setUnlockedSections(prev => {
-          const newSet = new Set<SectionKey>([...prev, 'PRD']);
+          const newSet = new Set<SectionKey>([...prev, 'BUSINESS_PLAN']);
           return Array.from(newSet);
         });
-        setNewlyUnlocked(['PRD']);
+        setNewlyUnlocked(['BUSINESS_PLAN']);
         setTimeout(() => setNewlyUnlocked([]), 5000);
       }
     } catch (error) {
@@ -1390,6 +1396,36 @@ Respond ONLY with valid JSON, no other text.`;
     }
   };
 
+  const handleGenerateBusinessPlan = async () => {
+    if (!validationData || !improvedIdea) return;
+    setIsGeneratingBusinessPlan(true);
+    try {
+      const response = await fetch('/api/validate/generate-business-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          improvedIdea,
+          idea: validationData.idea,
+          canonicalDescription: validationData.canonicalDescription,
+          pillars: validationData.pillars,
+          gapAnalysis
+        })
+      });
+      const data = await response.json();
+      if (data.businessPlan) {
+        setBusinessPlanData(data.businessPlan);
+        toast.success('Business plan generated');
+      } else {
+        throw new Error(data.error || 'Failed');
+      }
+    } catch (error) {
+      console.error('[BusinessPlan] Error:', error);
+      toast.error('Business plan generation failed');
+    } finally {
+      setIsGeneratingBusinessPlan(false);
+    }
+  };
+
   const handleDNAModalClose = () => {
     setShowDNAModal(false);
   };
@@ -1592,18 +1628,18 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
                 gapAnalysis={gapAnalysis}
                 isAnalyzingGaps={isAnalyzingGaps}
                 improvedIdea={improvedIdea}
-                onNavigateToPRD={() => setActiveSection('PRD')}
+                onNavigateToPRD={() => setShowBusinessPlanConfirm(true)}
               />
             </ProcessingSection>
           )}
           
-          {activeSection === 'PRD' && (
-            <PRDSection
-              key="prd"
-              prdContent={prdMarkdown}
-              isGenerating={isGeneratingPRD}
-              onGenerate={handleGeneratePRD}
-              canGenerate={!!validationData && gapAnalysis.length > 0}
+          {activeSection === 'BUSINESS_PLAN' && (
+            <BusinessPlanSection
+              key='business_plan'
+              businessPlan={businessPlanData}
+              isGenerating={isGeneratingBusinessPlan}
+              onGenerate={handleGenerateBusinessPlan}
+              canGenerate={!!improvedIdea}
             />
           )}
           
@@ -1687,6 +1723,17 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
       <SourceModal
         source={selectedSource}
         onClose={() => setSelectedSource(null)}
+      />
+
+      {/* Business Plan Confirm Modal */}
+      <BusinessPlanConfirmModal
+        isOpen={showBusinessPlanConfirm}
+        onClose={() => setShowBusinessPlanConfirm(false)}
+        onConfirm={() => {
+          setActiveSection('BUSINESS_PLAN');
+          handleGenerateBusinessPlan();
+        }}
+        onGoBack={() => setActiveSection('PROCESSING')}
       />
 
       {/* Keyboard Shortcuts */}

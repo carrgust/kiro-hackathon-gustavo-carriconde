@@ -1,29 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { callWithFallback } from '@/lib/validation/model-client';
 
-const PRD_PROMPT = `You are a product requirements expert. Generate a comprehensive Product Requirements Document based on the validated business idea.
+const PRD_PROMPT = `You are a product requirements expert. Generate a concise PRD from validated business data.
 
-Input data:
-- Business idea and description
-- 7 validated pillars with scores
-- Gap analysis with identified weaknesses
-- Improved business idea addressing gaps
+STRICT RULES:
+- Each section: MAX 3-4 bullet points, 1-2 sentences each
+- Total output: under 1500 words
+- Be specific and actionable, not verbose
+- Use markdown ## headers and bullet points
 
-Generate a structured PRD with these sections:
+SECTIONS:
+1. EXECUTIVE SUMMARY (1 short paragraph, max 60 words)
+2. PROBLEM STATEMENT (3 bullets)
+3. TARGET MARKET (3 bullets with segments)
+4. PRODUCT OVERVIEW (1 paragraph, max 50 words)
+5. KEY FEATURES (3-5 features, name + one-line description each)
+6. SUCCESS METRICS (4 KPIs with target numbers)
+7. COMPETITIVE ADVANTAGE (3 bullets)
+8. GO-TO-MARKET (3 channel bullets)
+9. REVENUE MODEL (pricing tiers, max 3)
+10. RISKS & MITIGATIONS (3 rows: risk | mitigation)
+11. ROADMAP (3 milestones: Month X - deliverable)
 
-1. EXECUTIVE SUMMARY (2-3 paragraphs)
-2. PROBLEM STATEMENT (what problem we're solving)
-3. TARGET MARKET & USERS (who we're building for)
-4. PRODUCT OVERVIEW (high-level solution)
-5. KEY FEATURES (3-5 core features based on validation)
-6. SUCCESS METRICS / KPIs (measurable goals)
-7. COMPETITIVE ADVANTAGE (what makes us unique)
-8. GO-TO-MARKET STRATEGY (how we'll launch)
-9. REVENUE MODEL (how we'll make money)
-10. RISKS & MITIGATIONS (from gap analysis)
-11. TIMELINE & MILESTONES (6-12 month roadmap)
-
-Format as clean markdown with headers (##) and bullet points. Be specific and actionable.`;
+Keep it tight. Investors read PRDs in 2 minutes.`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -77,7 +76,7 @@ ${Object.entries(improvedIdea).map(([key, value]) => `${key.toUpperCase()}: ${va
         { role: 'system', content: PRD_PROMPT },
         { role: 'user', content: context }
       ],
-      { maxTokens: 3000 }
+      { maxTokens: 4096 }
     );
 
     console.log('[GeneratePRD] PRD generated successfully');

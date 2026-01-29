@@ -1,9 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Search, MessageCircle, Terminal, TrendingUp, BookOpen, Globe, Database, Briefcase, RotateCcw, Target, CheckCircle2 } from 'lucide-react';
+import { Search, MessageCircle, Terminal, TrendingUp, BookOpen, Globe, Database, Briefcase, RotateCcw, Target, CheckCircle2, Pencil, CheckCircle } from 'lucide-react';
 import { getSourceFavicon, getSourceLabel } from '@/lib/source-favicons';
 import { useRef, useEffect, useState } from 'react';
+import GlassCard from '@/components/GlassCard';
 import '@/styles/validation-dashboard.css';
 
 /**
@@ -120,6 +121,20 @@ export default function ValidationDashboardV2({
   const improvedIdeaRef = useRef<HTMLDivElement>(null);
   const [revealedPillars, setRevealedPillars] = useState<string[]>([]);
   const [typewriterTexts, setTypewriterTexts] = useState<Record<string, string>>({});
+  const [editingImprovedPillar, setEditingImprovedPillar] = useState<string | null>(null);
+  const [editImprovedText, setEditImprovedText] = useState('');
+
+  // Check localStorage on mount for improved idea
+  useEffect(() => {
+    const saved = localStorage.getItem('curatos_improved_idea');
+    if (saved && improvedIdea) {
+      const allPillars = ['problem', 'market', 'competition', 'solution', 'monetization', 'gtm', 'timing'];
+      setRevealedPillars(allPillars);
+      const allTexts: Record<string, string> = {};
+      allPillars.forEach(p => { allTexts[p] = improvedIdea[p] || ''; });
+      setTypewriterTexts(allTexts);
+    }
+  }, []);
 
   // Auto-scroll to Close the Gaps button when it appears
   useEffect(() => {
@@ -132,36 +147,55 @@ export default function ValidationDashboardV2({
 
   // Scroll to improved idea and start typewriter when it appears
   useEffect(() => {
-    if (improvedIdea && improvedIdeaRef.current) {
+    if (!improvedIdea) return;
+    
+    // Save to localStorage when new data arrives
+    localStorage.setItem('curatos_improved_idea', JSON.stringify(improvedIdea));
+    
+    // Check if already shown (remount scenario)
+    const saved = localStorage.getItem('curatos_improved_idea_shown');
+    if (saved === JSON.stringify(improvedIdea)) {
+      const allPillars = ['problem', 'market', 'competition', 'solution', 'monetization', 'gtm', 'timing'];
+      setRevealedPillars(allPillars);
+      const allTexts: Record<string, string> = {};
+      allPillars.forEach(p => { allTexts[p] = improvedIdea[p] || ''; });
+      setTypewriterTexts(allTexts);
+      return;
+    }
+    
+    if (improvedIdeaRef.current) {
       setTimeout(() => {
         improvedIdeaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 300);
-      
-      // Start sequential reveal with typewriter
-      const pillars = ['problem', 'market', 'competition', 'solution', 'monetization', 'gtm', 'timing'];
-      setRevealedPillars([]);
-      setTypewriterTexts({});
-      
-      pillars.forEach((pillar, index) => {
-        setTimeout(() => {
-          setRevealedPillars(prev => [...prev, pillar]);
-          
-          const text = improvedIdea[pillar] || '';
-          let charIndex = 0;
-          const typeInterval = setInterval(() => {
-            if (charIndex <= text.length) {
-              setTypewriterTexts(prev => ({
-                ...prev,
-                [pillar]: text.substring(0, charIndex)
-              }));
-              charIndex++;
-            } else {
-              clearInterval(typeInterval);
-            }
-          }, 25);
-        }, index * 400);
-      });
     }
+      
+    // Start sequential reveal with typewriter
+    const pillars = ['problem', 'market', 'competition', 'solution', 'monetization', 'gtm', 'timing'];
+    setRevealedPillars([]);
+    setTypewriterTexts({});
+    
+    pillars.forEach((pillar, index) => {
+      setTimeout(() => {
+        setRevealedPillars(prev => [...prev, pillar]);
+        
+        const text = improvedIdea[pillar] || '';
+        let charIndex = 0;
+        const typeInterval = setInterval(() => {
+          if (charIndex <= text.length) {
+            setTypewriterTexts(prev => ({
+              ...prev,
+              [pillar]: text.substring(0, charIndex)
+            }));
+            charIndex++;
+          } else {
+            clearInterval(typeInterval);
+          }
+        }, 25);
+      }, index * 400);
+    });
+    
+    // Mark as shown after starting animation
+    localStorage.setItem('curatos_improved_idea_shown', JSON.stringify(improvedIdea));
   }, [improvedIdea]);
 
   return (
@@ -358,90 +392,91 @@ export default function ValidationDashboardV2({
 
       {/* Improved Business Idea */}
       {improvedIdea && (
-        <motion.div
-          ref={improvedIdeaRef}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-12 space-y-4"
-          style={{ maxWidth: '1200px', margin: '48px auto 0', padding: '0 20px' }}
-        >
-          <h3 className="text-2xl font-bold text-white mb-6">✨ Improved Business Idea</h3>
-          <div className="space-y-4">
-            {['problem', 'market', 'competition', 'solution', 'monetization', 'gtm', 'timing'].map((pillar) => {
-              if (!revealedPillars.includes(pillar)) return null;
-              
-              const displayText = typewriterTexts[pillar] || '';
-              const fullText = improvedIdea[pillar] || '';
-              
-              return (
-                <motion.div
-                  key={pillar}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4 }}
-                  className="p-4 rounded-xl"
-                  style={{
-                    background: 'rgba(245, 158, 11, 0.1)',
-                    border: '1px solid rgba(245, 158, 11, 0.3)'
-                  }}
-                >
-                  <h4 className="text-sm font-semibold text-orange-400 uppercase mb-2">{pillar}</h4>
-                  <p className="text-sm text-white leading-relaxed">
-                    {displayText}
-                    {displayText.length < fullText.length && (
-                      <span className="inline-block w-1 h-4 bg-orange-400 ml-1 animate-pulse" />
-                    )}
-                  </p>
-                </motion.div>
-              );
-            })}
-          </div>
-        </motion.div>
-      )}
-
-      {/* PRD Ready Banner */}
-      {gapAnalysis.length > 0 && improvedIdea && onNavigateToPRD && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mt-12"
-          style={{ maxWidth: '1200px', margin: '48px auto 0', padding: '0 20px' }}
-        >
-          <div 
-            className="p-6 rounded-2xl flex items-center justify-between"
-            style={{
-              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(251, 191, 36, 0.1))',
-              border: '2px solid rgba(245, 158, 11, 0.4)',
-              boxShadow: '0 0 30px rgba(245, 158, 11, 0.2)'
-            }}
-          >
-            <div className="flex-1">
-              <h3 className="text-xl font-bold text-white mb-2">📋 PRD Ready to Generate</h3>
-              <p className="text-sm text-gray-300">
-                Your validation is complete. Click the PRD tab to generate a full Product Requirements Document.
-              </p>
+        <div ref={improvedIdeaRef} style={{ maxWidth: '1000px', width: '100%', margin: '48px auto 0', padding: '0 20px' }}>
+          <GlassCard className='p-6 space-y-4'>
+            <div className='space-y-2'>
+              <label className='text-sm font-medium text-white'>Improved Business Idea (7 Pillars)</label>
+              <div className='space-y-4'>
+                {['problem', 'market', 'competition', 'solution', 'monetization', 'gtm', 'timing'].map((pillar) => {
+                  if (!revealedPillars.includes(pillar)) return null;
+                  
+                  const displayText = typewriterTexts[pillar] || '';
+                  const fullText = improvedIdea[pillar] || '';
+                  
+                  return (
+                    <motion.div
+                      key={pillar}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4 }}
+                      className='bg-white/5 border border-white/10 rounded-lg p-4'
+                    >
+                      <div className='flex items-center justify-between mb-2'>
+                        <h3 className='text-sm font-semibold text-orange-400 uppercase'>{pillar}</h3>
+                        <button
+                          onClick={() => { setEditingImprovedPillar(pillar); setEditImprovedText(fullText); }}
+                          className='text-white/60 hover:text-white transition-colors'
+                        >
+                          <Pencil size={16} />
+                        </button>
+                      </div>
+                      {editingImprovedPillar === pillar ? (
+                        <div className='space-y-2'>
+                          <textarea
+                            value={editImprovedText}
+                            onChange={(e) => setEditImprovedText(e.target.value)}
+                            className='w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-sm text-white focus:outline-none focus:ring-2 focus:ring-orange-400/50'
+                            rows={3}
+                          />
+                          <div className='flex gap-2'>
+                            <button
+                              onClick={() => {
+                                setTypewriterTexts(prev => ({ ...prev, [pillar]: editImprovedText }));
+                                setEditingImprovedPillar(null);
+                              }}
+                              className='px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white text-xs rounded'
+                            >Save</button>
+                            <button
+                              onClick={() => setEditingImprovedPillar(null)}
+                              className='px-3 py-1 bg-white/10 hover:bg-white/20 text-white text-xs rounded'
+                            >Cancel</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className='text-sm text-white/80 leading-relaxed' style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                          {displayText}
+                          {displayText.length < fullText.length && (
+                            <span className='inline-block w-1 h-4 bg-orange-400 ml-1 animate-pulse' />
+                          )}
+                        </p>
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </div>
             </div>
-            <button
-              onClick={onNavigateToPRD}
-              className="px-6 py-3 rounded-xl font-semibold text-white transition-all flex items-center gap-2"
-              style={{
-                background: 'linear-gradient(135deg, #F59E0B, #FBBF24)',
-                boxShadow: '0 4px 20px rgba(245, 158, 11, 0.4)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.05)';
-                e.currentTarget.style.boxShadow = '0 6px 30px rgba(245, 158, 11, 0.6)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 4px 20px rgba(245, 158, 11, 0.4)';
-              }}
-            >
-              Go to PRD →
-            </button>
-          </div>
-        </motion.div>
+
+            <div className='flex gap-3'>
+              <motion.button
+                onClick={onCloseGaps}
+                className='flex-1 py-3 rounded-lg font-medium text-white transition-all flex items-center justify-center gap-2 bg-white/10 border border-white/20 hover:bg-white/20'
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Regenerate
+              </motion.button>
+              <motion.button
+                onClick={onNavigateToPRD}
+                className='flex-1 py-3 rounded-lg font-medium text-white transition-all flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-md shadow-orange-500/30'
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <CheckCircle size={20} />
+                Confirm and Proceed to Business Plan
+              </motion.button>
+            </div>
+          </GlassCard>
+        </div>
       )}
     </div>
   );

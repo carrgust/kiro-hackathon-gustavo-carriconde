@@ -23,8 +23,8 @@ export const SECTION_COLORS = {
     rgb: 'rgb(245, 158, 11)',
     rgba: 'rgba(245, 158, 11, 0.1)',
   },
-  PRD: {
-    name: 'PRD',
+  BUSINESS_PLAN: {
+    name: 'Business Plan',
     gradient: 'from-emerald-500 to-green-800',
     bg: 'bg-emerald-500',
     text: 'text-emerald-400',
