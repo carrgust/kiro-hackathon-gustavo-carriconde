@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   const prisma = getPrisma();
 
   try {
-    const { idea, canonicalDescription } = await request.json();
+    const { idea, canonicalDescription, geography } = await request.json();
 
     if (!idea || idea.trim().length < 3) {
       return NextResponse.json(
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    processValidation(session.id, canonicalDescription || idea.trim()).catch(console.error);
+    processValidation(session.id, canonicalDescription || idea.trim(), geography || 'Global').catch(console.error);
 
     return NextResponse.json({
       sessionId: session.id,
@@ -86,12 +86,12 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function processValidation(sessionId: string, canonicalDescription: string) {
+async function processValidation(sessionId: string, canonicalDescription: string, geography: string) {
   console.log('[DEBUG] processValidation started for session:', sessionId);
   const prisma = getPrisma();
 
   const pillarPromises = PILLARS.map(pillar =>
-    processPillar(sessionId, pillar, canonicalDescription)
+    processPillar(sessionId, pillar, canonicalDescription, geography)
   );
 
   await Promise.all(pillarPromises);
@@ -114,7 +114,8 @@ async function processValidation(sessionId: string, canonicalDescription: string
 async function processPillar(
   sessionId: string,
   pillarConfig: typeof PILLARS[0],
-  canonicalDescription: string
+  canonicalDescription: string,
+  geography: string
 ) {
   console.log('[DEBUG] processPillar started for pillar:', pillarConfig.key, 'session:', sessionId);
   const prisma = getPrisma();
@@ -131,7 +132,7 @@ async function processPillar(
   });
 
   const subcategoryPromises = pillarConfig.subcategories.map(subConfig =>
-    processSubcategory(pillar.id, pillarConfig.key, subConfig, canonicalDescription)
+    processSubcategory(pillar.id, pillarConfig.key, subConfig, canonicalDescription, geography)
   );
 
   const subcategoryScores = await Promise.all(subcategoryPromises);
@@ -148,7 +149,8 @@ async function processSubcategory(
   pillarId: string,
   pillarKey: string,
   subConfig: { key: string; name: string; prompt: string },
-  canonicalDescription: string
+  canonicalDescription: string,
+  geography: string
 ): Promise<number> {
   console.log('[DEBUG] processSubcategory started for:', pillarKey, '/', subConfig.key);
   const prisma = getPrisma();
@@ -167,7 +169,7 @@ async function processSubcategory(
   const apis = getApisForPillar(pillarKey);
   const sourcePromises = apis.map(async (api) => {
     const result = await searchAndAnalyzeSource(
-      canonicalDescription, pillarKey, subConfig.key, api.id
+      canonicalDescription, pillarKey, subConfig.key, api.id, geography
     );
 
     await prisma.sourceResult.updateMany({
@@ -192,7 +194,7 @@ async function processSubcategory(
   const sources = await Promise.all(sourcePromises);
 
   const score = await calculateSubcategoryScore(
-    canonicalDescription, pillarKey, subConfig.key, sources
+    canonicalDescription, pillarKey, subConfig.key, sources, geography
   );
 
   await prisma.subcategoryResult.update({

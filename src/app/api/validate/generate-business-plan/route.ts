@@ -89,7 +89,7 @@ Each text section must be markdown-formatted with bullet points and bold numbers
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { idea, canonicalDescription, pillars, gapAnalysis, improvedIdea } = body;
+    const { idea, canonicalDescription, pillars, gapAnalysis, improvedIdea, geography = 'Global' } = body;
 
     if (!idea || !improvedIdea) {
       return NextResponse.json(
@@ -111,6 +111,7 @@ export async function POST(request: NextRequest) {
     // Build context from all data
     const context = `
 BUSINESS IDEA: ${idea}
+TARGET GEOGRAPHY: ${geography}
 
 CANONICAL DESCRIPTION: ${canonicalDescription || 'N/A'}
 
@@ -125,7 +126,7 @@ GAP ANALYSIS:
 ${gapAnalysis.map((g: any) => `- ${g.pillarName} (${g.priority}): ${g.diagnosis}`).join('\n')}
 ` : ''}
 
-Generate a comprehensive business plan with chart data based on this validated data.
+Generate a comprehensive business plan with chart data based on this validated data FOR ${geography}. All market sizes, competitors, regulations, pricing, and financial projections should be specific to ${geography}. Use appropriate currency and market conditions for ${geography}.
 `;
 
     const response = await callWithFallback(

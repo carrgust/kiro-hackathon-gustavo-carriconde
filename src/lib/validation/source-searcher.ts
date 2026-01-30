@@ -47,7 +47,8 @@ export async function searchAndAnalyzeSource(
   idea: string,
   pillarKey: string,
   subcategoryKey: string,
-  apiId: string
+  apiId: string,
+  geography: string = 'Global'
 ): Promise<AnalyzedSource> {
 
   const apiKey = process.env.OPENROUTER_API_KEY;
@@ -135,6 +136,7 @@ export async function searchAndAnalyzeSource(
     const analysisPrompt = `You are analyzing REAL search results for a business idea validation.
 
 BUSINESS IDEA: "${idea}"
+TARGET GEOGRAPHY: ${geography}
 
 PILLAR: ${pillar.name}
 SUBCATEGORY: ${subcategory.name}
@@ -148,7 +150,12 @@ Title: ${bestResult.title}
 Snippet: ${bestResult.snippet || 'N/A'}
 URL: ${bestResult.url || 'N/A'}
 
-Analyze how this REAL evidence supports or challenges the business idea for this subcategory. Consider current year is ${currentYear}.
+Analyze how this REAL evidence supports or challenges the business idea for this subcategory IN THE CONTEXT OF ${geography}. Consider:
+- Market size and opportunity specific to ${geography}
+- Local competitors and alternatives in ${geography}
+- Regulatory environment and constraints in ${geography}
+- Cultural and economic factors relevant to ${geography}
+- Current year is ${currentYear}
 
 OUTPUT FORMAT (JSON):
 {
@@ -210,7 +217,8 @@ export async function calculateSubcategoryScore(
   idea: string,
   pillarKey: string,
   subcategoryKey: string,
-  sources: AnalyzedSource[]
+  sources: AnalyzedSource[],
+  geography: string = 'Global'
 ): Promise<number> {
 
   const apiKey = process.env.OPENROUTER_API_KEY;

@@ -382,7 +382,7 @@ export default function Dashboard() {
   }, [activeSection]);
 
   // Start validation function
-  const startValidation = useCallback(async (idea: string, canonicalDescription?: string) => {
+  const startValidation = useCallback(async (idea: string, canonicalDescription?: string, geography?: string) => {
     if (!idea || idea.trim().length < 3) {
       toast.error('Please select a market niche');
       return;
@@ -419,7 +419,7 @@ export default function Dashboard() {
       const validateRes = await fetch('/api/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idea, canonicalDescription: canonical })
+        body: JSON.stringify({ idea, canonicalDescription: canonical, geography })
       });
 
       if (!validateRes.ok) {
@@ -1123,7 +1123,8 @@ Respond ONLY with valid JSON, no other text.`;
         body: JSON.stringify({
           idea: validationData.idea,
           canonicalDescription: validationData.canonicalDescription,
-          pillars: validationData.pillars
+          pillars: validationData.pillars,
+          geography
         })
       });
       
@@ -1154,7 +1155,7 @@ Respond ONLY with valid JSON, no other text.`;
       setIsAnalyzingGaps(false);
       console.log('[CloseGaps] Finished');
     }
-  }, [validationData]);
+  }, [validationData, geography]);
 
   const handleItemClick = useCallback((hypothesis: Hypothesis) => {
     setSelectedHypothesis(hypothesis);
@@ -1390,7 +1391,8 @@ Respond ONLY with valid JSON, no other text.`;
           canonicalDescription: validationData.canonicalDescription,
           pillars: validationData.pillars,
           gapAnalysis,
-          improvedIdea
+          improvedIdea,
+          geography
         })
       });
 
@@ -1426,7 +1428,8 @@ Respond ONLY with valid JSON, no other text.`;
           idea: validationData.idea,
           canonicalDescription: validationData.canonicalDescription,
           pillars: validationData.pillars,
-          gapAnalysis
+          gapAnalysis,
+          geography
         })
       });
       const data = await response.json();
@@ -1631,10 +1634,10 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
               geography={geography}
               onNicheChange={(niche) => setState(prev => ({ ...prev, niche }))}
               onGeographyChange={setGeography}
-              onStartValidation={(niche, canonicalDescription) => {
+              onStartValidation={(niche, canonicalDescription, geography) => {
                 setClearInputAnalysis(true);
                 setActiveSection('PROCESSING');
-                startValidation(niche, canonicalDescription);
+                startValidation(niche, canonicalDescription, geography);
               }}
               onDemoMode={loadDemoMode}
               clearAnalysis={clearInputAnalysis}

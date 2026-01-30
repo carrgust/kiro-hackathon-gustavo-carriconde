@@ -16,6 +16,7 @@ interface GapAnalysisRequest {
   idea: string;
   canonicalDescription: string;
   pillars: Pillar[];
+  geography?: string;
 }
 
 interface GapResult {
@@ -29,7 +30,7 @@ interface GapResult {
 export async function POST(request: NextRequest) {
   try {
     const body: GapAnalysisRequest = await request.json();
-    const { canonicalDescription, pillars } = body;
+    const { canonicalDescription, pillars, geography = 'Global' } = body;
 
     // Get API key from environment (server-side)
     const apiKey = process.env.OPENROUTER_API_KEY;
@@ -59,13 +60,14 @@ export async function POST(request: NextRequest) {
       const prompt = `You are a business strategy advisor. A business idea was validated and the pillar "${pillar.name}" scored ${pillar.score}/100 (weak).
 
 Business idea: ${canonicalDescription}
+Target geography: ${geography}
 
 Subcategory scores:
 ${subcategoryList}
 
-Analyze WHY this pillar scored low and provide:
-1. GAP DIAGNOSIS: One sentence explaining the core weakness (max 30 words)
-2. ACTION ITEMS: Exactly 3 specific, actionable steps to improve this pillar (each max 20 words)
+Analyze WHY this pillar scored low IN THE CONTEXT OF ${geography} and provide:
+1. GAP DIAGNOSIS: One sentence explaining the core weakness considering ${geography} market conditions (max 30 words)
+2. ACTION ITEMS: Exactly 3 specific, actionable steps to improve this pillar for ${geography} (each max 20 words)
 3. PRIORITY: Rate urgency as HIGH, MEDIUM, or LOW
 
 Return JSON only: { "diagnosis": "...", "actions": ["...", "...", "..."], "priority": "HIGH|MEDIUM|LOW" }`;
@@ -115,11 +117,12 @@ Return JSON only: { "diagnosis": "...", "actions": ["...", "...", "..."], "prior
       const improvePrompt = `You are a business strategist. Based on the gap analysis below, rewrite and improve this business idea to address all weaknesses.
 
 ORIGINAL IDEA: ${canonicalDescription}
+TARGET GEOGRAPHY: ${geography}
 
 GAPS FOUND:
 ${gapsSummary}
 
-Rewrite the business idea in 7 short sentences, one for each pillar (problem, market, competition, solution, monetization, gtm, timing). Each sentence must directly address any weakness found. If a pillar was strong (no gap), keep the original strength. If weak, rewrite to close the gap.
+Rewrite the business idea in 7 short sentences, one for each pillar (problem, market, competition, solution, monetization, gtm, timing). Each sentence must directly address any weakness found FOR ${geography}. If a pillar was strong (no gap), keep the original strength. If weak, rewrite to close the gap considering ${geography} market conditions.
 
 Return JSON: { "problem": "...", "market": "...", "competition": "...", "solution": "...", "monetization": "...", "gtm": "...", "timing": "..." }`;
 

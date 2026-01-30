@@ -10,7 +10,7 @@ interface InputDashboardProps {
   geography: string;
   onNicheChange: (niche: string) => void;
   onGeographyChange: (geo: string) => void;
-  onStartValidation?: (niche: string, canonicalDescription: string) => void;
+  onStartValidation?: (niche: string, canonicalDescription: string, geography: string) => void;
   onDemoMode?: () => void;
   clearAnalysis?: boolean;
 }
@@ -139,7 +139,7 @@ export default function InputDashboard({
       const canonicalDescription = Object.entries(analysis)
         .map(([key, value]) => `${key.toUpperCase()}: ${value}`)
         .join('\n\n');
-      onStartValidation(niche, canonicalDescription);
+      onStartValidation(niche, canonicalDescription, geography);
     }
   };
 

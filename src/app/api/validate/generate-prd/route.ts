@@ -62,7 +62,7 @@ Return ONLY the JSON object. No markdown fences, no explanation.`;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { idea, canonicalDescription, pillars, gapAnalysis, improvedIdea } = body;
+    const { idea, canonicalDescription, pillars, gapAnalysis, improvedIdea, geography = 'Global' } = body;
 
     if (!idea || !pillars) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -76,13 +76,16 @@ export async function POST(request: NextRequest) {
     console.log('[GeneratePRD] Starting PRD generation...');
 
     const context = `BUSINESS IDEA: ${idea}
+TARGET GEOGRAPHY: ${geography}
 CANONICAL DESCRIPTION: ${canonicalDescription || 'N/A'}
 VALIDATION SCORES:
 ${pillars.map((p: any) => `- ${p.name}: ${p.score}/100`).join('\n')}
 ${gapAnalysis && gapAnalysis.length > 0 ? `GAP ANALYSIS:
 ${gapAnalysis.map((g: any) => `- ${g.pillarName}: ${g.diagnosis} Actions: ${g.actions.join('; ')}`).join('\n')}` : ''}
 ${improvedIdea ? `IMPROVED IDEA:
-${Object.entries(improvedIdea).map(([key, value]) => `${key.toUpperCase()}: ${value}`).join('\n')}` : ''}`;
+${Object.entries(improvedIdea).map(([key, value]) => `${key.toUpperCase()}: ${value}`).join('\n')}` : ''}
+
+Generate an MVP PRD for ${geography}. Consider regional constraints: local regulations, language/localization needs, payment methods, infrastructure limitations, cultural preferences, and competitive landscape specific to ${geography}.`;
 
     const result = await callWithFallback(
       apiKey,
