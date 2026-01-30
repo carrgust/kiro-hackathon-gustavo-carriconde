@@ -18,9 +18,11 @@ Curatos DNA validates business ideas through a structured 7-pillar framework pow
 2. **7-pillar validation** — Market Viability, Technical Feasibility, Revenue Potential, Competitive Landscape, Scalability, Regulatory Risk, and Team Fit — each scored 0-100
 3. **Gap analysis** — Identifies weak pillars and generates actionable improvements
 4. **Business plan generation** — 4-section investor-ready plan with interactive charts
-5. **PDF export** — Professional PDF with embedded pie charts, bar charts, radar charts, and financial tables
+5. **PRD generation** — Structured Product Requirements Document with traceability (U→US→FR→NFR)
+6. **AutoCoder mockup** — AI-generated HTML landing page from PRD with live preview
+7. **PDF export** — Professional PDF with embedded pie charts, bar charts, radar charts, and financial tables
 
-Stop guessing if your idea has legs. Let AI validate it against 105 real web sources in minutes.
+Stop guessing if your idea has legs. Let AI validate it against 105 real web sources and generate a working mockup in minutes.
 
 ---
 
@@ -51,9 +53,24 @@ Stop guessing if your idea has legs. Let AI validate it against 105 real web sou
 - Client-side generation (zero server dependency)
 
 ### Progressive Unlock Flow
-- Tabbed sidebar navigation: Input → Processing → Close Gaps → Business Plan
+- Tabbed sidebar navigation: Business Idea → Processing → Business Plan → PRD → AutoCoder
 - Each stage unlocks after the previous completes
 - Visual progress indicators throughout
+
+### PRD Generator
+- Structured Product Requirements Document with traceability
+- 5 sections: Executive Summary, Target Users, User Stories, Functional Requirements, Non-Functional Requirements
+- Numbered IDs with cross-references (U-xxx → US-xxx → FR-xxx → NFR-xxx)
+- Progressive section unlocking with collapsible tables
+- Copy/Download functionality
+
+### AutoCoder — PRD to HTML Mockup
+- Two-phase autonomous agent: Decomposer (PRD → Features) + Implementer (Features → HTML)
+- Generates working HTML landing page from structured PRD
+- Single-file output with inline CSS/JS (no build tools needed)
+- Live preview in iframe with 2-second polling updates
+- Full traceability: each feature links to FR-xxx, US-xxx, NFR-xxx IDs
+- Copy/Download final mockup
 
 ---
 
@@ -119,7 +136,7 @@ Open [http://localhost:5001](http://localhost:5001) and start validating!
 ## How It Works
 
 ### Step 1: Input Your Idea
-Type any business idea (e.g., "AI-powered fitness coaching app for seniors"). The system normalizes it into a canonical description.
+Type any business idea (e.g., "AI-powered fitness coaching app for seniors"). Select your target geography. The system normalizes it into a structured 7-pillar description.
 
 ### Step 2: 7-Pillar Validation
 Click **Validate** and watch as AI researches your idea across 7 pillars:
@@ -143,10 +160,26 @@ Generate a 4-section business plan with interactive charts:
 - Team & Operations with milestone timeline and team composition donut
 - Financial Plan with revenue projections and financial tables
 
-### Step 5: Export
-- **Copy** — Clipboard text of the full business plan
+### Step 5: PRD Generation
+Generate a structured Product Requirements Document:
+- Target Users (U-xxx) with personas
+- User Stories (US-xxx) linked to users
+- Functional Requirements (FR-xxx) linked to stories
+- Non-Functional Requirements (NFR-xxx) with global constraints
+- Full traceability chain: U → US → FR → NFR
+
+### Step 6: AutoCoder Mockup
+Transform your PRD into a working HTML landing page:
+- AI decomposes PRD into 5-15 ordered features
+- Each feature implemented sequentially with live preview
+- Single-file HTML output (inline CSS/JS, no dependencies)
+- Copy or download the complete mockup
+
+### Step 7: Export
+- **Copy** — Clipboard text of business plan or PRD
 - **Download PDF** — Professional PDF with charts, tables, and emerald branding
-- **Regenerate** — Create a new version with different AI output
+- **Download HTML** — Working landing page mockup
+- **Regenerate** — Create new versions with different AI output
 
 ---
 
@@ -319,6 +352,7 @@ This project was built using [Kiro CLI](https://kiro.dev) for the **Dynamous x K
 - **Day 7-8**: 7-pillar validation system, API Machine Gun, glassmorphism UI
 - **Day 9**: Close-gaps analysis, business plan generation, sidebar navigation
 - **Day 10**: Interactive charts (6 types), PDF download, section-specific visualizations
+- **Day 11**: AutoCoder engine (PRD-to-HTML), geography integration, final polish
 
 See [.kiro/DEVLOG.md](./.kiro/DEVLOG.md) for the full development journal.
 
