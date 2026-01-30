@@ -5,6 +5,7 @@ import { Search, MessageCircle, Terminal, TrendingUp, BookOpen, Globe, Database,
 import { getSourceFavicon, getSourceLabel } from '@/lib/source-favicons';
 import { useRef, useEffect, useState } from 'react';
 import GlassCard from '@/components/GlassCard';
+import EvidenceMatrix from './EvidenceMatrix';
 import '@/styles/validation-dashboard.css';
 
 /**
@@ -258,41 +259,8 @@ export default function ValidationDashboardV2({
         </div>
       </motion.div>
 
-      {/* Pillar Grid */}
-      <div className="vd-pillar-grid">
-        {pillars.map((pillar, idx) => {
-          const hasData = (pillar.score ?? 0) > 0 || pillar.status === 'completed';
-          const isProcessing = pillar.status === 'processing';
-          
-          if (!hasData && !isProcessing) return null;
-          
-          if (isProcessing) {
-            return (
-              <motion.div
-                key={pillar.key}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="vd-pillar-card"
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '200px' }}
-              >
-                <div className="text-center">
-                  <div className="w-8 h-8 border-4 border-orange-500/30 border-t-orange-500 rounded-full animate-spin mx-auto mb-3" />
-                  <p className="text-white/60 text-sm">Researching {pillar.name}...</p>
-                </div>
-              </motion.div>
-            );
-          }
-          
-          return (
-            <PillarCard
-              key={pillar.key}
-              pillar={pillar}
-              onSourceClick={onSourceClick}
-              delay={0.3 + idx * 0.05}
-            />
-          );
-        })}
-      </div>
+      {/* Evidence Matrix */}
+      <EvidenceMatrix pillars={pillars} onSourceClick={onSourceClick} />
 
       {/* Close the Gaps Button */}
       {onCloseGaps && gapPillars.length > 0 && gapAnalysis.length === 0 && (

@@ -19,15 +19,17 @@
   --vd-glass-border: rgba(255, 255, 255, 0.1);
   --vd-glass-border-hover: rgba(255, 255, 255, 0.2);
 
-  /* Text Colors */
+  /* Text Colors - Dark for contrast on orange background */
+  --vd-text: #000000;
+  --vd-text-secondary: #1a1a1a;
+  --vd-text-muted: #333333;
   --vd-text-white: #ffffff;
-  --vd-text-muted: rgba(255, 255, 255, 0.7);
-  --vd-text-subtle: rgba(255, 255, 255, 0.5);
+  --vd-text-subtle: #4a4a4a;
 
-  /* Semantic */
-  --vd-success: #10B981;
-  --vd-warning: #F59E0B;
-  --vd-danger: #EF4444;
+  /* Semantic - Dark versions for contrast */
+  --vd-success: #065f46;
+  --vd-warning: #78350f;
+  --vd-danger: #7f1d1d;
 
   /* Typography */
   --vd-font: 'OCR-B', monospace;
@@ -71,7 +73,7 @@
 .vd-title {
   font-size: 32px;
   font-weight: 700;
-  color: var(--vd-text-white);
+  color: #000000;
   margin: 0 0 var(--vd-space-2) 0;
   letter-spacing: -0.02em;
 }
@@ -142,7 +144,7 @@
 .vd-mini-score-value {
   font-size: 20px;
   font-weight: 700;
-  color: var(--vd-text-white);
+  color: #000000;
 }
 
 .vd-mini-score-label {
@@ -213,7 +215,7 @@
 .vd-pillar-title {
   font-size: 15px;
   font-weight: 600;
-  color: var(--vd-text-white);
+  color: #000000;
   margin: 0;
 }
 
@@ -259,7 +261,7 @@
 .vd-subcategory-name {
   font-size: 13px;
   font-weight: 400;
-  color: var(--vd-text-muted);
+  color: #000000;
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -334,7 +336,7 @@
 .vd-subcategory-score {
   font-size: 14px;
   font-weight: 600;
-  color: var(--vd-text-white);
+  color: #000000;
   min-width: 28px;
   text-align: right;
 }
@@ -373,7 +375,7 @@
   font-family: var(--vd-font);
   font-size: 28px;
   font-weight: 700;
-  fill: var(--vd-text-white);
+  fill: #000000;
   text-anchor: middle;
   dominant-baseline: middle;
 }
@@ -454,7 +456,7 @@
 .vd-concept-text {
   font-size: 13px;
   font-weight: 400;
-  color: var(--vd-text-muted);
+  color: #000000;
   line-height: 1.5;
 }
 

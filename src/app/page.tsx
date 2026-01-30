@@ -3,7 +3,6 @@
 import '@/styles/glassmorphism.css';
 import { useState, useEffect, useCallback, useMemo, Suspense, lazy, useRef } from 'react';
 import { Toaster, toast } from 'sonner';
-import { AnimatePresence } from 'framer-motion';
 import { EngineState, Hypothesis, DNAData } from '@/types/project';
 import { getStoredApiKey } from '@/lib/api';
 import { HypothesisService } from '@/lib/api/hypothesis';
@@ -1591,94 +1590,92 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
       
       {/* Main Content with offset for sidebar */}
       <main className="flex-1 ml-56">
-        <AnimatePresence mode="wait">
-          {activeSection === 'INPUT' && (
-            <InputDashboard
-              key="input"
-              niche={state.niche}
-              geography={geography}
-              onNicheChange={(niche) => setState(prev => ({ ...prev, niche }))}
-              onGeographyChange={setGeography}
-              onStartValidation={(niche, canonicalDescription, geography) => {
-                setClearInputAnalysis(true);
-                setActiveSection('PROCESSING');
-                startValidation(niche, canonicalDescription, geography);
-              }}
-              onDemoMode={loadDemoMode}
-              clearAnalysis={clearInputAnalysis}
-            />
-          )}
-          
-          {activeSection === 'PROCESSING' && (
-            <ProcessingSection
-              key="processing"
-              isOnline={!!hypothesisService}
-              isProcessing={engineRunning}
-            >
-              {/* Continuous Mode Indicator */}
-              {continuousMode && (
-                <div className="mb-4 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/50 rounded-lg p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-cyan-400 font-medium">Continuous Mode Active</span>
-                      <span className="text-gray-400 text-sm">Backend executing cycles every 15s</span>
-                    </div>
-                    {sessionId && (
-                      <span className="text-xs text-gray-500 font-mono">
-                        Session: {sessionId.slice(0, 12)}
-                      </span>
-                    )}
+        <div style={{ display: activeSection === 'INPUT' ? 'block' : 'none' }}>
+          <InputDashboard
+            key="input"
+            niche={state.niche}
+            geography={geography}
+            onNicheChange={(niche) => setState(prev => ({ ...prev, niche }))}
+            onGeographyChange={setGeography}
+            onStartValidation={(niche, canonicalDescription, geography) => {
+              setClearInputAnalysis(true);
+              setActiveSection('PROCESSING');
+              startValidation(niche, canonicalDescription, geography);
+            }}
+            onDemoMode={loadDemoMode}
+            clearAnalysis={clearInputAnalysis}
+          />
+        </div>
+        
+        <div style={{ display: activeSection === 'PROCESSING' ? 'block' : 'none' }}>
+          <ProcessingSection
+            key="processing"
+            isOnline={!!hypothesisService}
+            isProcessing={engineRunning}
+          >
+            {/* Continuous Mode Indicator */}
+            {continuousMode && (
+              <div className="mb-4 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/50 rounded-lg p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <span className="text-cyan-400 font-medium">Continuous Mode Active</span>
+                    <span className="text-gray-400 text-sm">Backend executing cycles every 15s</span>
                   </div>
+                  {sessionId && (
+                    <span className="text-xs text-gray-500 font-mono">
+                      Session: {sessionId.slice(0, 12)}
+                    </span>
+                  )}
                 </div>
-              )}
-              
-              {/* Validation Dashboard - Always show */}
-              <ValidationDashboardV2
-                idea={validationData?.idea}
-                canonicalDescription={validationData?.canonicalDescription}
-                overallScore={validationData?.overallScore ?? null}
-                scoreLabel={validationData?.scoreLabel}
-                pillars={validationData?.pillars || []}
-                onSourceClick={setSelectedSource}
-                agentLogs={[...state.agentRationale, currentRationaleStream].filter(Boolean)}
-                onCloseGaps={handleCloseGaps}
-                gapAnalysis={gapAnalysis}
-                isAnalyzingGaps={isAnalyzingGaps}
-                improvedIdea={improvedIdea}
-                onNavigateToPRD={() => setShowBusinessPlanConfirm(true)}
-              />
-            </ProcessingSection>
-          )}
-          
-          {activeSection === 'BUSINESS_PLAN' && (
-            <BusinessPlanSection
-              key='business_plan'
-              businessPlan={businessPlanData}
-              isGenerating={isGeneratingBusinessPlan}
-              onGenerate={handleGenerateBusinessPlan}
-              onUpdateSection={handleUpdateBusinessPlanSection}
-              onProceedToPRD={handleProceedToPRD}
-              chartData={chartData}
-              ideaName={validationData?.idea || 'Business'}
-              canGenerate={!!improvedIdea}
+              </div>
+            )}
+            
+            {/* Validation Dashboard - Always show */}
+            <ValidationDashboardV2
+              idea={validationData?.idea}
+              canonicalDescription={validationData?.canonicalDescription}
+              overallScore={validationData?.overallScore ?? null}
+              scoreLabel={validationData?.scoreLabel}
+              pillars={validationData?.pillars || []}
+              onSourceClick={setSelectedSource}
+              agentLogs={[...state.agentRationale, currentRationaleStream].filter(Boolean)}
+              onCloseGaps={handleCloseGaps}
+              gapAnalysis={gapAnalysis}
+              isAnalyzingGaps={isAnalyzingGaps}
+              improvedIdea={improvedIdea}
+              onNavigateToPRD={() => setShowBusinessPlanConfirm(true)}
             />
-          )}
-          
-          {activeSection === 'PRD' && (
-            <PRDSection
-              key="prd"
-              prdData={prdData}
-              isGenerating={isGeneratingPRD}
-              onGenerate={handleGeneratePRD}
-              canGenerate={!!businessPlanData}
-            />
-          )}
-          
-          {activeSection === 'AUTOCODER' && (
-            <AutoCoderSection key="autocoder" prdData={prdData} />
-          )}
-        </AnimatePresence>
+          </ProcessingSection>
+        </div>
+        
+        <div style={{ display: activeSection === 'BUSINESS_PLAN' ? 'block' : 'none' }}>
+          <BusinessPlanSection
+            key='business_plan'
+            businessPlan={businessPlanData}
+            isGenerating={isGeneratingBusinessPlan}
+            onGenerate={handleGenerateBusinessPlan}
+            onUpdateSection={handleUpdateBusinessPlanSection}
+            onProceedToPRD={handleProceedToPRD}
+            chartData={chartData}
+            ideaName={validationData?.idea || 'Business'}
+            canGenerate={!!improvedIdea}
+          />
+        </div>
+        
+        <div style={{ display: activeSection === 'PRD' ? 'block' : 'none' }}>
+          <PRDSection
+            key="prd"
+            prdData={prdData}
+            isGenerating={isGeneratingPRD}
+            onGenerate={handleGeneratePRD}
+            canGenerate={!!businessPlanData}
+          />
+        </div>
+        
+        <div style={{ display: activeSection === 'AUTOCODER' ? 'block' : 'none' }}>
+          <AutoCoderSection key="autocoder" prdData={prdData} />
+        </div>
       </main>
       
       {/* Modals - rendered outside sections */}
