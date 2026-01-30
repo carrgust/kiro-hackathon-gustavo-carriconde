@@ -9,8 +9,6 @@ import { getStoredApiKey } from '@/lib/api';
 import { HypothesisService } from '@/lib/api/hypothesis';
 import { StreamingService } from '@/lib/api/streaming';
 import { useScoring } from '@/hooks/useScoring';
-import { useSync } from '@/hooks/useSync';
-import { useSyncToasts } from '@/hooks/useSyncToasts';
 import { buildAgentContext } from '@/lib/orchestrator/context-builder';
 import { AgentAction } from '@/types/orchestrator';
 import { SectionKey } from '@/lib/colors';
@@ -36,6 +34,9 @@ const DNAModal = lazy(() => import('@/components/dashboard/DNAModal'));
 const LandingPageModal = lazy(() => import('@/components/dashboard/LandingPageModal'));
 const PRDModal = lazy(() => import('@/components/dashboard/PRDModal'));
 const ExportModal = lazy(() => import('@/components/dashboard/ExportModal').then(m => ({ default: m.ExportModal })));
+
+// Section navigation order
+const SECTION_ORDER: SectionKey[] = ['INPUT', 'PROCESSING', 'BUSINESS_PLAN', 'PRD', 'AUTOCODER'];
 
 export default function Dashboard() {
   const [state, setState] = useState<EngineState>({
@@ -252,51 +253,6 @@ export default function Dashboard() {
     () => validatedProblems.length >= 2 && validatedSolutions.length >= 2,
     [validatedProblems.length, validatedSolutions.length]
   );
-
-  // Sync toasts for real-time notifications
-  const syncToasts = useSyncToasts();
-
-  // WebSocket sync hook for real-time collaboration
-  const [syncEnabled, setSyncEnabled] = useState(false);
-  const sync = useSync({
-    enabled: syncEnabled,
-    wsUrl: 'ws://localhost:3001',
-    onHypothesisAdd: useCallback((hypothesis: Hypothesis, column: 'hypotheses' | 'solutions' | 'requirements') => {
-      setState(prev => ({
-        ...prev,
-        [column]: [...prev[column], hypothesis],
-      }));
-      syncToasts.showHypothesisAdded(column);
-    }, [syncToasts]),
-    onHypothesisUpdate: useCallback((hypothesis: Hypothesis, column: 'hypotheses' | 'solutions' | 'requirements') => {
-      setState(prev => ({
-        ...prev,
-        [column]: prev[column].map(h => h.id === hypothesis.id ? hypothesis : h),
-      }));
-      syncToasts.showHypothesisUpdated(column);
-    }, [syncToasts]),
-    onHypothesisDelete: useCallback((hypothesis: Hypothesis, column: 'hypotheses' | 'solutions' | 'requirements') => {
-      setState(prev => ({
-        ...prev,
-        [column]: prev[column].filter(h => h.id !== hypothesis.id),
-      }));
-    }, []),
-    onStateSync: useCallback((syncState: { hypotheses: Hypothesis[]; solutions: Hypothesis[]; requirements: Hypothesis[] }) => {
-      setState(prev => ({
-        ...prev,
-        hypotheses: syncState.hypotheses,
-        solutions: syncState.solutions,
-        requirements: syncState.requirements,
-      }));
-      syncToasts.showStateSynced();
-    }, [syncToasts]),
-    onUserJoin: useCallback((userId: string) => {
-      syncToasts.showUserJoined(userId);
-    }, [syncToasts]),
-    onUserLeave: useCallback((userId: string) => {
-      syncToasts.showUserLeft(userId);
-    }, [syncToasts]),
-  });
 
   // Update running time
   useEffect(() => {
@@ -1074,35 +1030,12 @@ Respond ONLY with valid JSON, no other text.`;
     }
   }, [engineRunning, handleStartEngine, handleStopEngine]);
 
-  const handleNicheChange = useCallback((niche: string) => {
-    setState(prev => ({ ...prev, niche }));
-  }, []);
-
   const handleNicheLockToggle = useCallback(() => {
     setState(prev => ({ ...prev, nicheLocked: !prev.nicheLocked }));
   }, []);
 
   const handleRegionsChange = useCallback((regions: string[]) => {
     setState(prev => ({ ...prev, selectedRegions: regions }));
-  }, []);
-
-  const handleStartOver = useCallback(() => {
-    // Clear validation data
-    setValidationData(null);
-    setValidationSessionId(null);
-    setIsValidating(false);
-    setShowValidation(false);
-    setGapAnalysis([]);
-    setImprovedIdea(null);
-    setBusinessPlanData(null);
-    setChartData(null);
-    
-    // Clear localStorage
-    localStorage.removeItem('curatos_validation_session');
-    localStorage.removeItem('curatos_validation_data');
-    
-    // Navigate back to INPUT
-    setActiveSection('INPUT');
   }, []);
 
   const handleCloseGaps = useCallback(async () => {
@@ -1420,9 +1353,8 @@ Respond ONLY with valid JSON, no other text.`;
 
   // Navigation handlers
   const handleNextStage = useCallback(() => {
-    const sectionOrder: SectionKey[] = ['INPUT', 'PROCESSING', 'BUSINESS_PLAN', 'PRD', 'AUTOCODER'];
-    const currentIndex = sectionOrder.indexOf(activeSection);
-    const nextUnlocked = sectionOrder.slice(currentIndex + 1).find(section => unlockedSections.includes(section));
+    const currentIndex = SECTION_ORDER.indexOf(activeSection);
+    const nextUnlocked = SECTION_ORDER.slice(currentIndex + 1).find(section => unlockedSections.includes(section));
     if (nextUnlocked) {
       setActiveSection(nextUnlocked);
     }
@@ -1445,9 +1377,8 @@ Respond ONLY with valid JSON, no other text.`;
   }, []);
 
   const getNextUnlockedSection = useCallback(() => {
-    const sectionOrder: SectionKey[] = ['INPUT', 'PROCESSING', 'BUSINESS_PLAN', 'PRD', 'AUTOCODER'];
-    const currentIndex = sectionOrder.indexOf(activeSection);
-    return sectionOrder.slice(currentIndex + 1).find(section => unlockedSections.includes(section));
+    const currentIndex = SECTION_ORDER.indexOf(activeSection);
+    return SECTION_ORDER.slice(currentIndex + 1).find(section => unlockedSections.includes(section));
   }, [activeSection, unlockedSections]);
 
   const handleGenerateBusinessPlan = async () => {
@@ -1581,33 +1512,6 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
 
 *Generated by Curatos - Autonomous AI Hypothesis Engine*
 `;
-  };
-
-  const countGreenFacts = () => {
-    const count = state.hypotheses.filter(h => h.state === 'fact').length;
-    console.log('[DEBUG] countGreenFacts:', count);
-    return count;
-  };
-
-  const countSolutionsGreenFacts = () => {
-    const count = state.solutions.filter(h => h.state === 'fact').length;
-    console.log('[DEBUG] countSolutionsGreenFacts:', count);
-    return count;
-  };
-
-  const countRequirementsGreenFacts = () => {
-    const count = state.requirements.filter(h => h.state === 'fact').length;
-    console.log('[DEBUG] countRequirementsGreenFacts:', count);
-    return count;
-  };
-
-  const getProvider = () => 'openrouter';
-  const getModel = () => 'deepseek-chat';
-
-  const getActiveColumns = () => {
-    const columns = ['problems', 'solutions'];
-    if (state.requirementsUnlocked) columns.push('requirements');
-    return columns;
   };
 
   return (

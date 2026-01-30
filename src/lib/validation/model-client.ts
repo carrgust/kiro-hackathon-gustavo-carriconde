@@ -1,7 +1,5 @@
 import { FALLBACK_CHAIN } from '@/lib/config/models';
 
-const MODEL_FALLBACK_CHAIN = FALLBACK_CHAIN;
-
 export async function callWithFallback(
   apiKey: string,
   messages: { role: string; content: string }[],
@@ -9,7 +7,7 @@ export async function callWithFallback(
 ): Promise<string> {
   const errors: string[] = [];
   
-  for (const model of MODEL_FALLBACK_CHAIN) {
+  for (const model of FALLBACK_CHAIN) {
     try {
       console.log(`[ModelClient] Trying model: ${model}`);
       

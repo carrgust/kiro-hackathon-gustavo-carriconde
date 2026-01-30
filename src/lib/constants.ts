@@ -13,14 +13,6 @@ export const LIMITS = {
   RATE_LIMIT_PER_MINUTE: 100, // API rate limit
 } as const;
 
-// @deprecated - Use src/lib/scoring/gates.ts for new scoring logic
-export const SCORES = {
-  DNA_UNLOCK_THRESHOLD: 2, // Minimum validated hypotheses to unlock DNA
-  CONFIDENCE_THRESHOLD: 90, // Minimum confidence to consider validated (fact)
-  REQUIREMENTS_UNLOCK_PROBLEMS: 3, // Green facts needed in problems
-  REQUIREMENTS_UNLOCK_SOLUTIONS: 3, // Green facts needed in solutions
-} as const;
-
 export const STORAGE_KEYS = {
   API_KEY: 'curatos_api_key',
   TOTAL_SPENT: 'curatos_total_spent',
