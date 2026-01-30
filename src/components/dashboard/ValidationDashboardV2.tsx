@@ -87,7 +87,6 @@ interface ValidationDashboardV2Props {
   gapAnalysis?: GapAnalysis[];
   isAnalyzingGaps?: boolean;
   improvedIdea?: Record<string, string>;
-  onNavigateToPRD?: () => void;
   isResearchComplete?: boolean;
 }
 
@@ -114,7 +113,6 @@ export default function ValidationDashboardV2({
   gapAnalysis = [],
   isAnalyzingGaps = false,
   improvedIdea,
-  onNavigateToPRD,
   isResearchComplete = false
 }: ValidationDashboardV2Props) {
   const verdict = overallScore ? getScoreVerdict(overallScore) : '';

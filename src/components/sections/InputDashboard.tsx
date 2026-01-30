@@ -140,16 +140,6 @@ export default function InputDashboard({
     }
   };
 
-  const handleConfirmValidation = () => {
-    if (onStartValidation && analysis) {
-      // Convert analysis object to string for backward compatibility
-      const canonicalDescription = Object.entries(analysis)
-        .map(([key, value]) => `${key.toUpperCase()}: ${value}`)
-        .join('\n\n');
-      onStartValidation(niche, canonicalDescription, geography);
-    }
-  };
-
   const handleEditPillar = (pillar: string, text: string) => {
     setEditingPillar(pillar);
     setEditText(text);
@@ -188,15 +178,6 @@ export default function InputDashboard({
             <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Business Idea</h1>
             <p className="text-blue-200 text-sm sm:text-base">Define your market niche and validate your idea</p>
           </div>
-          {showCanonical && (
-            <button
-              onClick={handleStartOver}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm border border-white/20 rounded-lg text-white/60 hover:text-white hover:border-white/40 transition-all"
-            >
-              <RotateCcw size={14} />
-              Start Over
-            </button>
-          )}
         </div>
 
         {/* Configuration Card */}
@@ -384,21 +365,6 @@ export default function InputDashboard({
                   >
                     <FlaskConical size={20} />
                     Regenerate
-                  </motion.button>
-
-                  <motion.button
-                    onClick={handleConfirmValidation}
-                    disabled={!analysis}
-                    className={`flex-1 py-3 rounded-lg font-medium text-white transition-all flex items-center justify-center gap-2 ${
-                      analysis
-                        ? 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-md shadow-orange-500/30 hover:shadow-lg hover:shadow-orange-500/40'
-                        : 'bg-gray-600 cursor-not-allowed opacity-50'
-                    }`}
-                    whileHover={analysis ? { scale: 1.02 } : {}}
-                    whileTap={analysis ? { scale: 0.98 } : {}}
-                  >
-                    <CheckCircle size={20} />
-                    Confirm & Start Validation
                   </motion.button>
                 </div>
               </GlassCard>

@@ -23,7 +23,6 @@ import ConfirmationModal from '@/components/dashboard/ConfirmationModal';
 import HypothesisModal from '@/components/dashboard/HypothesisModal';
 import ValidationDashboardV2 from '@/components/dashboard/ValidationDashboardV2';
 import SourceModal from '@/components/dashboard/SourceModal';
-import BusinessPlanConfirmModal from '@/components/dashboard/BusinessPlanConfirmModal';
 import ModalLoading from '@/components/ui/ModalLoading';
 import { KeyboardShortcuts } from '@/components/ui/KeyboardShortcuts';
 import StopProcessingButton from '@/components/dashboard/StopProcessingButton';
@@ -199,7 +198,6 @@ export default function Dashboard() {
   const [businessPlanData, setBusinessPlanData] = useState<any>(null);
   const [chartData, setChartData] = useState<any>(null);
   const [isGeneratingBusinessPlan, setIsGeneratingBusinessPlan] = useState(false);
-  const [showBusinessPlanConfirm, setShowBusinessPlanConfirm] = useState(false);
   const [clearInputAnalysis, setClearInputAnalysis] = useState(false);
 
   // Scoring hook for stage progression
@@ -1640,7 +1638,6 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
               gapAnalysis={gapAnalysis}
               isAnalyzingGaps={isAnalyzingGaps}
               improvedIdea={improvedIdea}
-              onNavigateToPRD={() => setShowBusinessPlanConfirm(true)}
               isResearchComplete={!isValidating}
             />
           </ProcessingSection>
@@ -1748,17 +1745,6 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
       <SourceModal
         source={selectedSource}
         onClose={() => setSelectedSource(null)}
-      />
-
-      {/* Business Plan Confirm Modal */}
-      <BusinessPlanConfirmModal
-        isOpen={showBusinessPlanConfirm}
-        onClose={() => setShowBusinessPlanConfirm(false)}
-        onConfirm={() => {
-          setActiveSection('BUSINESS_PLAN');
-          handleGenerateBusinessPlan();
-        }}
-        onGoBack={() => setActiveSection('PROCESSING')}
       />
 
       {/* Keyboard Shortcuts */}
