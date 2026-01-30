@@ -8,7 +8,7 @@ RULES:
 2. Feature 2: Navigation/header section
 3. Features 3-N: Visual sections top-to-bottom (hero, features, content, testimonials, pricing, CTA, footer)
 4. Last feature: Polish, animations, scroll effects, responsive fixes
-5. Total: 5-10 features maximum
+5. Total: 5-7 features maximum (NEVER more than 7)
 6. Each feature must reference its FR-xxx and US-xxx IDs where applicable
 
 Return ONLY a JSON object with a "features" array. Each feature object must have:

@@ -1425,6 +1425,13 @@ Respond ONLY with valid JSON, no other text.`;
     }
   }, [activeSection, businessPlanData, isGeneratingBusinessPlan, validationData, improvedIdea]);
 
+  // Auto-generate PRD when navigating to PRD section
+  useEffect(() => {
+    if (activeSection === 'PRD' && !prdData && !isGeneratingPRD && validationData) {
+      handleGeneratePRD();
+    }
+  }, [activeSection, prdData, isGeneratingPRD, validationData]);
+
   // Auto-start deep validation when navigating to PROCESSING section
   useEffect(() => {
     if (activeSection === 'PROCESSING' && !validationSessionId && !isValidating && normalizedAnalysis && state.niche) {
@@ -1447,7 +1454,7 @@ Respond ONLY with valid JSON, no other text.`;
     });
     setChartData(DEMO_BUSINESS_PLAN.chart_data);
     setPrdData(DEMO_PRD_DATA);
-    setUnlockedSections(['INPUT', 'PROCESSING', 'BUSINESS_PLAN', 'PRD']);
+    setUnlockedSections(['INPUT', 'PROCESSING', 'BUSINESS_PLAN', 'PRD', 'AUTOCODER']);
     setActiveSection('PROCESSING');
     toast.success('Demo mode loaded');
   };
@@ -1685,6 +1692,7 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
             isGenerating={isGeneratingPRD}
             onGenerate={handleGeneratePRD}
             canGenerate={!!businessPlanData}
+            onNextStage={unlockedSections.includes('AUTOCODER') ? handleNextStage : undefined}
           />
         </div>
         
@@ -1775,15 +1783,15 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
       />
       
       {/* Toast Notifications */}
-      <Toaster 
-        position="top-right" 
+      <Toaster
+        position="top-right"
         theme="dark"
         toastOptions={{
           style: {
             background: 'rgba(26, 26, 36, 0.95)',
             border: '1px solid rgba(148, 163, 184, 0.2)',
             backdropFilter: 'blur(12px)',
-            color: 'var(--text-primary-color)',
+            color: '#FFFFFF',
           },
           className: 'font-mono text-sm',
         }}

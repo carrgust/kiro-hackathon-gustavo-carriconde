@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Users, BookOpen, Cpu, Shield, ChevronDown, ChevronUp } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 // TypeScript interfaces for structured PRD data
 export interface TargetUser {
@@ -51,6 +51,7 @@ interface PRDSectionProps {
   isGenerating: boolean;
   onGenerate: () => void;
   canGenerate: boolean;
+  onNextStage?: () => void;
 }
 
 // Section config
@@ -62,8 +63,24 @@ const SECTIONS = [
   { key: 'non_functional_requirements' as const, label: 'Non-Functional Requirements', icon: Shield },
 ];
 
-export default function PRDSection({ prdData, isGenerating, onGenerate, canGenerate }: PRDSectionProps) {
+export default function PRDSection({ prdData, isGenerating, onGenerate, canGenerate, onNextStage }: PRDSectionProps) {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(SECTIONS.map(s => s.key)));
+  const [revealedSections, setRevealedSections] = useState<string[]>([]);
+
+  // Sequential reveal: when prdData arrives, reveal sections one by one
+  useEffect(() => {
+    if (!prdData) {
+      setRevealedSections([]);
+      return;
+    }
+
+    const sectionKeys = SECTIONS.map(s => s.key);
+    sectionKeys.forEach((key, index) => {
+      setTimeout(() => {
+        setRevealedSections(prev => [...prev, key]);
+      }, index * 600);
+    });
+  }, [prdData]);
 
   const toggleSection = (key: string) => {
     setExpandedSections(prev => {
@@ -80,6 +97,7 @@ export default function PRDSection({ prdData, isGenerating, onGenerate, canGener
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       className="w-full max-w-5xl mx-auto space-y-6"
+      style={{ fontFamily: "'OCR-B', monospace" }}
     >
       {/* Header */}
       <div className="text-center mb-8">
@@ -87,45 +105,38 @@ export default function PRDSection({ prdData, isGenerating, onGenerate, canGener
         <p className="text-cyan-200/60">MVP PRD with traceability — Users → Stories → Requirements</p>
       </div>
 
-      {/* Generate Button */}
+      {/* Loading State — shown when no data yet */}
       {!prdData && (
-        <motion.button
-          onClick={onGenerate}
-          disabled={!canGenerate || isGenerating}
-          className="w-full py-4 rounded-xl font-semibold text-white bg-gradient-to-r from-cyan-500 to-teal-600 hover:from-cyan-400 hover:to-teal-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          whileHover={canGenerate && !isGenerating ? { scale: 1.02 } : {}}
-          whileTap={canGenerate && !isGenerating ? { scale: 0.98 } : {}}
-        >
-          <FileText size={20} />
-          {isGenerating ? 'Generating PRD...' : 'Generate PRD'}
-        </motion.button>
-      )}
-
-      {/* Loading State */}
-      {isGenerating && (
-        <div className="flex flex-col items-center gap-4 py-12">
+        <div className="flex flex-col items-center gap-4 py-16">
           <div className="w-12 h-12 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />
-          <p className="text-cyan-300 font-medium">Analyzing business data and generating structured PRD...</p>
+          <motion.p
+            className="text-cyan-300 font-medium"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            {isGenerating ? 'Analyzing business data and generating structured PRD...' : 'Preparing PRD generation...'}
+          </motion.p>
         </div>
       )}
 
-      {/* PRD Content */}
+      {/* PRD Content — sections revealed sequentially */}
       {prdData && (
         <>
-          {/* Outer card matching Business Plan style */}
           <div className="rounded-2xl p-6 space-y-6" style={{ background: 'rgba(6, 182, 212, 0.08)', border: '1px solid rgba(6, 182, 212, 0.15)' }}>
-            {/* Sections */}
             {SECTIONS.map(({ key, label, icon: Icon }) => {
+              if (!revealedSections.includes(key)) return null;
+
               const isExpanded = expandedSections.has(key);
               return (
                 <motion.div
                   key={key}
                   className="rounded-xl overflow-hidden"
                   style={{ background: 'rgba(6, 182, 212, 0.06)', border: '1px solid rgba(6, 182, 212, 0.1)' }}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
                 >
-                  {/* Section Header — colored uppercase like Business Plan */}
+                  {/* Section Header */}
                   <button
                     onClick={() => toggleSection(key)}
                     className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/5 transition-colors"
@@ -285,6 +296,33 @@ export default function PRDSection({ prdData, isGenerating, onGenerate, canGener
               );
             })}
           </div>
+
+          {/* Next Stage button — appears after all sections revealed */}
+          {revealedSections.length === SECTIONS.length && onNextStage && (
+            <motion.button
+              onClick={onNextStage}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="w-full py-4 rounded-xl font-semibold text-white flex items-center justify-center gap-2"
+              style={{
+                background: 'linear-gradient(135deg, #10B981, #059669)',
+                boxShadow: '0 0 20px rgba(16, 185, 129, 0.4), 0 0 40px rgba(16, 185, 129, 0.15)',
+                animation: 'bounceGlow 1.5s ease-in-out infinite',
+              }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Next Stage → Auto Coder
+            </motion.button>
+          )}
+
+          <style jsx>{`
+            @keyframes bounceGlow {
+              0%, 100% { transform: translateY(0); box-shadow: 0 0 20px rgba(16, 185, 129, 0.4), 0 0 40px rgba(16, 185, 129, 0.15); }
+              50% { transform: translateY(-4px); box-shadow: 0 0 30px rgba(16, 185, 129, 0.6), 0 0 60px rgba(16, 185, 129, 0.25); }
+            }
+          `}</style>
         </>
       )}
     </motion.div>

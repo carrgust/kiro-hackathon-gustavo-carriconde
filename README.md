@@ -162,4 +162,4 @@ This project was built using [Kiro CLI](https://kiro.dev) for the **Dynamous x K
 
 ## License
 
-MIT — [Gustavo Martini Carriconde](https://github.com/carrgust) — Dynamous x Kiro Hackathon 2026
+MIT — [Gustavo Carriconde](https://github.com/carrgust) — Dynamous x Kiro Hackathon 2026

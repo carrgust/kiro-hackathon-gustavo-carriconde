@@ -1,6 +1,7 @@
 import { AUTOCODER_FALLBACK_CHAIN } from '@/lib/config/models';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const LLM_TIMEOUT_MS = 90_000; // 90 seconds per call
 
 export async function callLLM(
   messages: { role: string; content: string }[],
@@ -12,6 +13,9 @@ export async function callLLM(
   for (const model of AUTOCODER_FALLBACK_CHAIN) {
     try {
       console.log(`[AutoCoder] Trying model: ${model}`);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), LLM_TIMEOUT_MS);
+
       const res = await fetch(OPENROUTER_URL, {
         method: 'POST',
         headers: {
@@ -26,7 +30,10 @@ export async function callLLM(
           temperature: 0.7,
           max_tokens: options?.maxTokens ?? 16384,
         }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
+
       if (!res.ok) {
         console.log(`[AutoCoder] ${model} returned ${res.status}`);
         continue;
@@ -37,8 +44,12 @@ export async function callLLM(
         console.log(`[AutoCoder] ✓ ${model} returned ${content.length} chars`);
         return content;
       }
-    } catch (e) {
-      console.log(`[AutoCoder] ${model} error: ${e}`);
+    } catch (e: any) {
+      if (e.name === 'AbortError') {
+        console.log(`[AutoCoder] ${model} timed out after ${LLM_TIMEOUT_MS / 1000}s`);
+      } else {
+        console.log(`[AutoCoder] ${model} error: ${e}`);
+      }
       continue;
     }
   }
