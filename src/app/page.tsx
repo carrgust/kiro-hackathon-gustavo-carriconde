@@ -1711,7 +1711,7 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
           )}
           
           {activeSection === 'AUTOCODER' && (
-            <AutoCoderSection key="autocoder" />
+            <AutoCoderSection key="autocoder" prdData={prdData} />
           )}
         </AnimatePresence>
       </main>
