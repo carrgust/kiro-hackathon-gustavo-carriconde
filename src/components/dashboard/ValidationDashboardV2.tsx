@@ -258,10 +258,11 @@ export default function ValidationDashboardV2({
               className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all whitespace-nowrap"
               style={{
                 background: isAnalyzingGaps 
-                  ? 'rgba(245, 158, 11, 0.5)' 
-                  : 'linear-gradient(135deg, #F59E0B, #D97706)',
+                  ? 'rgba(34, 197, 94, 0.5)' 
+                  : 'linear-gradient(135deg, #22C55E, #16A34A)',
                 cursor: isAnalyzingGaps ? 'not-allowed' : 'pointer',
-                animation: isAnalyzingGaps ? 'none' : 'gapGlow 1.5s ease-in-out infinite'
+                animation: isAnalyzingGaps ? 'none' : 'bounceGlow 1.5s ease-in-out infinite',
+                boxShadow: isAnalyzingGaps ? 'none' : '0 0 20px rgba(34, 197, 94, 0.5), 0 0 40px rgba(34, 197, 94, 0.2)'
               }}
               whileHover={!isAnalyzingGaps ? { scale: 1.05 } : {}}
               whileTap={!isAnalyzingGaps ? { scale: 0.95 } : {}}
@@ -284,6 +285,10 @@ export default function ValidationDashboardV2({
             0%, 100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
             50% { box-shadow: 0 0 40px rgba(245, 158, 11, 0.8), 0 0 80px rgba(245, 158, 11, 0.4); }
           }
+          @keyframes bounceGlow {
+            0%, 100% { transform: translateY(0); box-shadow: 0 0 20px rgba(34, 197, 94, 0.5); }
+            50% { transform: translateY(-4px); box-shadow: 0 0 30px rgba(34, 197, 94, 0.7), 0 0 60px rgba(34, 197, 94, 0.3); }
+          }
         `}</style>
       </motion.div>
 
@@ -293,7 +298,7 @@ export default function ValidationDashboardV2({
           <GlassCard className='p-6 space-y-4'>
             <div className='space-y-2'>
               <label className='text-sm font-medium text-white'>Refined Business Idea (7 Pillars)</label>
-              <div className='space-y-4'>
+              <div className='grid grid-cols-2 gap-4'>
                 {['problem', 'market', 'competition', 'solution', 'monetization', 'gtm', 'timing'].map((pillar) => {
                   if (!revealedPillars.includes(pillar)) return null;
                   
@@ -306,7 +311,7 @@ export default function ValidationDashboardV2({
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.4 }}
-                      className='bg-white/5 border border-white/10 rounded-lg p-4'
+                      className={`bg-white/5 border border-white/10 rounded-lg p-4 ${pillar === 'timing' ? 'col-span-2' : ''}`}
                     >
                       <div className='flex items-center justify-between mb-2'>
                         <h3 className='text-sm font-semibold text-orange-400 uppercase'>{pillar}</h3>

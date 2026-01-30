@@ -199,6 +199,7 @@ export default function Dashboard() {
   const [chartData, setChartData] = useState<any>(null);
   const [isGeneratingBusinessPlan, setIsGeneratingBusinessPlan] = useState(false);
   const [clearInputAnalysis, setClearInputAnalysis] = useState(false);
+  const [normalizedAnalysis, setNormalizedAnalysis] = useState<any>(null);
 
   // Scoring hook for stage progression
   const scoring = useScoring({
@@ -1352,9 +1353,13 @@ Respond ONLY with valid JSON, no other text.`;
     const currentIndex = SECTION_ORDER.indexOf(activeSection);
     const nextUnlocked = SECTION_ORDER.slice(currentIndex + 1).find(section => unlockedSections.includes(section));
     if (nextUnlocked) {
+      // Auto-start validation when navigating from INPUT to PROCESSING
+      if (activeSection === 'INPUT' && nextUnlocked === 'PROCESSING' && normalizedAnalysis) {
+        startValidation(state.niche, normalizedAnalysis.normalized_idea || state.niche, geography);
+      }
       setActiveSection(nextUnlocked);
     }
-  }, [activeSection, unlockedSections]);
+  }, [activeSection, unlockedSections, normalizedAnalysis, state.niche, geography]);
 
   const handleCompleteStartOver = useCallback(() => {
     setActiveSection('INPUT');
@@ -1598,6 +1603,13 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
             }}
             onDemoMode={loadDemoMode}
             clearAnalysis={clearInputAnalysis}
+            onNormalizationComplete={(analysis) => {
+              setNormalizedAnalysis(analysis);
+              setUnlockedSections(prev => {
+                const s = new Set([...prev, 'PROCESSING']);
+                return Array.from(s) as SectionKey[];
+              });
+            }}
           />
         </div>
         

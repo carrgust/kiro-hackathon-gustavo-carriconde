@@ -12,6 +12,7 @@ interface InputDashboardProps {
   onStartValidation?: (niche: string, canonicalDescription: string, geography: string) => void;
   onDemoMode?: () => void;
   clearAnalysis?: boolean;
+  onNormalizationComplete?: (analysis: any) => void;
 }
 
 const NICHE_OPTIONS = [
@@ -45,6 +46,7 @@ export default function InputDashboard({
   onStartValidation,
   onDemoMode,
   clearAnalysis = false,
+  onNormalizationComplete,
 }: InputDashboardProps) {
   const [analysis, setAnalysis] = useState<any>(null);
   const [showCanonical, setShowCanonical] = useState(false);
@@ -98,6 +100,9 @@ export default function InputDashboard({
       if (data.analysis) {
         setAnalysis(data.analysis);
         setShowCanonical(true);
+        
+        // Notify parent that normalization is complete
+        onNormalizationComplete?.(data.analysis);
         
         // Save to localStorage
         localStorage.setItem('curatos_analysis', JSON.stringify(data.analysis));
