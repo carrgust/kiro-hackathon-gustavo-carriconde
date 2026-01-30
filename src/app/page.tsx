@@ -319,7 +319,6 @@ export default function Dashboard() {
           setIsValidating(false);
           clearInterval(poll);
           addRationale(`[VALIDATION COMPLETE] Score: ${data.overallScore}/100 - ${data.scoreLabel}`);
-          toast.success(`Validation complete! Score: ${data.overallScore}/100`);
         }
       } catch (error) {
         console.error('Validation poll error:', error);
@@ -1645,6 +1644,7 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
               isAnalyzingGaps={isAnalyzingGaps}
               improvedIdea={improvedIdea}
               onNavigateToPRD={() => setShowBusinessPlanConfirm(true)}
+              isResearchComplete={!isValidating}
             />
           </ProcessingSection>
         </div>

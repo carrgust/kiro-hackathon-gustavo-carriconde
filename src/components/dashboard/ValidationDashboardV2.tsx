@@ -88,6 +88,7 @@ interface ValidationDashboardV2Props {
   isAnalyzingGaps?: boolean;
   improvedIdea?: Record<string, string>;
   onNavigateToPRD?: () => void;
+  isResearchComplete?: boolean;
 }
 
 // Score label based on value
@@ -113,7 +114,8 @@ export default function ValidationDashboardV2({
   gapAnalysis = [],
   isAnalyzingGaps = false,
   improvedIdea,
-  onNavigateToPRD
+  onNavigateToPRD,
+  isResearchComplete = false
 }: ValidationDashboardV2Props) {
   const verdict = overallScore ? getScoreVerdict(overallScore) : '';
   const gapPillars = pillars.filter(p => (p.score ?? 0) < 70);
@@ -249,8 +251,8 @@ export default function ValidationDashboardV2({
             </div>
           </div>
           
-          {/* Action Button - Close Gaps or Write Business Plan */}
-          {onCloseGaps && gapPillars.length > 0 && gapAnalysis.length === 0 && (
+          {/* Action Button - Refine Business Idea or Confirm and Proceed */}
+          {onCloseGaps && gapPillars.length > 0 && gapAnalysis.length === 0 && isResearchComplete && (
             <motion.button
               ref={closeGapsRef}
               onClick={onCloseGaps}
@@ -267,7 +269,7 @@ export default function ValidationDashboardV2({
               whileTap={!isAnalyzingGaps ? { scale: 0.95 } : {}}
             >
               <Target size={18} />
-              {isAnalyzingGaps ? 'Analyzing...' : `Close the Gaps (${gapPillars.length})`}
+              {isAnalyzingGaps ? 'Analyzing...' : 'Refine Business Idea'}
             </motion.button>
           )}
           
@@ -279,7 +281,7 @@ export default function ValidationDashboardV2({
               whileTap={{ scale: 0.95 }}
             >
               <CheckCircle size={18} />
-              Write Business Plan
+              Confirm and Proceed to Business Plan
             </motion.button>
           )}
         </div>
@@ -299,83 +301,12 @@ export default function ValidationDashboardV2({
         `}</style>
       </motion.div>
 
-      {/* Evidence Matrix */}
-      <EvidenceMatrix pillars={pillars} onSourceClick={onSourceClick} />
-
-      {/* Gap Analysis Results */}
-      {gapAnalysis.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-8 space-y-4"
-          style={{ maxWidth: '1200px', margin: '32px auto 0' }}
-        >
-          <h3 className="text-xl font-bold text-white mb-4 px-4">Gap Analysis & Action Plan</h3>
-          {gapAnalysis.map((gap, idx) => (
-            <motion.div
-              key={gap.pillarName}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: idx * 0.1 }}
-              className="p-6 rounded-xl"
-              style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)'
-              }}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <h4 className="text-lg font-semibold text-white">{gap.pillarName}</h4>
-                  <span 
-                    className="text-2xl font-bold"
-                    style={{ 
-                      color: gap.score >= 50 ? '#F59E0B' : '#EF4444' 
-                    }}
-                  >
-                    {gap.score}
-                  </span>
-                </div>
-                <span 
-                  className="px-3 py-1 rounded-full text-xs font-bold"
-                  style={{
-                    background: gap.priority === 'HIGH' 
-                      ? 'rgba(239, 68, 68, 0.2)' 
-                      : gap.priority === 'MEDIUM' 
-                      ? 'rgba(245, 158, 11, 0.2)' 
-                      : 'rgba(156, 163, 175, 0.2)',
-                    color: gap.priority === 'HIGH' 
-                      ? '#EF4444' 
-                      : gap.priority === 'MEDIUM' 
-                      ? '#F59E0B' 
-                      : '#9CA3AF'
-                  }}
-                >
-                  {gap.priority} PRIORITY
-                </span>
-              </div>
-              
-              <p className="text-sm italic text-gray-400 mb-4">{gap.diagnosis}</p>
-              
-              <div className="space-y-2">
-                {gap.actions.map((action, actionIdx) => (
-                  <div key={actionIdx} className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-gray-300">{action}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-      )}
-
-      {/* Improved Business Idea */}
+      {/* Refined Business Idea */}
       {improvedIdea && (
-        <div ref={improvedIdeaRef} style={{ maxWidth: '1000px', width: '100%', margin: '48px auto 0', padding: '0 20px' }}>
+        <div ref={improvedIdeaRef} style={{ maxWidth: '1000px', width: '100%', margin: '32px auto', padding: '0 20px' }}>
           <GlassCard className='p-6 space-y-4'>
             <div className='space-y-2'>
-              <label className='text-sm font-medium text-white'>Improved Business Idea (7 Pillars)</label>
+              <label className='text-sm font-medium text-white'>Refined Business Idea (7 Pillars)</label>
               <div className='space-y-4'>
                 {['problem', 'market', 'competition', 'solution', 'monetization', 'gtm', 'timing'].map((pillar) => {
                   if (!revealedPillars.includes(pillar)) return null;
@@ -458,6 +389,9 @@ export default function ValidationDashboardV2({
           </GlassCard>
         </div>
       )}
+
+      {/* Evidence Matrix */}
+      <EvidenceMatrix pillars={pillars} onSourceClick={onSourceClick} />
     </div>
   );
 }
