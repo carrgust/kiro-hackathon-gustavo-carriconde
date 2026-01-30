@@ -78,23 +78,7 @@ export default function InputDashboard({
 
   const geographyQuality = geography ? (GDP_SCORES[geography] || 50) : 0;
 
-  // Restore from localStorage on mount
-  useEffect(() => {
-    const savedAnalysis = localStorage.getItem('curatos_analysis');
-    const savedNiche = localStorage.getItem('curatos_niche');
-    
-    if (savedAnalysis) {
-      const parsed = JSON.parse(savedAnalysis);
-      setAnalysis(parsed);
-      setShowCanonical(true);
-      setRevealedPillars(['problem', 'market', 'competition', 'solution', 'monetization', 'gtm', 'timing']);
-      setTypewriterTexts(parsed);
-    }
-    
-    if (savedNiche && !niche) {
-      onNicheChange(savedNiche);
-    }
-  }, []);
+  // localStorage loading disabled - component always starts fresh
 
   const handleValidateIdea = async () => {
     if (!niche) return;
