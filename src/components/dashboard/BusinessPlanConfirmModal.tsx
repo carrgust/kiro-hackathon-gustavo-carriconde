@@ -92,7 +92,6 @@ export default function BusinessPlanConfirmModal({
                   background: 'linear-gradient(135deg, #10b981, #059669)',
                 }}
               >
-                <FileText size={18} />
                 Confirm and Create Business Plan
               </button>
             </div>
