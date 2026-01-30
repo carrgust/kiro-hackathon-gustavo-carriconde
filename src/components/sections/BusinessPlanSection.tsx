@@ -5,7 +5,6 @@ import { FileText, Copy, Loader2, Pencil, ArrowRight } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import GlassCard from '@/components/GlassCard';
-import { pageVariants } from '@/lib/animations';
 import { toast } from 'sonner';
 
 const PDFDownloadButton = dynamic(() => import('@/components/pdf/PDFDownloadButton'), { ssr: false });
@@ -186,12 +185,8 @@ export default function BusinessPlanSection({
   };
 
   return (
-    <motion.div
+    <div
       className="min-h-screen bg-gradient-to-br from-emerald-500 to-green-800 p-8"
-      variants={pageVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
     >
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="text-center mb-8">
@@ -376,6 +371,6 @@ export default function BusinessPlanSection({
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }

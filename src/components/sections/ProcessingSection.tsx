@@ -1,6 +1,4 @@
-import { motion } from 'framer-motion';
 import { ReactNode } from 'react';
-import { pageVariants } from '@/lib/animations';
 
 interface ProcessingSectionProps {
   children: ReactNode;
@@ -14,12 +12,8 @@ export default function ProcessingSection({
   isProcessing,
 }: ProcessingSectionProps) {
   return (
-    <motion.div
+    <div
       className="min-h-screen bg-gradient-to-br from-yellow-500 via-amber-600 to-amber-700 p-8"
-      variants={pageVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
     >
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
@@ -31,6 +25,6 @@ export default function ProcessingSection({
         {/* Content */}
         {children}
       </div>
-    </motion.div>
+    </div>
   );
 }

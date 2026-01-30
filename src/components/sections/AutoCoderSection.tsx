@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Loader2, CheckCircle, XCircle, SkipForward, Download, ExternalLink, RefreshCw } from 'lucide-react';
 import GlassCard from '@/components/GlassCard';
-import { pageVariants } from '@/lib/animations';
 
 interface Feature {
   id: string;
@@ -153,12 +152,8 @@ export default function AutoCoderSection({ prdData }: AutoCoderSectionProps) {
   const progressPct = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
 
   return (
-    <motion.div
+    <div
       className="min-h-screen bg-gradient-to-br from-purple-900 via-violet-800 to-indigo-900 p-4 sm:p-8"
-      variants={pageVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
     >
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="text-center mb-8">
@@ -332,6 +327,6 @@ export default function AutoCoderSection({ prdData }: AutoCoderSectionProps) {
           </GlassCard>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }

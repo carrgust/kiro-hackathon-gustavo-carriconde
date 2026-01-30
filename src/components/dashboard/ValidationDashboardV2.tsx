@@ -118,7 +118,7 @@ export default function ValidationDashboardV2({
   const verdict = overallScore ? getScoreVerdict(overallScore) : '';
   const gapPillars = pillars.filter(p => (p.score ?? 0) < 70);
   
-  const closeGapsRef = useRef<HTMLDivElement>(null);
+  const closeGapsRef = useRef<HTMLButtonElement>(null);
   const improvedIdeaRef = useRef<HTMLDivElement>(null);
   const [revealedPillars, setRevealedPillars] = useState<string[]>([]);
   const [typewriterTexts, setTypewriterTexts] = useState<Record<string, string>>({});
@@ -248,6 +248,40 @@ export default function ValidationDashboardV2({
               />
             </div>
           </div>
+          
+          {/* Action Button - Close Gaps or Write Business Plan */}
+          {onCloseGaps && gapPillars.length > 0 && gapAnalysis.length === 0 && (
+            <motion.button
+              ref={closeGapsRef}
+              onClick={onCloseGaps}
+              disabled={isAnalyzingGaps}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all whitespace-nowrap"
+              style={{
+                background: isAnalyzingGaps 
+                  ? 'rgba(245, 158, 11, 0.5)' 
+                  : 'linear-gradient(135deg, #F59E0B, #D97706)',
+                cursor: isAnalyzingGaps ? 'not-allowed' : 'pointer',
+                animation: isAnalyzingGaps ? 'none' : 'gapGlow 1.5s ease-in-out infinite'
+              }}
+              whileHover={!isAnalyzingGaps ? { scale: 1.05 } : {}}
+              whileTap={!isAnalyzingGaps ? { scale: 0.95 } : {}}
+            >
+              <Target size={18} />
+              {isAnalyzingGaps ? 'Analyzing...' : `Close the Gaps (${gapPillars.length})`}
+            </motion.button>
+          )}
+          
+          {onNavigateToPRD && gapAnalysis.length > 0 && improvedIdea && (
+            <motion.button
+              onClick={onNavigateToPRD}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all whitespace-nowrap bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-md shadow-orange-500/30"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <CheckCircle size={18} />
+              Write Business Plan
+            </motion.button>
+          )}
         </div>
         <div className="vd-overall-mini-scores">
           {pillars.slice(0, 7).map((pillar) => (
@@ -257,39 +291,16 @@ export default function ValidationDashboardV2({
             </div>
           ))}
         </div>
+        <style jsx>{`
+          @keyframes gapGlow {
+            0%, 100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(245, 158, 11, 0.8), 0 0 80px rgba(245, 158, 11, 0.4); }
+          }
+        `}</style>
       </motion.div>
 
       {/* Evidence Matrix */}
       <EvidenceMatrix pillars={pillars} onSourceClick={onSourceClick} />
-
-      {/* Close the Gaps Button */}
-      {onCloseGaps && gapPillars.length > 0 && gapAnalysis.length === 0 && (
-        <div ref={closeGapsRef} className="flex justify-center mt-8 mb-4">
-          <motion.button
-            onClick={onCloseGaps}
-            disabled={isAnalyzingGaps}
-            className="flex items-center gap-3 px-6 py-3 rounded-xl text-base font-semibold text-white transition-all"
-            style={{
-              background: isAnalyzingGaps 
-                ? 'rgba(245, 158, 11, 0.5)' 
-                : 'linear-gradient(135deg, #F59E0B, #D97706)',
-              cursor: isAnalyzingGaps ? 'not-allowed' : 'pointer',
-              animation: isAnalyzingGaps ? 'none' : 'gapGlow 1.5s ease-in-out infinite'
-            }}
-            whileHover={!isAnalyzingGaps ? { scale: 1.05 } : {}}
-            whileTap={!isAnalyzingGaps ? { scale: 0.95 } : {}}
-          >
-            <Target size={20} />
-            {isAnalyzingGaps ? 'Analyzing Gaps...' : `Close the Gaps (${gapPillars.length})`}
-          </motion.button>
-          <style jsx>{`
-            @keyframes gapGlow {
-              0%, 100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
-              50% { box-shadow: 0 0 40px rgba(245, 158, 11, 0.8), 0 0 80px rgba(245, 158, 11, 0.4); }
-            }
-          `}</style>
-        </div>
-      )}
 
       {/* Gap Analysis Results */}
       {gapAnalysis.length > 0 && (
