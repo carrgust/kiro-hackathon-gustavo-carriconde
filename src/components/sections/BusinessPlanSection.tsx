@@ -1,13 +1,12 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { FileText, Copy, Loader2, Pencil, ArrowRight } from 'lucide-react';
+import { FileText, Loader2, Pencil } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import GlassCard from '@/components/GlassCard';
 import { toast } from 'sonner';
 
-const PDFDownloadButton = dynamic(() => import('@/components/pdf/PDFDownloadButton'), { ssr: false });
 const ExecutiveSummaryCharts = dynamic(() => import('@/components/BusinessPlanCharts').then(m => ({ default: m.ExecutiveSummaryCharts })), { ssr: false });
 const MarketSalesCharts = dynamic(() => import('@/components/BusinessPlanCharts').then(m => ({ default: m.MarketSalesCharts })), { ssr: false });
 const TeamOperationsCharts = dynamic(() => import('@/components/BusinessPlanCharts').then(m => ({ default: m.TeamOperationsCharts })), { ssr: false });
@@ -24,7 +23,6 @@ interface BusinessPlanSectionProps {
   onGenerate: () => void;
   canGenerate: boolean;
   onUpdateSection?: (key: string, value: string) => void;
-  onProceedToPRD?: () => void;
   chartData?: {
     market_breakdown: Array<{ name: string; value: number; color: string }>;
     revenue_projections: Array<{ year: string; revenue: number; costs: number }>;
@@ -98,11 +96,9 @@ export default function BusinessPlanSection({
   onGenerate,
   canGenerate,
   onUpdateSection,
-  onProceedToPRD,
   chartData,
   ideaName,
 }: BusinessPlanSectionProps) {
-  const [copied, setCopied] = useState(false);
   const [revealedSections, setRevealedSections] = useState<string[]>([]);
   const [typewriterTexts, setTypewriterTexts] = useState<Record<string, string>>({});
   const [isRevealing, setIsRevealing] = useState(false);
@@ -172,17 +168,6 @@ export default function BusinessPlanSection({
 
     localStorage.setItem('curatos_business_plan_shown', JSON.stringify(businessPlan));
   }, [businessPlan]);
-
-  const handleCopy = async () => {
-    if (!businessPlan) return;
-    const fullText = SECTIONS.map(s =>
-      `## ${s.label}\n\n${typewriterTexts[s.key] || businessPlan[s.key as keyof typeof businessPlan]}`
-    ).join('\n\n---\n\n');
-    await navigator.clipboard.writeText(fullText);
-    setCopied(true);
-    toast.success('Business plan copied to clipboard');
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <div
@@ -303,35 +288,7 @@ export default function BusinessPlanSection({
                     <FileText size={18} />
                     Regenerate
                   </motion.button>
-                  <motion.button
-                    onClick={handleCopy}
-                    className="px-6 py-3 rounded-lg font-medium text-white transition-all flex items-center justify-center gap-2 bg-white/10 border border-white/20 hover:bg-white/20"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Copy size={18} />
-                    {copied ? 'Copied!' : 'Copy'}
-                  </motion.button>
-                  {businessPlan && (
-                    <PDFDownloadButton
-                      businessPlan={businessPlan}
-                      chartData={chartData}
-                      ideaName={ideaName || 'Business'}
-                    />
-                  )}
                 </div>
-              )}
-
-              {!isRevealing && businessPlan && onProceedToPRD && (
-                <motion.button
-                  onClick={onProceedToPRD}
-                  className="w-full mt-6 py-4 rounded-xl font-semibold text-white bg-gradient-to-r from-cyan-500 to-teal-600 hover:from-cyan-400 hover:to-teal-500 shadow-lg flex items-center justify-center gap-2"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Generate PRD - Next Step
-                  <ArrowRight size={20} />
-                </motion.button>
               )}
             </GlassCard>
           </div>

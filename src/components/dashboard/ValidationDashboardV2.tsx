@@ -251,8 +251,8 @@ export default function ValidationDashboardV2({
             </div>
           </div>
           
-          {/* Action Button - Refine Business Idea or Confirm and Proceed */}
-          {onCloseGaps && gapPillars.length > 0 && gapAnalysis.length === 0 && isResearchComplete && (
+          {/* Action Button - Refine Business Idea */}
+          {onCloseGaps && gapPillars.length > 0 && gapAnalysis.length === 0 && isResearchComplete && !improvedIdea && (
             <motion.button
               ref={closeGapsRef}
               onClick={onCloseGaps}
@@ -270,18 +270,6 @@ export default function ValidationDashboardV2({
             >
               <Target size={18} />
               {isAnalyzingGaps ? 'Analyzing...' : 'Refine Business Idea'}
-            </motion.button>
-          )}
-          
-          {onNavigateToPRD && gapAnalysis.length > 0 && improvedIdea && (
-            <motion.button
-              onClick={onNavigateToPRD}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all whitespace-nowrap bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-md shadow-orange-500/30"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <CheckCircle size={18} />
-              Confirm and Proceed to Business Plan
             </motion.button>
           )}
         </div>
@@ -375,15 +363,6 @@ export default function ValidationDashboardV2({
                 whileTap={{ scale: 0.98 }}
               >
                 Regenerate
-              </motion.button>
-              <motion.button
-                onClick={onNavigateToPRD}
-                className='flex-1 py-3 rounded-lg font-medium text-white transition-all flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-md shadow-orange-500/30'
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <CheckCircle size={20} />
-                Confirm and Proceed to Business Plan
               </motion.button>
             </div>
           </GlassCard>

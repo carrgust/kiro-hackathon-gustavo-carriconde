@@ -1519,21 +1519,18 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
       
       {/* Navigation Bar - Top Right */}
       <div className="fixed top-4 right-4 z-50 flex items-center gap-3">
-        <button
-          onClick={handleNextStage}
-          disabled={!getNextUnlockedSection()}
-          className={`px-6 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${
-            getNextUnlockedSection()
-              ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/50 hover:shadow-emerald-500/70 animate-pulse'
-              : 'bg-gray-700/50 text-gray-500 cursor-not-allowed'
-          }`}
-          style={{
-            backdropFilter: 'blur(12px)',
-            border: getNextUnlockedSection() ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(75, 85, 99, 0.3)'
-          }}
-        >
-          Next Stage →
-        </button>
+        {getNextUnlockedSection() && (
+          <button
+            onClick={handleNextStage}
+            className="px-6 py-3 rounded-lg font-medium transition-all flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/50 hover:shadow-emerald-500/70 animate-pulse"
+            style={{
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(16, 185, 129, 0.3)'
+            }}
+          >
+            Next Stage →
+          </button>
+        )}
         
         <button
           onClick={handleCompleteStartOver}
@@ -1656,7 +1653,6 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
             isGenerating={isGeneratingBusinessPlan}
             onGenerate={handleGenerateBusinessPlan}
             onUpdateSection={handleUpdateBusinessPlanSection}
-            onProceedToPRD={handleProceedToPRD}
             chartData={chartData}
             ideaName={validationData?.idea || 'Business'}
             canGenerate={!!improvedIdea}

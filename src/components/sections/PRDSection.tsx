@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, Users, BookOpen, Cpu, Shield, ChevronDown, ChevronUp, Copy, Download, Check } from 'lucide-react';
+import { FileText, Users, BookOpen, Cpu, Shield, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 
 // TypeScript interfaces for structured PRD data
@@ -64,7 +64,6 @@ const SECTIONS = [
 
 export default function PRDSection({ prdData, isGenerating, onGenerate, canGenerate }: PRDSectionProps) {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(SECTIONS.map(s => s.key)));
-  const [copied, setCopied] = useState(false);
 
   const toggleSection = (key: string) => {
     setExpandedSections(prev => {
@@ -73,24 +72,6 @@ export default function PRDSection({ prdData, isGenerating, onGenerate, canGener
       else next.add(key);
       return next;
     });
-  };
-
-  const handleCopy = () => {
-    if (!prdData) return;
-    navigator.clipboard.writeText(JSON.stringify(prdData, null, 2));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleDownload = () => {
-    if (!prdData) return;
-    const blob = new Blob([JSON.stringify(prdData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'prd.json';
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   return (
@@ -133,31 +114,6 @@ export default function PRDSection({ prdData, isGenerating, onGenerate, canGener
         <>
           {/* Outer card matching Business Plan style */}
           <div className="rounded-2xl p-6 space-y-6" style={{ background: 'rgba(6, 182, 212, 0.08)', border: '1px solid rgba(6, 182, 212, 0.15)' }}>
-            {/* Top bar with section count and actions */}
-            <div className="flex items-center justify-between">
-              <span className="text-cyan-300/80 text-sm font-medium">Product Requirements ({SECTIONS.length} Sections)</span>
-              <div className="flex gap-2">
-                <motion.button
-                  onClick={handleCopy}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 hover:bg-cyan-500/20 flex items-center gap-1.5 transition-colors"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {copied ? <Check size={14} /> : <Copy size={14} />}
-                  {copied ? 'Copied!' : 'Copy JSON'}
-                </motion.button>
-                <motion.button
-                  onClick={handleDownload}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 hover:bg-cyan-500/20 flex items-center gap-1.5 transition-colors"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Download size={14} />
-                  Download .json
-                </motion.button>
-              </div>
-            </div>
-
             {/* Sections */}
             {SECTIONS.map(({ key, label, icon: Icon }) => {
               const isExpanded = expandedSections.has(key);
