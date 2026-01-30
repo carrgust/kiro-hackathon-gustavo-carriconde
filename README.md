@@ -12,7 +12,7 @@
 ## Live Demo
 
 > **Don't want to set up API keys?** Try the deployed version:
-> **[https://curatos-dna.vercel.app](https://curatos-dna.vercel.app)**
+> **[https://kiro-hackathon-gustavo-carriconde.vercel.app](https://kiro-hackathon-gustavo-carriconde.vercel.app)**
 >
 > Same commit as this repo. Prepared hours before submission deadline.
 
@@ -79,7 +79,7 @@ cp .env.local.example .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and select a niche to begin.
+Open [http://localhost:5001](http://localhost:5001) and select a niche to begin.
 
 ---
 
