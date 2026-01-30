@@ -124,6 +124,37 @@ export default function ValidationDashboardV2({
   const [typewriterTexts, setTypewriterTexts] = useState<Record<string, string>>({});
   const [editingImprovedPillar, setEditingImprovedPillar] = useState<string | null>(null);
   const [editImprovedText, setEditImprovedText] = useState('');
+  const [fakeProgress, setFakeProgress] = useState(0);
+  const [displayScore, setDisplayScore] = useState(0);
+
+  // Fake progress animation when research is in progress
+  useEffect(() => {
+    if ((overallScore === null || overallScore === 0) && !isResearchComplete) {
+      const interval = setInterval(() => {
+        setFakeProgress(prev => {
+          if (prev >= 10) { clearInterval(interval); return 10; }
+          return prev + 0.5;
+        });
+      }, 400);
+      return () => clearInterval(interval);
+    } else {
+      setFakeProgress(0);
+    }
+  }, [overallScore, isResearchComplete]);
+
+  // Counting animation for score display
+  useEffect(() => {
+    const target = overallScore ?? 0;
+    if (target === displayScore) return;
+    const step = target > displayScore ? 1 : -1;
+    const interval = setInterval(() => {
+      setDisplayScore(prev => {
+        if (prev === target) { clearInterval(interval); return prev; }
+        return prev + step;
+      });
+    }, 30);
+    return () => clearInterval(interval);
+  }, [overallScore, displayScore]);
 
   // Check localStorage on mount for improved idea
   useEffect(() => {
@@ -213,7 +244,7 @@ export default function ValidationDashboardV2({
         <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '16px' }}>
           <div>
             <div style={{ fontSize: '48px', fontWeight: '700', color: '#FFFFFF', lineHeight: '1' }}>
-              {overallScore ?? 0}
+              {displayScore}
             </div>
             <div style={{ fontSize: '14px', fontWeight: '600', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '4px' }}>
               {verdict}
@@ -229,7 +260,7 @@ export default function ValidationDashboardV2({
             }}>
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: `${overallScore ?? 0}%` }}
+                animate={{ width: `${(overallScore && overallScore > 0) ? overallScore : fakeProgress}%` }}
                 transition={{ duration: 1.5, ease: 'easeOut' }}
                 style={{
                   height: '100%',
