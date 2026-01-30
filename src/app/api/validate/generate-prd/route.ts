@@ -1,28 +1,63 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { callWithFallback } from '@/lib/validation/model-client';
 
-const PRD_PROMPT = `You are a product requirements expert. Generate a concise PRD from validated business data.
+const PRD_SYSTEM_PROMPT = `You are an MVP product requirements expert. Generate a concise MVP PRD as structured JSON.
 
 STRICT RULES:
-- Each section: MAX 3-4 bullet points, 1-2 sentences each
-- Total output: under 1500 words
+- MVP scope only — minimal viable product, nothing more
+- Functional Requirements + Non-Functional Requirements COMBINED: MAX 10 items total
+- User Stories: 5-8 stories max
+- Target Users: 2-3 personas max
+- Executive Summary: 1 paragraph, max 60 words
+- All items must be numbered with their prefix (U-001, US-001, FR-001, NFR-001)
+- User stories must reference a persona_id from target_users
+- Functional requirements must include story_ids (which user stories they serve) and priority (build order)
+- Non-functional requirements must include applies_to (which FRs they constrain, or ["global"])
 - Be specific and actionable, not verbose
-- Use markdown ## headers and bullet points
 
-SECTIONS:
-1. EXECUTIVE SUMMARY (1 short paragraph, max 60 words)
-2. PROBLEM STATEMENT (3 bullets)
-3. TARGET MARKET (3 bullets with segments)
-4. PRODUCT OVERVIEW (1 paragraph, max 50 words)
-5. KEY FEATURES (3-5 features, name + one-line description each)
-6. SUCCESS METRICS (4 KPIs with target numbers)
-7. COMPETITIVE ADVANTAGE (3 bullets)
-8. GO-TO-MARKET (3 channel bullets)
-9. REVENUE MODEL (pricing tiers, max 3)
-10. RISKS & MITIGATIONS (3 rows: risk | mitigation)
-11. ROADMAP (3 milestones: Month X - deliverable)
+Return ONLY valid JSON with this exact structure:
+{
+  "executive_summary": "string",
+  "target_users": [
+    {
+      "id": "U-001",
+      "persona": "string",
+      "age_range": "string",
+      "description": "string",
+      "pain_points": ["string"],
+      "primary_need": "string"
+    }
+  ],
+  "user_stories": [
+    {
+      "id": "US-001",
+      "persona_id": "U-001",
+      "story": "As a [persona], I want [X], so that [Y]",
+      "acceptance_criteria": ["string"]
+    }
+  ],
+  "functional_requirements": [
+    {
+      "id": "FR-001",
+      "name": "string",
+      "description": "string",
+      "story_ids": ["US-001"],
+      "priority": 1
+    }
+  ],
+  "non_functional_requirements": [
+    {
+      "id": "NFR-001",
+      "name": "string",
+      "category": "Performance|Security|Accessibility|Scalability",
+      "description": "string",
+      "target": "string",
+      "applies_to": ["FR-001"]
+    }
+  ]
+}
 
-Keep it tight. Investors read PRDs in 2 minutes.`;
+Return ONLY the JSON object. No markdown fences, no explanation.`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,64 +65,50 @@ export async function POST(request: NextRequest) {
     const { idea, canonicalDescription, pillars, gapAnalysis, improvedIdea } = body;
 
     if (!idea || !pillars) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
-      return NextResponse.json(
-        { error: 'API key not configured' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
     }
 
     console.log('[GeneratePRD] Starting PRD generation...');
 
-    // Build context from all data
-    const context = `
-BUSINESS IDEA: ${idea}
-
+    const context = `BUSINESS IDEA: ${idea}
 CANONICAL DESCRIPTION: ${canonicalDescription || 'N/A'}
-
 VALIDATION SCORES:
 ${pillars.map((p: any) => `- ${p.name}: ${p.score}/100`).join('\n')}
+${gapAnalysis && gapAnalysis.length > 0 ? `GAP ANALYSIS:
+${gapAnalysis.map((g: any) => `- ${g.pillarName}: ${g.diagnosis} Actions: ${g.actions.join('; ')}`).join('\n')}` : ''}
+${improvedIdea ? `IMPROVED IDEA:
+${Object.entries(improvedIdea).map(([key, value]) => `${key.toUpperCase()}: ${value}`).join('\n')}` : ''}`;
 
-${gapAnalysis && gapAnalysis.length > 0 ? `
-GAP ANALYSIS:
-${gapAnalysis.map((g: any) => `
-- ${g.pillarName} (${g.priority} priority)
-  Diagnosis: ${g.diagnosis}
-  Actions: ${g.actions.join('; ')}
-`).join('\n')}
-` : ''}
-
-${improvedIdea ? `
-IMPROVED IDEA:
-${Object.entries(improvedIdea).map(([key, value]) => `${key.toUpperCase()}: ${value}`).join('\n\n')}
-` : ''}
-`;
-
-    const prd = await callWithFallback(
+    const result = await callWithFallback(
       apiKey,
       [
-        { role: 'system', content: PRD_PROMPT },
+        { role: 'system', content: PRD_SYSTEM_PROMPT },
         { role: 'user', content: context }
       ],
       { maxTokens: 4096 }
     );
 
-    console.log('[GeneratePRD] PRD generated successfully');
+    console.log('[GeneratePRD] Raw response received, parsing JSON...');
 
-    return NextResponse.json({ prd });
+    let prdData;
+    try {
+      const cleaned = result.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+      prdData = JSON.parse(cleaned);
+    } catch (parseError) {
+      console.error('[GeneratePRD] JSON parse failed:', parseError);
+      return NextResponse.json({ error: 'Failed to parse PRD response' }, { status: 500 });
+    }
+
+    console.log('[GeneratePRD] PRD generated successfully');
+    return NextResponse.json({ prd: prdData });
 
   } catch (error: any) {
     console.error('[GeneratePRD] Error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to generate PRD' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message || 'Failed to generate PRD' }, { status: 500 });
   }
 }

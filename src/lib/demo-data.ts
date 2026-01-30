@@ -444,138 +444,152 @@ export const DEMO_BUSINESS_PLAN = {
   },
 };
 
-export const DEMO_PRD_MARKDOWN = `# Product Requirements Document (PRD)
-## FitSenior AI — AI-Powered Fitness Coaching Platform
+export const DEMO_PRD_DATA = {
+  executive_summary: "FitSenior AI is a B2C SaaS platform delivering AI-powered, personalized fitness coaching for adults 60+. It adapts exercise routines based on mobility level, health conditions, and real-time progress to capture 0.5% of the $3.1B senior fitness market within 18 months.",
 
----
+  target_users: [
+    {
+      id: "U-001",
+      persona: "Active Senior",
+      age_range: "60-75",
+      description: "Mobile adults who want to maintain fitness independently",
+      pain_points: ["Fear of injury from generic workouts", "No apps designed for their age group", "Expensive personal trainers"],
+      primary_need: "Adaptive exercise routines with injury prevention"
+    },
+    {
+      id: "U-002",
+      persona: "Recovery Senior",
+      age_range: "65-80",
+      description: "Post-surgery or post-injury adults needing gentle rehabilitation",
+      pain_points: ["Generic rehab programs ignore specific conditions", "No medical context in fitness apps", "Afraid to exercise without guidance"],
+      primary_need: "Safe, medically-aware gentle exercise programs"
+    },
+    {
+      id: "U-003",
+      persona: "Caregiver",
+      age_range: "35-55",
+      description: "Adult children managing a parent's health remotely",
+      pain_points: ["Cannot monitor parent's activity", "No visibility into exercise adherence", "Worry about falls"],
+      primary_need: "Remote progress monitoring and alerts"
+    }
+  ],
 
-### 1. Executive Summary
+  user_stories: [
+    {
+      id: "US-001",
+      persona_id: "U-001",
+      story: "As an Active Senior, I want to complete a health assessment onboarding, so that my exercise plan accounts for my conditions",
+      acceptance_criteria: ["Captures mobility level, health conditions, and fitness goals", "Takes under 5 minutes to complete", "Results stored for plan generation"]
+    },
+    {
+      id: "US-002",
+      persona_id: "U-001",
+      story: "As an Active Senior, I want to receive a personalized weekly exercise plan, so that I can stay fit without risking injury",
+      acceptance_criteria: ["Plan adapts to mobility level", "Excludes exercises for flagged conditions", "New plan generated weekly"]
+    },
+    {
+      id: "US-003",
+      persona_id: "U-001",
+      story: "As an Active Senior, I want video-guided sessions with voice cues, so that I can follow along without reading a screen",
+      acceptance_criteria: ["Video plays with audio instructions", "Large UI elements for easy tapping", "Pause and replay available"]
+    },
+    {
+      id: "US-004",
+      persona_id: "U-002",
+      story: "As a Recovery Senior, I want exercises filtered by my medical conditions, so that I don't aggravate my recovery",
+      acceptance_criteria: ["Filters by joint replacement, arthritis, balance disorders", "Conservative intensity defaults", "Medical disclaimer shown"]
+    },
+    {
+      id: "US-005",
+      persona_id: "U-001",
+      story: "As an Active Senior, I want to track my progress with a mobility score, so that I can see improvement over time",
+      acceptance_criteria: ["Dashboard shows weekly mobility score", "Trend chart over 30 days", "Celebrates milestones"]
+    },
+    {
+      id: "US-006",
+      persona_id: "U-003",
+      story: "As a Caregiver, I want to view my parent's exercise progress remotely, so that I can ensure they stay active",
+      acceptance_criteria: ["View-only dashboard access", "Weekly summary email", "Alert if no activity for 3 days"]
+    }
+  ],
 
-FitSenior AI is a B2C SaaS platform that delivers AI-powered, personalized fitness coaching for adults 60+. The system adapts exercise routines based on mobility level, health conditions, and real-time progress tracking. Target launch: Q2 2026.
+  functional_requirements: [
+    {
+      id: "FR-001",
+      name: "Health Assessment Onboarding",
+      description: "User completes questionnaire capturing mobility level, health conditions, and fitness goals",
+      story_ids: ["US-001"],
+      priority: 1
+    },
+    {
+      id: "FR-002",
+      name: "AI Exercise Plan Generation",
+      description: "AI generates personalized weekly exercise plan based on assessment data and progress history",
+      story_ids: ["US-002"],
+      priority: 2
+    },
+    {
+      id: "FR-003",
+      name: "Video-Guided Sessions",
+      description: "Exercise sessions with video playback, voice cues, and large-tap UI controls",
+      story_ids: ["US-003"],
+      priority: 3
+    },
+    {
+      id: "FR-004",
+      name: "Medical Condition Filtering",
+      description: "Exercise library filtered by user health conditions to prevent aggravating injuries",
+      story_ids: ["US-004"],
+      priority: 4
+    },
+    {
+      id: "FR-005",
+      name: "Progress Dashboard",
+      description: "Dashboard displaying mobility score, weekly trends, and milestone achievements",
+      story_ids: ["US-005"],
+      priority: 5
+    },
+    {
+      id: "FR-006",
+      name: "Caregiver View",
+      description: "Read-only dashboard for caregivers with weekly summaries and inactivity alerts",
+      story_ids: ["US-006"],
+      priority: 6
+    }
+  ],
 
-**Business Goal:** Capture 0.5% of the $3.1B senior fitness market within 18 months, reaching $500K ARR by month 12.
-
----
-
-### 2. Problem Statement
-
-72% of seniors cannot maintain exercise routines due to:
-- **Fear of injury** from generic workout programs not adapted to their conditions
-- **Lack of personalization** — most fitness apps target ages 18-45
-- **No medical context** — existing apps ignore arthritis, joint replacements, balance disorders
-- **Social isolation** — 40% of seniors report loneliness as barrier to exercise
-
-Current solutions (personal trainers, group classes) cost $60-150/session with limited availability.
-
----
-
-### 3. Target Users
-
-| Persona | Description | Key Need |
-|---------|-------------|----------|
-| **Primary:** Active Senior | Age 60-75, mobile, wants to stay fit | Adaptive routines, injury prevention |
-| **Secondary:** Recovery Senior | Age 65-80, post-surgery/injury | Gentle rehabilitation, medical-safe exercises |
-| **Tertiary:** Caregiver | Adult child managing parent's health | Remote monitoring, progress reports |
-
----
-
-### 4. Functional Requirements
-
-| ID | Requirement | Priority | Sprint |
-|----|-------------|----------|--------|
-| FR-001 | User onboarding with health assessment questionnaire | P0 | S1 |
-| FR-002 | AI generates personalized weekly exercise plan | P0 | S1 |
-| FR-003 | Video-guided exercise sessions with voice cues | P0 | S1 |
-| FR-004 | Real-time form correction via device camera | P1 | S2 |
-| FR-005 | Progress dashboard with mobility score tracking | P0 | S1 |
-| FR-006 | Integration with Apple Health / Google Fit | P1 | S2 |
-| FR-007 | Emergency contact alert if user falls during session | P1 | S2 |
-| FR-008 | Social community: group classes, buddy system | P2 | S3 |
-| FR-009 | Caregiver dashboard with remote progress view | P2 | S3 |
-| FR-010 | PDF export of progress reports for doctor visits | P1 | S2 |
-
----
-
-### 5. Non-Functional Requirements
-
-| ID | Requirement | Target |
-|----|-------------|--------|
-| NFR-001 | App launch to first exercise | < 3 taps |
-| NFR-002 | Video streaming latency | < 200ms |
-| NFR-003 | Camera AI inference time | < 100ms per frame |
-| NFR-004 | Accessibility (WCAG 2.1 AA) | Full compliance |
-| NFR-005 | Minimum font size | 18px (large text mode default) |
-| NFR-006 | Voice control support | Full navigation |
-| NFR-007 | Offline mode | Core exercises available offline |
-| NFR-008 | Data encryption | AES-256 at rest, TLS 1.3 in transit |
-
----
-
-### 6. Technical Architecture
-
-\`\`\`
-┌─────────────┐     ┌──────────────┐     ┌─────────────┐
-│   Frontend   │────▶│   Backend    │────▶│  Database    │
-│  Next.js 15  │     │  Node.js API │     │  PostgreSQL  │
-│  TypeScript  │     │  Prisma ORM  │     │  + Redis     │
-└─────────────┘     └──────────────┘     └─────────────┘
-       │                    │
-       ▼                    ▼
-┌─────────────┐     ┌──────────────┐
-│  AI Engine   │     │  Media CDN   │
-│  OpenRouter  │     │  Cloudflare  │
-│  Multi-model │     │  R2 Storage  │
-└─────────────┘     └──────────────┘
-\`\`\`
-
-**Stack:**
-- **Frontend:** Next.js 15, TypeScript, Tailwind CSS, Framer Motion
-- **Backend:** Next.js API Routes, Prisma ORM, PostgreSQL
-- **AI:** OpenRouter API (GPT-4o for coaching, Gemini for vision)
-- **Video:** WebRTC for real-time camera, HLS for exercise videos
-- **Infrastructure:** Vercel (frontend), Railway (DB), Cloudflare R2 (media)
-
----
-
-### 7. MVP Scope (Sprint 1-2)
-
-**In Scope:**
-- Health assessment onboarding (FR-001)
-- AI-generated weekly exercise plans (FR-002)
-- Video-guided sessions with voice cues (FR-003)
-- Progress dashboard with mobility score (FR-005)
-- PDF progress reports (FR-010)
-
-**Out of Scope (Post-MVP):**
-- Real-time camera form correction (FR-004)
-- Social features and group classes (FR-008)
-- Caregiver dashboard (FR-009)
-
----
-
-### 8. Success Metrics
-
-| Metric | Target | Timeframe |
-|--------|--------|-----------|
-| Weekly Active Users | 2,000 | Month 6 |
-| Exercise Completion Rate | > 70% | Month 3 |
-| User Retention (30-day) | > 45% | Month 3 |
-| NPS Score | > 50 | Month 6 |
-| Conversion (free → paid) | > 8% | Month 6 |
-| Monthly Recurring Revenue | $42K | Month 12 |
-
----
-
-### 9. Risks & Mitigations
-
-| Risk | Impact | Probability | Mitigation |
-|------|--------|-------------|------------|
-| Seniors struggle with app UX | High | Medium | Voice-first design, 18px+ fonts, max 3 taps |
-| AI recommends unsafe exercise | Critical | Low | Medical review board, conservative defaults |
-| Low organic acquisition | Medium | High | Partner with senior centers, Medicare Advantage |
-| Camera AI accuracy insufficient | Medium | Medium | Fallback to manual rep counting |
-
----
-
-*Generated by Curatos DNA — AI-Powered Business Validation Platform*
-`;
+  non_functional_requirements: [
+    {
+      id: "NFR-001",
+      name: "Accessibility Compliance",
+      category: "Accessibility",
+      description: "WCAG 2.1 AA with minimum 18px font and voice navigation",
+      target: "Full WCAG 2.1 AA compliance",
+      applies_to: ["global"]
+    },
+    {
+      id: "NFR-002",
+      name: "App Responsiveness",
+      category: "Performance",
+      description: "App launch to first exercise interaction",
+      target: "Under 3 taps",
+      applies_to: ["FR-003"]
+    },
+    {
+      id: "NFR-003",
+      name: "Data Encryption",
+      category: "Security",
+      description: "All health data encrypted at rest and in transit",
+      target: "AES-256 at rest, TLS 1.3 in transit",
+      applies_to: ["global"]
+    },
+    {
+      id: "NFR-004",
+      name: "Offline Mode",
+      category: "Performance",
+      description: "Core exercise library available without internet connection",
+      target: "Full offline playback for downloaded sessions",
+      applies_to: ["FR-003"]
+    }
+  ]
+};

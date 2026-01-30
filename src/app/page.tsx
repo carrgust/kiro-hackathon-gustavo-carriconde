@@ -15,7 +15,7 @@ import { buildAgentContext } from '@/lib/orchestrator/context-builder';
 import { AgentAction } from '@/types/orchestrator';
 import { SectionKey } from '@/lib/colors';
 import { PRIMARY_MODEL } from '@/lib/config/models';
-import { DEMO_IDEA, DEMO_CANONICAL, DEMO_VALIDATION_DATA, DEMO_GAP_ANALYSIS, DEMO_IMPROVED_IDEA, DEMO_BUSINESS_PLAN, DEMO_PRD_MARKDOWN } from '@/lib/demo-data';
+import { DEMO_IDEA, DEMO_CANONICAL, DEMO_VALIDATION_DATA, DEMO_GAP_ANALYSIS, DEMO_IMPROVED_IDEA, DEMO_BUSINESS_PLAN, DEMO_PRD_DATA } from '@/lib/demo-data';
 import Sidebar from '@/components/Sidebar';
 import InputDashboard from '@/components/sections/InputDashboard';
 import ProcessingSection from '@/components/sections/ProcessingSection';
@@ -173,7 +173,7 @@ export default function Dashboard() {
   const [showPRDModal, setShowPRDModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [landingPageHtml, setLandingPageHtml] = useState('');
-  const [prdMarkdown, setPrdMarkdown] = useState('');
+  const [prdData, setPrdData] = useState<any>(null);
   const [isGeneratingLandingPage, setIsGeneratingLandingPage] = useState(false);
   const [isGeneratingPRD, setIsGeneratingPRD] = useState(false);
   const [currentRationaleStream, setCurrentRationaleStream] = useState('');
@@ -1363,7 +1363,7 @@ Respond ONLY with valid JSON, no other text.`;
 
   const handleProceedToPRD = () => {
     setActiveSection('PRD');
-    if (!prdMarkdown && !isGeneratingPRD) {
+    if (!prdData && !isGeneratingPRD) {
       handleGeneratePRD();
     }
   };
@@ -1396,7 +1396,7 @@ Respond ONLY with valid JSON, no other text.`;
       console.log('[GeneratePRD] Response:', data);
 
       if (data.prd) {
-        setPrdMarkdown(data.prd);
+        setPrdData(data.prd);
         setUnlockedSections(prev => { const s = new Set([...prev, 'AUTOCODER']); return Array.from(s) as SectionKey[]; });
         setNewlyUnlocked(['AUTOCODER']);
         setTimeout(() => setNewlyUnlocked([]), 5000);
@@ -1465,7 +1465,7 @@ Respond ONLY with valid JSON, no other text.`;
       financial_plan: DEMO_BUSINESS_PLAN.financial_plan
     });
     setChartData(DEMO_BUSINESS_PLAN.chart_data);
-    setPrdMarkdown(DEMO_PRD_MARKDOWN);
+    setPrdData(DEMO_PRD_DATA);
     setUnlockedSections(['INPUT', 'PROCESSING', 'BUSINESS_PLAN', 'PRD']);
     setActiveSection('PROCESSING');
     toast.success('Demo mode loaded');
@@ -1696,7 +1696,7 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
           {activeSection === 'PRD' && (
             <PRDSection
               key="prd"
-              prdContent={prdMarkdown}
+              prdData={prdData}
               isGenerating={isGeneratingPRD}
               onGenerate={handleGeneratePRD}
               canGenerate={!!businessPlanData}
@@ -1752,7 +1752,7 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
             problems={validatedProblems}
             solutions={validatedSolutions}
             niche={state.niche}
-            markdown={prdMarkdown}
+            markdown={prdData}
           />
         )}
       </Suspense>
@@ -1765,7 +1765,7 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
             niche={state.niche}
             hypotheses={state.hypotheses}
             solutions={state.solutions}
-            prdContent={prdMarkdown || undefined}
+            prdContent={prdData || undefined}
             landingPageHTML={landingPageHtml || undefined}
           />
         )}
