@@ -125,7 +125,7 @@
 .vd-overall-mini-scores {
   display: flex;
   justify-content: center;
-  gap: var(--vd-space-6);
+  gap: 32px;
   padding-top: var(--vd-space-5);
   border-top: 1px solid var(--vd-glass-border);
   flex-wrap: wrap;
@@ -144,7 +144,7 @@
 .vd-mini-score-value {
   font-size: 20px;
   font-weight: 700;
-  color: #000000;
+  color: #FFFFFF;
 }
 
 .vd-mini-score-label {

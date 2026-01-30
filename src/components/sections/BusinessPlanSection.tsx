@@ -295,37 +295,10 @@ export default function BusinessPlanSection({
         ) : (
           <GlassCard className="p-6">
             <div className="text-center py-12 text-white/60">
-              <FileText size={48} className="mx-auto mb-4 opacity-50" />
-              <p>No business plan generated yet. Click &quot;Generate Business Plan&quot; to create one.</p>
+              <div className="w-12 h-12 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin mx-auto mb-4" />
+              <p>Generating business plan...</p>
             </div>
           </GlassCard>
-        )}
-
-        {/* Generate button always visible when no plan */}
-        {!businessPlan && (
-          <div className="flex gap-4">
-            <button
-              onClick={onGenerate}
-              disabled={!canGenerate || isGenerating}
-              className={`flex-1 py-4 rounded-lg font-semibold text-white transition-all flex items-center justify-center gap-2 ${
-                canGenerate && !isGenerating
-                  ? 'bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-700 hover:to-green-800 shadow-lg hover:shadow-xl'
-                  : 'bg-gray-600 cursor-not-allowed opacity-50'
-              }`}
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 size={20} className="animate-spin" />
-                  Generating Business Plan...
-                </>
-              ) : (
-                <>
-                  <FileText size={20} />
-                  Generate Business Plan
-                </>
-              )}
-            </button>
-          </div>
         )}
       </div>
     </div>

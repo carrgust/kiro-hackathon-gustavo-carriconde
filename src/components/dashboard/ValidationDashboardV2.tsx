@@ -212,7 +212,7 @@ export default function ValidationDashboardV2({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '16px' }}>
           <div>
-            <div style={{ fontSize: '48px', fontWeight: '700', color: '#F59E0B', lineHeight: '1' }}>
+            <div style={{ fontSize: '48px', fontWeight: '700', color: '#FFFFFF', lineHeight: '1' }}>
               {overallScore ?? 0}
             </div>
             <div style={{ fontSize: '14px', fontWeight: '600', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '4px' }}>
@@ -314,7 +314,7 @@ export default function ValidationDashboardV2({
                       className={`bg-white/5 border border-white/10 rounded-lg p-4 ${pillar === 'timing' ? 'col-span-2' : ''}`}
                     >
                       <div className='flex items-center justify-between mb-2'>
-                        <h3 className='text-sm font-semibold text-orange-400 uppercase'>{pillar}</h3>
+                        <h3 className='text-sm font-bold text-white uppercase'>{pillar}</h3>
                         <button
                           onClick={() => { setEditingImprovedPillar(pillar); setEditImprovedText(fullText); }}
                           className='text-white/60 hover:text-white transition-colors'

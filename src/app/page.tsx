@@ -385,7 +385,6 @@ export default function Dashboard() {
       setIsValidating(true);
       
       addRationale('[VALIDATING] Researching 7 pillars × 3 subcategories × 5 sources = 105 searches...');
-      toast.success('Validation started! Researching 105 sources...');
     } catch (error: any) {
       console.error('Validation error:', error);
       addRationale(`[ERROR] ${error.message}`);
@@ -1353,13 +1352,9 @@ Respond ONLY with valid JSON, no other text.`;
     const currentIndex = SECTION_ORDER.indexOf(activeSection);
     const nextUnlocked = SECTION_ORDER.slice(currentIndex + 1).find(section => unlockedSections.includes(section));
     if (nextUnlocked) {
-      // Auto-start validation when navigating from INPUT to PROCESSING
-      if (activeSection === 'INPUT' && nextUnlocked === 'PROCESSING' && normalizedAnalysis) {
-        startValidation(state.niche, normalizedAnalysis.normalized_idea || state.niche, geography);
-      }
       setActiveSection(nextUnlocked);
     }
-  }, [activeSection, unlockedSections, normalizedAnalysis, state.niche, geography]);
+  }, [activeSection, unlockedSections]);
 
   const handleCompleteStartOver = useCallback(() => {
     setActiveSection('INPUT');
@@ -1422,6 +1417,21 @@ Respond ONLY with valid JSON, no other text.`;
   const handleUpdateBusinessPlanSection = (key: string, value: string) => {
     setBusinessPlanData((prev: any) => prev ? { ...prev, [key]: value } : prev);
   };
+
+  // Auto-generate business plan when navigating to BUSINESS_PLAN section
+  useEffect(() => {
+    if (activeSection === 'BUSINESS_PLAN' && !businessPlanData && !isGeneratingBusinessPlan && validationData && improvedIdea) {
+      handleGenerateBusinessPlan();
+    }
+  }, [activeSection, businessPlanData, isGeneratingBusinessPlan, validationData, improvedIdea]);
+
+  // Auto-start deep validation when navigating to PROCESSING section
+  useEffect(() => {
+    if (activeSection === 'PROCESSING' && !validationSessionId && !isValidating && normalizedAnalysis && state.niche) {
+      console.log('[AutoValidation] Starting deep validation from PROCESSING page');
+      startValidation(state.niche, normalizedAnalysis.solution || state.niche, geography);
+    }
+  }, [activeSection]);
 
   const loadDemoMode = () => {
     setState(prev => ({ ...prev, niche: DEMO_IDEA }));
