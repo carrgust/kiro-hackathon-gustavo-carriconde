@@ -1,6 +1,6 @@
 # Curatos DNA
 
-> **7-Pillar AI Business Idea Validator** — Transform any business idea into a validated, investor-ready business plan with real-time web research, gap analysis, and professional PDF export.
+> **From Idea to MVP in Minutes** — AI-powered business validation platform that transforms any business idea into a validated business plan, technical PRD, and working HTML prototype through real-time web research across 8 APIs and autonomous code generation.
 
 [![Next.js](https://img.shields.io/badge/Next.js-14.2-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue?logo=typescript)](https://www.typescriptlang.org/)
@@ -12,17 +12,16 @@
 
 ## What It Does
 
-Curatos DNA validates business ideas through a structured 7-pillar framework powered by AI and real-time web research. Input any business idea and get:
+Curatos DNA is an end-to-end business validation and prototyping platform. It takes any business idea from initial concept to a working MVP mockup through an automated 6-stage pipeline:
 
-1. **Canonical normalization** — AI interprets your idea into a structured description
-2. **7-pillar validation** — Market Viability, Technical Feasibility, Revenue Potential, Competitive Landscape, Scalability, Regulatory Risk, and Team Fit — each scored 0-100
-3. **Gap analysis** — Identifies weak pillars and generates actionable improvements
-4. **Business plan generation** — 4-section investor-ready plan with interactive charts
-5. **PRD generation** — Structured Product Requirements Document with traceability (U→US→FR→NFR)
-6. **AutoCoder mockup** — AI-generated HTML landing page from PRD with live preview
-7. **PDF export** — Professional PDF with embedded pie charts, bar charts, radar charts, and financial tables
+1. **Canonical normalization** — AI interprets your idea into a structured 7-pillar business description
+2. **7-pillar validation** — Real-time research across 8 APIs (Google, Reddit, Hacker News, FRED, Academic, Wikipedia, Wikidata, Jobs) scoring Problem, Market, Competition, Solution, Monetization, Go-to-Market, and Timing — each 0-100
+3. **Idea refinement** — AI analyzes weak pillars and generates an improved version of your business concept
+4. **Business plan generation** — 4-section investor-ready plan with interactive charts and financial projections
+5. **PRD generation** — Product Requirements Document: the bridge between business analysis and technical development. It translates validated business insights into structured technical requirements with full traceability (Users → Stories → Functional Requirements → Non-Functional Requirements)
+6. **AutoCoder** — Autonomous AI agent that reads the PRD and generates a working HTML/CSS/JS landing page prototype, effectively producing an MVP mockup from your validated idea
 
-Stop guessing if your idea has legs. Let AI validate it against 105 real web sources and generate a working mockup in minutes.
+From idea to MVP — no coding required.
 
 ---
 
@@ -34,11 +33,11 @@ Stop guessing if your idea has legs. Let AI validate it against 105 real web sou
 - Live progress tracking with animated pillar cards and score gauges
 - Source attribution with favicons and clickable URLs
 
-### Close-Gaps Analysis
-- Identifies lowest-scoring pillars automatically
+### Idea Refinement Engine
+- Identifies lowest-scoring pillars automatically after research completes
 - Generates an improved business idea addressing each weakness
-- Side-by-side before/after comparison
-- Confidence-weighted gap prioritization
+- Side-by-side before/after comparison in 2-column grid layout
+- Green glowing action button signals the next step
 
 ### Business Plan Generator
 - 4-section plan: Executive Summary, Market & Sales, Team & Operations, Financial Plan
@@ -80,8 +79,11 @@ Stop guessing if your idea has legs. Let AI validate it against 105 real web sou
 
 - **Node.js 18+**
 - **Docker** (for PostgreSQL database)
-- **OpenRouter API key** — [Get one free](https://openrouter.ai) (required for AI features)
-- **Serper API key** — [Get 2,500 free searches](https://serper.dev) (optional, enhances web research)
+- **OpenRouter API key** (PAID subscription required) — [Sign up at openrouter.ai](https://openrouter.ai). This application makes multiple LLM calls across different models (GLM 4.7 Flash, DeepSeek Chat, Gemini Flash) that have been carefully tuned for the optimal balance of efficiency, quality, and cost. Free OpenRouter accounts have strict rate limits that will cause the validation pipeline to fail. A paid account with credit is required.
+- **Serper API key** (Required) — [Get 2,500 free searches at serper.dev](https://serper.dev). Powers the Google web research across all 7 pillars.
+
+> **Judges: Don't want to set up API keys?** We deployed the exact same commit to Vercel so you can experience the full application as a regular user without any setup: **[https://curatos-dna.vercel.app](https://curatos-dna.vercel.app)**
+> The Vercel deployment matches this repository commit-for-commit and was prepared hours before submission.
 
 ### 1. Clone and Install
 
@@ -116,10 +118,10 @@ Edit `.env.local` and add your API keys:
 # Database (default works with docker-compose)
 DATABASE_URL="postgresql://curatos:curatos_dev_password@localhost:5432/curatos_dev"
 
-# Required - Get free key at https://openrouter.ai
+# Required (PAID account) - Sign up at https://openrouter.ai
 OPENROUTER_API_KEY="your_openrouter_api_key_here"
 
-# Optional - Enhances web research (https://serper.dev)
+# Required - Get 2,500 free searches at https://serper.dev
 SERPER_API_KEY="your_serper_api_key_here"
 ```
 
@@ -150,15 +152,15 @@ Click **Validate** and watch as AI researches your idea across 7 pillars:
 
 Each pillar gets a 0-100 score with real web sources.
 
-### Step 3: Close the Gaps
-AI identifies weak pillars and generates an improved version of your idea that addresses each gap. Review the before/after comparison and approve.
+### Step 3: Idea Refinement
+AI identifies weak pillars from the research results and generates an improved version of your business idea that addresses each gap. The refined idea appears in a 2-column grid matching the original layout for easy comparison.
 
 ### Step 4: Business Plan
 Generate a 4-section business plan with interactive charts:
 - Executive Summary with key metric cards
 - Market & Sales with pie charts, channel bars, and radar charts
 - Team & Operations with milestone timeline and team composition donut
-- Financial Plan with revenue projections and financial tables
+- Financial Plan with revenue projections and financial tablesNd here is the application audit the readme file to make sure you have information that are 100% correct.
 
 ### Step 5: PRD Generation
 Generate a structured Product Requirements Document:
@@ -175,11 +177,8 @@ Transform your PRD into a working HTML landing page:
 - Single-file HTML output (inline CSS/JS, no dependencies)
 - Copy or download the complete mockup
 
-### Step 7: Export
-- **Copy** — Clipboard text of business plan or PRD
-- **Download PDF** — Professional PDF with charts, tables, and emerald branding
-- **Download HTML** — Working landing page mockup
-- **Regenerate** — Create new versions with different AI output
+### Step 7: Prototype Your MVP
+The AutoCoder generates a working HTML landing page from your PRD — effectively creating an MVP prototype. Download the HTML file and you have a functional mockup of your validated business idea, ready to show investors or test with users.
 
 ---
 
