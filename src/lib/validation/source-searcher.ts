@@ -48,7 +48,8 @@ export async function searchAndAnalyzeSource(
   pillarKey: string,
   subcategoryKey: string,
   apiId: string,
-  geography: string = 'Global'
+  geography: string = 'Global',
+  preGeneratedQuery?: string
 ): Promise<AnalyzedSource> {
 
   const apiKey = process.env.OPENROUTER_API_KEY;
@@ -78,11 +79,14 @@ export async function searchAndAnalyzeSource(
   }
 
   try {
-    // Extract keywords from business idea
-    const keywords = extractKeywords(idea);
-    
-    // Build targeted query for this specific API and pillar
-    const searchQuery = buildQuery(pillarKey, apiId, keywords);
+    // Use pre-generated query if provided, otherwise fallback to keyword extraction
+    let searchQuery: string;
+    if (preGeneratedQuery) {
+      searchQuery = preGeneratedQuery;
+    } else {
+      const keywords = extractKeywords(idea);
+      searchQuery = buildQuery(pillarKey, apiId, keywords);
+    }
 
     console.log(`[SourceSearcher] Searching ${apiConfig.name} (${apiId}): "${searchQuery}"`);
 

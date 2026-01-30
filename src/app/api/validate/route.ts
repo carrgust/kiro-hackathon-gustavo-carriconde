@@ -3,6 +3,7 @@ import { getPrisma } from '@/lib/db/client';
 import { PILLARS, calculateOverallScore, calculatePillarScore } from '@/lib/validation/config';
 import { searchAndAnalyzeSource, calculateSubcategoryScore } from '@/lib/validation/source-searcher';
 import { getApisForPillar } from '@/lib/validation/registry-loader';
+import { buildSmartQueries } from '@/lib/validation/query-builder';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -90,8 +91,11 @@ async function processValidation(sessionId: string, canonicalDescription: string
   console.log('[DEBUG] processValidation started for session:', sessionId);
   const prisma = getPrisma();
 
+  // Generate all smart queries once at the start
+  const smartQueries = await buildSmartQueries(canonicalDescription, geography, PILLARS);
+
   const pillarPromises = PILLARS.map(pillar =>
-    processPillar(sessionId, pillar, canonicalDescription, geography)
+    processPillar(sessionId, pillar, canonicalDescription, geography, smartQueries)
   );
 
   await Promise.all(pillarPromises);
@@ -115,7 +119,8 @@ async function processPillar(
   sessionId: string,
   pillarConfig: typeof PILLARS[0],
   canonicalDescription: string,
-  geography: string
+  geography: string,
+  smartQueries: Record<string, Record<string, Record<string, string>>>
 ) {
   console.log('[DEBUG] processPillar started for pillar:', pillarConfig.key, 'session:', sessionId);
   const prisma = getPrisma();
@@ -132,7 +137,7 @@ async function processPillar(
   });
 
   const subcategoryPromises = pillarConfig.subcategories.map(subConfig =>
-    processSubcategory(pillar.id, pillarConfig.key, subConfig, canonicalDescription, geography)
+    processSubcategory(pillar.id, pillarConfig.key, subConfig, canonicalDescription, geography, smartQueries)
   );
 
   const subcategoryScores = await Promise.all(subcategoryPromises);
@@ -150,7 +155,8 @@ async function processSubcategory(
   pillarKey: string,
   subConfig: { key: string; name: string; prompt: string },
   canonicalDescription: string,
-  geography: string
+  geography: string,
+  smartQueries: Record<string, Record<string, Record<string, string>>>
 ): Promise<number> {
   console.log('[DEBUG] processSubcategory started for:', pillarKey, '/', subConfig.key);
   const prisma = getPrisma();
@@ -168,8 +174,11 @@ async function processSubcategory(
 
   const apis = getApisForPillar(pillarKey);
   const sourcePromises = apis.map(async (api) => {
+    // Look up pre-generated query from smartQueries map
+    const query = smartQueries?.[pillarKey]?.[subConfig.key]?.[api.id];
+    
     const result = await searchAndAnalyzeSource(
-      canonicalDescription, pillarKey, subConfig.key, api.id, geography
+      canonicalDescription, pillarKey, subConfig.key, api.id, geography, query
     );
 
     await prisma.sourceResult.updateMany({

@@ -15,11 +15,9 @@ export const FALLBACK_CHAIN = [
 
 // AutoCoder-specific fallback chain (designer, decomposer, implementer)
 export const AUTOCODER_FALLBACK_CHAIN = [
-  'deepseek/deepseek-v3.2-speciale',  // Fallback 2
-  'google/gemini-2.5-flash-lite',     // Fallback 1
-  'meta-llama/llama-4-scout',          
-  'qwen/qwen-2.5-7b-instruct',       // Primary - optimized for code
-  'google/gemini-2.5-flash-lite',     // Fallback 1
+  'google/gemini-2.5-flash-lite',
+  'meta-llama/llama-4-scout',    // Fallback     
+  'qwen/qwen-2.5-7b-instruct',
 
 ] as const;
 
