@@ -585,6 +585,7 @@ Respond ONLY with valid JSON, no other text.`;
         }
       })();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.requirements.length, state.hypotheses, state.solutions, state.prdAssessed, state.requirements, state.niche, hypothesisService, assessRequirements, addRationale]);
 
   // Agent orchestrator loop
@@ -781,6 +782,7 @@ Respond ONLY with valid JSON, no other text.`;
       clearInterval(interval);
       orchestratorIntervalRef.current = null;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engineRunning, hypothesisService, addRationale, scheduleTimeout, continuousMode, sessionId]);
 
   // Helper function to research a hypothesis with paced API status updates
@@ -1416,6 +1418,38 @@ Respond ONLY with valid JSON, no other text.`;
     }
   };
 
+  // Navigation handlers
+  const handleNextStage = useCallback(() => {
+    const sectionOrder: SectionKey[] = ['INPUT', 'PROCESSING', 'BUSINESS_PLAN', 'PRD', 'AUTOCODER'];
+    const currentIndex = sectionOrder.indexOf(activeSection);
+    const nextUnlocked = sectionOrder.slice(currentIndex + 1).find(section => unlockedSections.includes(section));
+    if (nextUnlocked) {
+      setActiveSection(nextUnlocked);
+    }
+  }, [activeSection, unlockedSections]);
+
+  const handleCompleteStartOver = useCallback(() => {
+    setActiveSection('INPUT');
+    setUnlockedSections(['INPUT']);
+    setValidationData(null);
+    setValidationSessionId(null);
+    setIsValidating(false);
+    setShowValidation(false);
+    setGapAnalysis([]);
+    setImprovedIdea(null);
+    setBusinessPlanData(null);
+    setChartData(null);
+    setPrdData(null);
+    setState(prev => ({ ...prev, niche: '' }));
+    toast.success('Reset complete');
+  }, []);
+
+  const getNextUnlockedSection = useCallback(() => {
+    const sectionOrder: SectionKey[] = ['INPUT', 'PROCESSING', 'BUSINESS_PLAN', 'PRD', 'AUTOCODER'];
+    const currentIndex = sectionOrder.indexOf(activeSection);
+    return sectionOrder.slice(currentIndex + 1).find(section => unlockedSections.includes(section));
+  }, [activeSection, unlockedSections]);
+
   const handleGenerateBusinessPlan = async () => {
     if (!validationData || !improvedIdea) return;
     setIsGeneratingBusinessPlan(true);
@@ -1580,6 +1614,33 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
     <div className="flex min-h-screen">
       {/* Stop Processing Button - Global */}
       <StopProcessingButton isProcessing={isProcessing} onStop={stopAllProcessing} />
+      
+      {/* Navigation Bar - Top Right */}
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-3">
+        <button
+          onClick={handleNextStage}
+          disabled={!getNextUnlockedSection()}
+          className={`px-6 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${
+            getNextUnlockedSection()
+              ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/50 hover:shadow-emerald-500/70 animate-pulse'
+              : 'bg-gray-700/50 text-gray-500 cursor-not-allowed'
+          }`}
+          style={{
+            backdropFilter: 'blur(12px)',
+            border: getNextUnlockedSection() ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(75, 85, 99, 0.3)'
+          }}
+        >
+          Next Stage →
+        </button>
+        
+        <button
+          onClick={handleCompleteStartOver}
+          className="px-6 py-3 rounded-lg font-medium bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 hover:border-red-500/50 transition-all"
+          style={{ backdropFilter: 'blur(12px)' }}
+        >
+          Start Over
+        </button>
+      </div>
       
       {/* Continuous Mode Toggle */}
       {state.nicheLocked && hypothesisService && (

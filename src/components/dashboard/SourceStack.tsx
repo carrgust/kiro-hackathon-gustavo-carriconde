@@ -52,7 +52,7 @@ function SourceBadge({ source, index }: { source: string; index: number }) {
         {faviconUrl && !imgError ? (
           <img 
             src={faviconUrl} 
-            alt="" 
+            alt="Favicon" 
             className="w-6 h-6 object-cover rounded-full" 
             onError={() => setImgError(true)} 
           />

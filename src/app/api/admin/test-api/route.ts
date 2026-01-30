@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MODELS } from '@/lib/config/models';
+import { PRIMARY_MODEL } from '@/lib/config/models';
 import { getAPIById } from '@/lib/api-registry';
 
 // Import all API search functions
@@ -112,7 +112,7 @@ async function testOpenRouter() {
 
   const start = Date.now();
   const requestBody = {
-    model: MODELS.GEMINI_LITE,
+    model: PRIMARY_MODEL,
     messages: [{ role: 'user', content: 'Say "API connection successful" in exactly 4 words.' }],
     max_tokens: 20,
   };
@@ -210,7 +210,7 @@ export async function GET() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: MODELS.GEMINI_LITE,
+            model: PRIMARY_MODEL,
             messages: [{ role: 'user', content: 'ping' }],
             max_tokens: 5,
           }),

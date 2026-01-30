@@ -134,6 +134,7 @@ export default function ValidationDashboardV2({
       allPillars.forEach(p => { allTexts[p] = improvedIdea[p] || ''; });
       setTypewriterTexts(allTexts);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-scroll to Close the Gaps button when it appears
@@ -595,7 +596,7 @@ function SubcategoryRow({
             >
               <img
                 src={faviconUrl}
-                alt={sourceLabel}
+                alt="Source favicon"
                 className="rounded-full"
                 style={{
                   width: '24px',

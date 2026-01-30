@@ -1,5 +1,6 @@
+import { AUTOCODER_FALLBACK_CHAIN } from '@/lib/config/models';
+
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODELS = ['google/gemini-2.5-flash-lite', 'deepseek/deepseek-chat-v3-0324:free'];
 
 export async function callLLM(
   messages: { role: string; content: string }[],
@@ -8,7 +9,7 @@ export async function callLLM(
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) throw new Error('OPENROUTER_API_KEY not configured');
 
-  for (const model of MODELS) {
+  for (const model of AUTOCODER_FALLBACK_CHAIN) {
     try {
       console.log(`[AutoCoder] Trying model: ${model}`);
       const res = await fetch(OPENROUTER_URL, {

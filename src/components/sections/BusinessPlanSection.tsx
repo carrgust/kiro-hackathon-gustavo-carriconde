@@ -120,6 +120,7 @@ export default function BusinessPlanSection({
       SECTIONS.forEach(s => { allTexts[s.key] = businessPlan[s.key as keyof typeof businessPlan] || ''; });
       setTypewriterTexts(allTexts);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Sequential typewriter effect

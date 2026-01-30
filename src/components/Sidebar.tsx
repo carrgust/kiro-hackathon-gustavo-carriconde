@@ -11,7 +11,7 @@ interface SidebarProps {
 
 const SECTIONS = [
   { key: 'INPUT' as SectionKey, icon: Lightbulb, label: 'Business Idea' },
-  { key: 'PROCESSING' as SectionKey, icon: Brain, label: 'Processing' },
+  { key: 'PROCESSING' as SectionKey, icon: Brain, label: 'Idea Refinement' },
   { key: 'BUSINESS_PLAN' as SectionKey, icon: FileText, label: 'Business Plan' },
   { key: 'PRD' as SectionKey, icon: ClipboardList, label: 'PRD' },
   { key: 'AUTOCODER' as SectionKey, icon: Code2, label: 'Auto Coder' },
@@ -61,7 +61,6 @@ export default function Sidebar({ activeSection, onSectionChange, unlockedSectio
                 borderRadius: isActive && isUnlocked ? '12px 0 0 12px' : '12px',
                 marginRight: isActive && isUnlocked ? '-12px' : '0',
                 paddingRight: isActive && isUnlocked ? '24px' : '16px',
-                opacity: isUnlocked ? 1 : 0.3,
                 cursor: isUnlocked ? 'pointer' : 'not-allowed',
                 animation: isNewlyUnlocked ? 'unlockGlow 2s ease-in-out 3' : 'none'
               }}
@@ -69,14 +68,14 @@ export default function Sidebar({ activeSection, onSectionChange, unlockedSectio
             >
               <Icon 
                 size={20} 
-                className={isActive && isUnlocked ? 'text-white' : isUnlocked ? 'text-gray-500' : 'text-gray-600'} 
+                className={isActive && isUnlocked ? 'text-white' : isUnlocked ? 'text-gray-500' : 'text-gray-500'} 
               />
               <span 
-                className={`text-sm whitespace-nowrap ${isActive && isUnlocked ? 'text-white font-semibold' : isUnlocked ? 'text-gray-400 font-medium' : 'text-gray-600 font-medium'}`}
+                className={`text-sm whitespace-nowrap ${isActive && isUnlocked ? 'text-white font-semibold' : isUnlocked ? 'text-gray-400 font-medium' : 'text-gray-400 font-medium'}`}
               >
                 {label}
               </span>
-              {!isUnlocked && <Lock size={14} className="text-gray-600 ml-auto" />}
+              {!isUnlocked && <Lock size={14} className="text-gray-500 ml-auto" />}
               {isNewlyUnlocked && (
                 <span className="ml-auto px-2 py-0.5 text-xs font-bold rounded-full bg-orange-500 text-white">
                   NEW

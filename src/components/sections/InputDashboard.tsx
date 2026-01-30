@@ -50,6 +50,7 @@ export default function InputDashboard({
   const [analysis, setAnalysis] = useState<any>(null);
   const [showCanonical, setShowCanonical] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [previousIdeas, setPreviousIdeas] = useState<string[]>([]);
   
   // Clear analysis when clearAnalysis prop is true
   useEffect(() => {
@@ -91,7 +92,7 @@ export default function InputDashboard({
       const response = await fetch('/api/validate/normalize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userInput: niche, geography }),
+        body: JSON.stringify({ userInput: niche, geography, previousIdeas }),
       });
       
       const data = await response.json();
@@ -102,6 +103,13 @@ export default function InputDashboard({
         // Save to localStorage
         localStorage.setItem('curatos_analysis', JSON.stringify(data.analysis));
         localStorage.setItem('curatos_niche', niche);
+        
+        // Track this idea to avoid duplicates
+        const summary = Object.entries(data.analysis)
+          .filter(([key]) => key !== 'normalized_idea')
+          .map(([key, val]: [string, any]) => `${key}: ${(val?.title || val?.problem || JSON.stringify(val)).substring(0, 100)}`)
+          .join('; ');
+        setPreviousIdeas(prev => [...prev, summary]);
         
         // Sequential reveal with typewriter effect
         const pillars = ['problem', 'market', 'competition', 'solution', 'monetization', 'gtm', 'timing'];

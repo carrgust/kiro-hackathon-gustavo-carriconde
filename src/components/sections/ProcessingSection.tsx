@@ -24,7 +24,7 @@ export default function ProcessingSection({
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Processing Dashboard</h1>
+          <h1 className="text-4xl font-bold text-white mb-2">Idea Refinement</h1>
           <p className="text-yellow-100">AI-powered hypothesis generation and validation</p>
         </div>
 

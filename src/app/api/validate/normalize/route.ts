@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    const { userInput, geography = 'Global' } = await req.json();
+    const { userInput, geography = 'Global', previousIdeas = [] } = await req.json();
 
     if (!userInput || userInput.trim().length < 3) {
       return NextResponse.json(
@@ -23,9 +23,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const exclusion = previousIdeas.length > 0
+      ? '\n\nPREVIOUSLY GENERATED IDEAS (DO NOT REPEAT THESE — generate a COMPLETELY DIFFERENT business concept):\n' +
+        previousIdeas.map((idea: string, i: number) => `${i + 1}. ${idea}`).join('\n')
+      : '';
+
     const prompt = NORMALIZER_PROMPT
       .replace('{user_input}', userInput)
-      .replace('{geography}', geography);
+      .replace('{geography}', geography)
+      .replace('{exclusion}', exclusion);
     
     console.log('[Normalize] Prompt length:', prompt.length);
     console.log('[Normalize] First 200 chars:', prompt.substring(0, 200));
@@ -33,7 +39,7 @@ export async function POST(req: NextRequest) {
     const response = await callWithFallback(
       apiKey,
       [{ role: 'user', content: prompt }],
-      { temperature: 0.3, maxTokens: 2500, jsonMode: true }
+      { temperature: previousIdeas.length > 0 ? 0.95 : 0.7, maxTokens: 2500, jsonMode: true }
     );
     
     console.log('[Normalize] Response length:', response?.length || 0);

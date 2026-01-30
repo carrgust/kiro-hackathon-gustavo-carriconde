@@ -30,4 +30,6 @@ RULES:
 - Use clear, simple business language
 
 OUTPUT:
-Return the JSON object only.`;
+Return the JSON object only.
+
+{exclusion}`;

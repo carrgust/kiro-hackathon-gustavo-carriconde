@@ -1,5 +1,6 @@
 import type { Feature, PRD } from './types';
 import { callLLM } from './llm';
+import type { DesignSystem } from './designer';
 
 const SYSTEM_PROMPT = `You are a world-class UI/UX designer and frontend developer. You build stunning single-page HTML mockups.
 
@@ -25,13 +26,37 @@ export async function implementFeature(
   feature: Feature,
   currentHtml: string,
   prd: PRD,
+  designSystem?: DesignSystem | null
 ): Promise<string> {
+  const designBlock = designSystem
+    ? `\nDESIGN SYSTEM (MANDATORY — apply these exact values):
+- Aesthetic: ${designSystem.aesthetic}
+- Primary Color: ${designSystem.primaryColor}
+- Accent Color: ${designSystem.accentColor}
+- Background: ${designSystem.backgroundColor}
+- Text Color: ${designSystem.textColor}
+- Display Font (headings): ${designSystem.displayFont} (load from Google Fonts)
+- Body Font: ${designSystem.bodyFont} (load from Google Fonts)
+- Layout: ${designSystem.layoutPhilosophy}
+- Memorable Element: ${designSystem.memorableElement}
+- Mood: ${designSystem.moodKeywords.join(', ')}
+
+ANTI-PATTERNS (NEVER do these):
+- NEVER use Inter, Roboto, Arial, system fonts, or Space Grotesk
+- NEVER use purple gradients on white backgrounds
+- NEVER use generic AI-generated aesthetics or cookie-cutter layouts
+- NEVER use predictable component patterns
+- Add textures, grain, shadows, or patterns for depth — not flat solid colors
+- Use CSS animations for micro-interactions and staggered reveals
+`
+    : '';
+
   const userMessage = currentHtml
     ? `Current index.html:\n${currentHtml}\n\n---\n\nAdd this section to the page:\nName: ${feature.name}\nDetails: ${feature.description}\n${feature.acceptance_criteria.length > 0 ? `Acceptance Criteria:\n${feature.acceptance_criteria.map(ac => `- ${ac}`).join('\n')}` : ''}\n\nReturn the COMPLETE updated HTML file.`
     : `Create the initial index.html scaffold for: ${prd.executive_summary}\n\nFirst section: ${feature.name}\nDetails: ${feature.description}\n\nReturn the COMPLETE HTML file starting with <!DOCTYPE html>.`;
 
   const response = await callLLM([
-    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'system', content: SYSTEM_PROMPT + designBlock },
     { role: 'user', content: userMessage },
   ], { maxTokens: 32000 });
 

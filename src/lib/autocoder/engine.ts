@@ -1,6 +1,7 @@
 import type { PRD, Feature, AutoCoderEvent } from './types';
 import { decomposePRDToFeatures } from './decomposer';
 import { implementFeature } from './implementer';
+import { generateDesignSystem, DesignSystem } from './designer';
 
 function now(): string {
   return new Date().toISOString();
@@ -24,6 +25,21 @@ export async function* runAutoCoderPipeline(
     return;
   }
 
+  // Phase 1.5: Generate design system
+  yield { type: 'phase_started', timestamp: now(), phase: 'designer' } as AutoCoderEvent;
+  let designSystem: DesignSystem | null = null;
+  try {
+    designSystem = await generateDesignSystem({
+      name: 'MVP',
+      problem: prd.executive_summary,
+      targetUsers: prd.target_users.map(u => u.persona).join(', ') || 'general users',
+      features: features
+    });
+    console.log(`[AutoCoder] Design: ${designSystem.aesthetic} | Fonts: ${designSystem.displayFont} + ${designSystem.bodyFont}`);
+  } catch (e) {
+    console.log('[AutoCoder] Design system generation failed, using defaults');
+  }
+
   // Phase 2: Implement each feature sequentially
   yield { type: 'phase_started', timestamp: now(), phase: 'coder', totalFeatures: features.length };
   let html = '';
@@ -35,7 +51,7 @@ export async function* runAutoCoderPipeline(
     yield { type: 'feature_started', timestamp: now(), feature: { ...feature } };
 
     try {
-      html = await implementFeature(feature, html, prd);
+      html = await implementFeature(feature, html, prd, designSystem);
       feature.status = 'done';
       completed += 1;
       yield { type: 'feature_completed', timestamp: now(), feature: { ...feature }, completed, total: features.length };

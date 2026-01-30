@@ -137,9 +137,9 @@ function SourceCard({ source, onRemove }: SourceCardProps) {
       );
     }
 
-    if (ogImage && !ogFailed) return <img src={ogImage} alt="" className="w-full h-full object-cover" onError={() => setOgFailed(true)} />;
-    if (!thumbFailed && url !== '#') return <img src={getScreenshotUrl(url)} alt="" className="w-full h-full object-cover" onError={() => setThumbFailed(true)} />;
-    if (domain && !logoFailed) return <img src={getLogoUrl(domain)} alt="" className="w-12 h-12 object-contain" onError={() => setLogoFailed(true)} />;
+    if (ogImage && !ogFailed) return <img src={ogImage} alt="Preview" className="w-full h-full object-cover" onError={() => setOgFailed(true)} />;
+    if (!thumbFailed && url !== '#') return <img src={getScreenshotUrl(url)} alt="Screenshot" className="w-full h-full object-cover" onError={() => setThumbFailed(true)} />;
+    if (domain && !logoFailed) return <img src={getLogoUrl(domain)} alt="Logo" className="w-12 h-12 object-contain" onError={() => setLogoFailed(true)} />;
     return <span className="text-2xl font-bold text-gray-500">{(domain || 'W').charAt(0).toUpperCase()}</span>;
   };
 
@@ -184,7 +184,7 @@ function SourceCard({ source, onRemove }: SourceCardProps) {
         {renderThumbnail()}
         {/* Favicon overlay on bottom-right */}
         <div className="absolute bottom-1 right-1 w-9 h-9 rounded flex items-center justify-center bg-orange-950/80 border border-orange-500/30">
-          {faviconUrl ? <img src={faviconUrl} alt="" className="w-6 h-6 object-contain" /> : <Globe className="w-6 h-6 text-orange-400" />}
+          {faviconUrl ? <img src={faviconUrl} alt="Favicon" className="w-6 h-6 object-contain" /> : <Globe className="w-6 h-6 text-orange-400" />}
         </div>
       </div>
     </div>

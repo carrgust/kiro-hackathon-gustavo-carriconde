@@ -133,6 +133,7 @@ const HypothesisItemEnhanced = memo(function HypothesisItemEnhanced({
     return () => {
       if (revealIntervalRef.current) clearInterval(revealIntervalRef.current);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hypothesis.sources?.length]);
   
   // Stall detection - check every second
