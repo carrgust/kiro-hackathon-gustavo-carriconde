@@ -200,6 +200,7 @@ export default function Dashboard() {
   const [chartData, setChartData] = useState<any>(null);
   const [isGeneratingBusinessPlan, setIsGeneratingBusinessPlan] = useState(false);
   const [showBusinessPlanConfirm, setShowBusinessPlanConfirm] = useState(false);
+  const [clearInputAnalysis, setClearInputAnalysis] = useState(false);
 
   // Scoring hook for stage progression
   const scoring = useScoring({
@@ -373,16 +374,19 @@ export default function Dashboard() {
     return () => clearInterval(poll);
   }, [validationSessionId, isValidating, addRationale]);
 
+  // Reset clearInputAnalysis when returning to INPUT section
+  useEffect(() => {
+    if (activeSection === 'INPUT') {
+      setClearInputAnalysis(false);
+    }
+  }, [activeSection]);
+
   // Start validation function
   const startValidation = useCallback(async (idea: string, canonicalDescription?: string) => {
     if (!idea || idea.trim().length < 3) {
       toast.error('Please select a market niche');
       return;
     }
-
-    // Set showValidation immediately to hide 3 columns
-    setShowValidation(true);
-    console.log('[DEBUG] showValidation set to TRUE');
 
     // Unlock PROCESSING section
     setUnlockedSections(prev => { const s = new Set([...prev, 'PROCESSING']); return Array.from(s) as SectionKey[]; });
@@ -433,8 +437,6 @@ export default function Dashboard() {
       console.error('Validation error:', error);
       addRationale(`[ERROR] ${error.message}`);
       toast.error(error.message || 'Validation failed');
-      // Reset showValidation on error
-      setShowValidation(false);
     }
   }, [addRationale]);
 
@@ -1630,10 +1632,12 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
               onNicheChange={(niche) => setState(prev => ({ ...prev, niche }))}
               onGeographyChange={setGeography}
               onStartValidation={(niche, canonicalDescription) => {
+                setClearInputAnalysis(true);
                 setActiveSection('PROCESSING');
                 startValidation(niche, canonicalDescription);
               }}
               onDemoMode={loadDemoMode}
+              clearAnalysis={clearInputAnalysis}
             />
           )}
           

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Brain, FileText, ClipboardList, Code2, Lock } from 'lucide-react';
+import { Lightbulb, Brain, FileText, ClipboardList, Code2, Lock } from 'lucide-react';
 import { SectionKey } from '@/lib/colors';
 
 interface SidebarProps {
@@ -10,7 +10,7 @@ interface SidebarProps {
 }
 
 const SECTIONS = [
-  { key: 'INPUT' as SectionKey, icon: LayoutDashboard, label: 'Input' },
+  { key: 'INPUT' as SectionKey, icon: Lightbulb, label: 'Business Idea' },
   { key: 'PROCESSING' as SectionKey, icon: Brain, label: 'Processing' },
   { key: 'BUSINESS_PLAN' as SectionKey, icon: FileText, label: 'Business Plan' },
   { key: 'PRD' as SectionKey, icon: ClipboardList, label: 'PRD' },

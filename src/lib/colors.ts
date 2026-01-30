@@ -4,7 +4,7 @@
 
 export const SECTION_COLORS = {
   INPUT: {
-    name: 'Input',
+    name: 'Business Idea',
     gradient: 'from-blue-600 to-blue-800',
     bg: 'bg-blue-600',
     text: 'text-blue-400',

@@ -12,6 +12,7 @@ interface InputDashboardProps {
   onGeographyChange: (geo: string) => void;
   onStartValidation?: (niche: string, canonicalDescription: string) => void;
   onDemoMode?: () => void;
+  clearAnalysis?: boolean;
 }
 
 const NICHE_OPTIONS = [
@@ -44,10 +45,22 @@ export default function InputDashboard({
   onGeographyChange,
   onStartValidation,
   onDemoMode,
+  clearAnalysis = false,
 }: InputDashboardProps) {
   const [analysis, setAnalysis] = useState<any>(null);
   const [showCanonical, setShowCanonical] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  
+  // Clear analysis when clearAnalysis prop is true
+  useEffect(() => {
+    if (clearAnalysis) {
+      setAnalysis(null);
+      setShowCanonical(false);
+      setRevealedPillars([]);
+      setTypewriterTexts({});
+      localStorage.removeItem('curatos_analysis');
+    }
+  }, [clearAnalysis]);
   const [editingPillar, setEditingPillar] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
   const [revealedPillars, setRevealedPillars] = useState<string[]>([]);
@@ -185,8 +198,8 @@ export default function InputDashboard({
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between mb-8">
           <div className="text-center flex-1">
-            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Input Configuration</h1>
-            <p className="text-blue-200 text-sm sm:text-base">Configure your research parameters</p>
+            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Business Idea</h1>
+            <p className="text-blue-200 text-sm sm:text-base">Define your market niche and validate your idea</p>
           </div>
           {showCanonical && (
             <button
