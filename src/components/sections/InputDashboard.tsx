@@ -91,7 +91,7 @@ export default function InputDashboard({
       const response = await fetch('/api/validate/normalize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userInput: niche }),
+        body: JSON.stringify({ userInput: niche, geography }),
       });
       
       const data = await response.json();

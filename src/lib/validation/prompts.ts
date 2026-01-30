@@ -3,7 +3,12 @@ export const NORMALIZER_PROMPT = `You are a business concept analyzer. Your job 
 USER INPUT:
 "{user_input}"
 
-Analyze the business idea and return a JSON object with exactly these 7 fields:
+TARGET GEOGRAPHY:
+"{geography}"
+
+Analyze the business idea specifically for the target geography. Tailor all 7 pillars to this region including local market conditions, regional competitors, regulations, and cultural context.
+
+Return a JSON object with exactly these 7 fields:
 
 {
   "problem": "[ONE sentence, 15-25 words] What specific pain point or problem does this solve? Who experiences this pain? How severe is it?",

@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    const { userInput } = await req.json();
+    const { userInput, geography = 'Global' } = await req.json();
 
     if (!userInput || userInput.trim().length < 3) {
       return NextResponse.json(
@@ -23,7 +23,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const prompt = NORMALIZER_PROMPT.replace('{user_input}', userInput);
+    const prompt = NORMALIZER_PROMPT
+      .replace('{user_input}', userInput)
+      .replace('{geography}', geography);
     
     console.log('[Normalize] Prompt length:', prompt.length);
     console.log('[Normalize] First 200 chars:', prompt.substring(0, 200));
