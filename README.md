@@ -1,85 +1,167 @@
-# Curatos DNA
+# Curatos DNA - AI-Powered Business Idea Validator
 
-> **From Idea to MVP in Minutes** — Select a market niche, validate it against 81 real web sources, generate a business plan, a technical PRD, and a working HTML prototype. All automated. No coding required.
-
-[![Next.js](https://img.shields.io/badge/Next.js-14.2-black?logo=next.js)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Built with Kiro](https://img.shields.io/badge/Built_with-Kiro_CLI-cyan)](https://kiro.dev)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+You type a business idea. It searches 8 real sources (Google, Reddit, Hacker News, FRED, OpenAlex, Wikipedia, Wikidata, RemoteOK). ~50 AI calls analyze the evidence across 7 pillars and 21 subcategories. You get an honest score backed by data, not opinions.
 
 ---
 
-## Live Demo
+## Live Demo (Try It Now!)
 
-> **Don't want to set up API keys?** Try the deployed version:
-> **[https://kiro-hackathon-gustavo-carriconde.vercel.app](https://kiro-hackathon-gustavo-carriconde.vercel.app)**
->
-> Same commit as this repo. Prepared hours before submission deadline.
+**The app is deployed and ready to use. No installation needed.**
+
+### [https://kiro-hackathon-gustavo-carriconde.vercel.app](https://kiro-hackathon-gustavo-carriconde.vercel.app)
+
+- Connected to Neon PostgreSQL database on Vercel
+- OpenRouter API key configured
+- Judges can use it immediately
+
+---
 
 ## Demo Video
 
-> **[Watch the 3-minute walkthrough](TODO_ADD_VIDEO_LINK)**
+**[INSERT VIDEO URL]** - 2-5 minute walkthrough of the full validation flow
 
 ---
 
-## What It Does
+## Features
 
-Curatos DNA takes a business idea from concept to working prototype through 6 automated stages:
+### 7-Pillar Validation
+Analyzes your business idea across 7 critical dimensions:
+- **Problem Severity** - Pain intensity, frequency, workarounds
+- **Market Opportunity** - TAM, adjacent markets, growth rate
+- **Competitive Landscape** - Competitor weaknesses, differentiation
+- **Solution Fit** - Problem-solution match, feature completeness
+- **Monetization Potential** - Pricing models, unit economics
+- **Go-to-Market Clarity** - Channel strategy, adoption readiness
+- **Timing and Trends** - Market timing, industry shifts, economics
 
-| Stage | What Happens |
-|-------|-------------|
-| **1. Business Idea** | Select a market niche and target geography. AI generates a structured 7-pillar business description. You can edit or regenerate. |
-| **2. Idea Refinement** | AI researches your idea across 8 APIs (Google, Reddit, Hacker News, FRED, Academic, Wikipedia, Wikidata, Jobs) — 81 queries total. Scores each pillar 0-100. Then refines weak areas. |
-| **3. Business Plan** | Auto-generates a 4-section investor-ready plan with interactive charts and financial projections. |
-| **4. PRD** | Generates a Product Requirements Document — the bridge between business analysis and technical development. Full traceability: Users -> Stories -> Requirements. |
-| **5. AutoCoder** | Autonomous AI agent reads the PRD and generates a working HTML/CSS/JS landing page — your MVP prototype. |
+### Evidence Matrix
+**21 subcategories × 8 sources = 168 data points**
 
-Each stage unlocks automatically. The progress bar, scores, and research results update in real-time.
+Each subcategory is validated against 8 real-world sources:
+- Google (via Serper API)
+- Reddit (via PullPush API)
+- Hacker News
+- FRED Economic Data
+- OpenAlex Academic Papers
+- Wikipedia
+- Wikidata
+- RemoteOK Job Listings
 
-### The 7 Pillars (scored 0-100)
+### Smart LLM Query Generation
+- AI generates targeted search queries for each pillar/subcategory/source combination
+- No generic keyword stuffing - context-aware queries
+- Fallback to template-based queries if LLM fails
 
-| Pillar | What It Measures | APIs Used |
-|--------|-----------------|-----------|
-| Problem Severity | Pain intensity, frequency, workarounds | Google, Reddit, Hacker News |
-| Market Opportunity | TAM, adjacent markets, growth rate | Google, FRED, Academic, Wikipedia |
-| Competitive Landscape | Competitor weaknesses, differentiation | Google, Reddit, HN, Wikipedia |
-| Solution Fit | Problem-solution match, feature completeness | Google, HN, Academic, Reddit |
-| Monetization Potential | Pricing models, unit economics | Google, Reddit, HN, FRED |
-| Go-to-Market Clarity | Channel strategy, adoption readiness | Google, Reddit, HN, RemoteOK |
-| Timing and Trends | Market timing, industry shifts, economics | Google, HN, FRED, Academic |
+### Business Plan Generator
+Auto-generates investor-ready business plan with:
+- Executive Summary
+- Market Analysis
+- Financial Projections
+- Interactive charts (Recharts)
+
+### PRD Generator
+Comprehensive Product Requirements Document with:
+- User personas
+- User stories
+- Functional requirements (FR-001, FR-002...)
+- Non-functional requirements (NFR-001, NFR-002...)
+- Full traceability: Users → Stories → Requirements
+
+### Idea Refinement with AI
+- Identifies weak pillars (score < 70)
+- AI suggests improvements for each weak area
+- Regenerates refined 7-pillar description
+
+### Auto Coder (DNA to Working Code)
+- Reads the PRD
+- Generates working HTML/CSS/JS landing page
+- Live preview in iframe
+- Download or copy to clipboard
 
 ---
 
-## Quick Start
+## How It Works
+
+```
+1. User enters business idea + geography
+   ↓
+2. AI normalizes into 7-pillar description
+   ↓
+3. Smart query generation (LLM creates ~50 targeted queries)
+   ↓
+4. Parallel API calls (8 sources × 21 subcategories)
+   ↓
+5. LLM analyzes each source result (relevance, impact, confidence)
+   ↓
+6. Scores calculated (subcategory → pillar → overall)
+   ↓
+7. Evidence matrix displayed (color-coded scores)
+   ↓
+8. AI refines weak pillars
+   ↓
+9. Business plan + PRD generated
+   ↓
+10. AutoCoder builds working prototype
+```
+
+---
+
+## Local Installation (Optional)
+
+**Note:** For the easiest experience, use the live demo at the Vercel URL - no installation required. Local setup is optional.
 
 ### Prerequisites
 
-- Node.js 18+
-- Docker (for PostgreSQL)
-- **OpenRouter API key** — [openrouter.ai](https://openrouter.ai) — **Paid account required.** This app makes many LLM calls across multiple models (GLM 4.7 Flash, DeepSeek Chat, Gemini Flash) tuned for efficiency, quality, and cost. Free accounts hit rate limits.
-- **Serper API key** — [serper.dev](https://serper.dev) — **Required.** Powers Google web research. 2,500 free searches included.
+- **Node.js 18+**
+- **PostgreSQL database** (Docker recommended, or external provider like Neon)
+- **OpenRouter API key** - Requires funded account. Costs ~$0.01 per validation using gemini-2.5-flash-lite (~50 LLM calls per validation)
+- **Serper API key** - For Google search (2,500 free searches at serper.dev)
 
-### Setup
+### Installation Steps
 
 ```bash
+# 1. Clone repository
 git clone https://github.com/carrgust/kiro-hackathon-gustavo-carriconde.git
 cd kiro-hackathon-gustavo-carriconde
+
+# 2. Install dependencies
 npm install
 
-# Start database
+# 3. Start PostgreSQL (if using Docker)
 docker-compose up -d
+
+# 4. Configure environment variables
+cp .env.local.example .env.local
+# Edit .env.local with your values (see below)
+
+# 5. Run database migrations
 npx prisma generate
 npx prisma migrate dev
 
-# Configure API keys
-cp .env.local.example .env.local
-# Edit .env.local — add OPENROUTER_API_KEY and SERPER_API_KEY
-
-# Run
+# 6. Start development server
 npm run dev
+
+# 7. Open browser
+# Navigate to http://localhost:5001
 ```
 
-Open [http://localhost:5001](http://localhost:5001) and select a niche to begin.
+### Environment Variables
+
+Create `.env.local` with the following variables:
+
+```bash
+# Database connection string
+DATABASE_URL="postgresql://user:password@localhost:5432/curatos"
+
+# OpenRouter API key (required for AI features)
+OPENROUTER_API_KEY="sk-or-v1-..."
+
+# Serper API key (required for Google search)
+SERPER_API_KEY="..."
+
+# NextAuth secret (generate with: openssl rand -base64 32)
+NEXTAUTH_SECRET="..."
+```
 
 ---
 
@@ -87,79 +169,39 @@ Open [http://localhost:5001](http://localhost:5001) and select a niche to begin.
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | Next.js 14, TypeScript, React 18 |
+| Framework | Next.js 14, React 18, TypeScript |
+| Database | PostgreSQL, Prisma ORM |
 | Styling | Tailwind CSS, Framer Motion |
-| Charts | Recharts (6 types: pie, bar, radar, cards, timeline, donut) |
-| Database | PostgreSQL + Prisma ORM |
-| AI Gateway | OpenRouter (GLM 4.7 Flash, DeepSeek Chat, Gemini Flash) |
-| Web Research | 8 APIs via API Machine Gun (81 parallel queries) |
-| Testing | Vitest + Playwright |
+| Charts | Recharts |
+| AI Gateway | OpenRouter (Gemini 2.5 Flash Lite, GLM 4.7 Flash, DeepSeek V3.2) |
+| Web Research | 8 APIs (Serper, PullPush, HN, FRED, OpenAlex, Wikipedia, Wikidata, RemoteOK) |
+| Deployment | Vercel + Neon PostgreSQL |
 
 ---
 
-## Architecture
+## Built with Kiro CLI
 
-```
-User selects niche + geography
-       |
-       v
-[Normalize] --> 7-Pillar Description (editable)
-       |
-       v
-[Validate] --> 81 API calls (8 sources x 7 pillars x 3 subcategories)
-       |       Scores update in real-time via polling
-       v
-[Refine] --> AI improves weak pillars
-       |
-       v
-[Business Plan] --> 4 sections + interactive charts
-       |
-       v
-[PRD] --> Users -> Stories -> Functional Reqs -> Non-Functional Reqs
-       |
-       v
-[AutoCoder] --> Working HTML/CSS/JS landing page (MVP prototype)
-```
+This entire project was built using [Kiro CLI](https://kiro.dev) for the **Dynamous x Kiro Hackathon 2026**.
 
----
-
-## Project Structure
-
-```
-src/
-  app/               # Next.js App Router + 18 API routes
-  components/        # 57 React components
-  lib/validation/    # 7-pillar scoring engine + API registry
-  lib/research/      # 8 API integrations (Serper, Reddit, HN, FRED, OpenAlex, Wikipedia, Wikidata, RemoteOK)
-.kiro/
-  steering/          # Product, tech, and structure docs
-  specs/             # 7 feature specifications
-  prompts/           # Reusable Kiro prompts
-  DEVLOG.md          # Development journal
-prisma/              # Database schema (10 models)
-```
-
----
-
-## Built with Kiro
-
-This project was built using [Kiro CLI](https://kiro.dev) for the **Dynamous x Kiro Hackathon 2026**.
-
-- **Steering docs**: Product vision, technical architecture, project structure
-- **Specs**: 7 feature specifications (hypothesis engine, demo mode, API machine gun, database, OpenRouter validation, PRD generator, autocoder)
-- **Prompts**: 12 reusable prompts
-- **DEVLOG**: 840+ lines documenting the full development journey
+See the `.kiro/` folder for:
+- **Steering documents** - Product vision, technical architecture, project structure
+- **Feature specifications** - 7 detailed specs
+- **Development log** - Complete build timeline and decisions
 
 ---
 
 ## Screenshots
 
-| Main Dashboard | Validation | Business Plan | PRD |
+| Evidence Matrix | Validation Results | Business Plan | PRD |
 |:-:|:-:|:-:|:-:|
 | ![Dashboard](./public/screenshots/main-dashboard.png) | ![Validation](./public/screenshots/demo-mode-populated.png) | ![Landing](./public/screenshots/landing-page-generated.png) | ![PRD](./public/screenshots/prd-generated.png) |
 
 ---
 
-## License
+## Author
 
-MIT — [Gustavo Carriconde](https://github.com/carrgust) — Dynamous x Kiro Hackathon 2026
+**Gustavo Martini Carriconde**
+
+Dynamous x Kiro Hackathon 2026
+
+MIT License
