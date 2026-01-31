@@ -190,14 +190,6 @@ See the `.kiro/` folder for:
 
 ---
 
-## Screenshots
-
-| Evidence Matrix | Validation Results | Business Plan | PRD |
-|:-:|:-:|:-:|:-:|
-| ![Dashboard](./public/screenshots/main-dashboard.png) | ![Validation](./public/screenshots/demo-mode-populated.png) | ![Landing](./public/screenshots/landing-page-generated.png) | ![PRD](./public/screenshots/prd-generated.png) |
-
----
-
 ## Author
 
 **Gustavo Martini Carriconde**
