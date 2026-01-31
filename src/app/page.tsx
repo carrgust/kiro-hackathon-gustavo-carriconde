@@ -1465,7 +1465,6 @@ Respond ONLY with valid JSON, no other text.`;
 
   const handleStartBuild = () => {
     console.log('Starting build phase...');
-    // TODO: Navigate to build phase
     setShowDNAModal(false);
   };
 
