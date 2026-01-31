@@ -196,4 +196,3 @@ See the `.kiro/` folder for:
 
 Dynamous x Kiro Hackathon 2026
 
-MIT License
