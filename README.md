@@ -18,7 +18,7 @@ You type a business idea. It searches 8 real sources (Google, Reddit, Hacker New
 
 ## Demo Video
 
-**[INSERT VIDEO URL]** - 2-5 minute walkthrough of the full validation flow
+**[https://youtu.be/bwmtiFe6iec](https://youtu.be/bwmtiFe6iec)** - 2-5 minute walkthrough of the full validation flow
 
 ---
 
