@@ -79,13 +79,13 @@ export async function searchAndAnalyzeSource(
   }
 
   try {
-    // Use pre-generated query if provided, otherwise fallback to keyword extraction
+    // Use pre-generated query if provided, otherwise fallback to LLM-generated query
     let searchQuery: string;
     if (preGeneratedQuery) {
       searchQuery = preGeneratedQuery;
     } else {
       const keywords = extractKeywords(idea);
-      searchQuery = buildQuery(pillarKey, apiId, keywords);
+      searchQuery = await buildQuery(pillarKey, apiId, keywords, idea, subcategory?.name);
     }
 
     console.log(`[SourceSearcher] Searching ${apiConfig.name} (${apiId}): "${searchQuery}"`);
@@ -189,19 +189,22 @@ OUTPUT FORMAT (JSON):
 
     console.log(`[SourceSearcher] [OK] Found ${apiId}: "${bestResult.title?.slice(0, 50)}..."`);
 
+    // Filter out low-relevance sources
+    const isIrrelevant = analysis.relevanceScore < 20;
+
     return {
       apiId,
       apiName: apiConfig.name,
       apiIcon: apiConfig.icon,
       apiColor: apiConfig.color,
-      status: 'found',
+      status: isIrrelevant ? 'irrelevant' : 'found',
       title: bestResult.title,
       url: bestResult.url,
       snippet: bestResult.snippet,
       relevanceScore: analysis.relevanceScore,
       supports: analysis.supports || [],
       concerns: analysis.concerns || [],
-      impactOnScore: analysis.impactOnScore || 0,
+      impactOnScore: isIrrelevant ? 0 : (analysis.impactOnScore || 0),
       confidence: analysis.confidence || 70
     };
 

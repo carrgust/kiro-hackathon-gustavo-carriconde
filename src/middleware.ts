@@ -63,6 +63,11 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Exempt GET requests on validate polling endpoint
+  if (req.method === 'GET' && pathname.match(/^\/api\/validate\/[^/]+$/)) {
+    return NextResponse.next();
+  }
+
   const ip = getClientIp(req);
   const isExpensive = EXPENSIVE_ROUTES.some(route => pathname.startsWith(route));
   const limit = isExpensive ? EXPENSIVE_LIMIT : GENERAL_LIMIT;

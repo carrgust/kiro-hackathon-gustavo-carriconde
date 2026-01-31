@@ -195,12 +195,18 @@ export default function EvidenceMatrix({ pillars, onSourceClick }: EvidenceMatri
                         matchSourceToColumn(src, sourceCol.keywords)
                       );
                       
+                      // Check if source is irrelevant
+                      const isIrrelevant = matchedSource && (
+                        matchedSource.status === 'irrelevant' || 
+                        (matchedSource.confidence !== undefined && matchedSource.confidence < 20)
+                      );
+                      
                       return (
                         <td key={sourceCol.key} style={{
                           padding: '10px 4px',
                           textAlign: 'center',
                         }}>
-                          {matchedSource ? (
+                          {matchedSource && !isIrrelevant ? (
                             <div
                               onClick={() => onSourceClick?.(matchedSource, subcategory.name)}
                               style={{

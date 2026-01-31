@@ -82,7 +82,33 @@ export function buildSearchQuery(keyword: string, pillar: string, subcategory: s
   return keyword + ' ' + subcategory + ' ' + pillar;
 }
 
-// Legacy function for old imports (3-param version)
-export function buildQuery(pillarKey: string, apiId: string, keywords: { keyword: string; industry: string }): string {
+// Legacy function upgraded with LLM fallback
+export async function buildQuery(
+  pillarKey: string, 
+  apiId: string, 
+  keywords: { keyword: string; industry: string },
+  businessDescription?: string,
+  subcategoryName?: string
+): Promise<string> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  
+  // Try LLM-generated query if we have context
+  if (apiKey && businessDescription && subcategoryName) {
+    try {
+      const prompt = `Generate a precise ${apiId} search query (5-10 words max) to find evidence about ${subcategoryName} for ${pillarKey}. The business idea is: ${businessDescription}. Return ONLY the search query text, nothing else. No quotes, no explanation.`;
+      
+      const response = await callWithFallback(
+        apiKey,
+        [{ role: 'user', content: prompt }],
+        { temperature: 0.3, maxTokens: 50 }
+      );
+      
+      return response.trim().replace(/^["']|["']$/g, '');
+    } catch (error) {
+      console.log('[QueryBuilder] LLM query generation failed, using fallback');
+    }
+  }
+  
+  // Fallback: simple keyword concatenation
   return keywords.keyword + ' ' + pillarKey;
 }
