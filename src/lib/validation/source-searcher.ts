@@ -28,7 +28,7 @@ interface AnalyzedSource {
   apiName: string;
   apiIcon: string;
   apiColor: string;
-  status: 'found' | 'not_found';
+  status: 'found' | 'not_found' | 'irrelevant';
   title?: string;
   url?: string;
   snippet?: string;
