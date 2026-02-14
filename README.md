@@ -14,6 +14,14 @@ An AI-powered business idea validator that searches 8 real sources, runs ~50 AI 
 
 ---
 
+## Hackathon Awards
+
+[![Watch the Kiro Hackathon Awards](https://img.youtube.com/vi/-4U_SbjS41M/maxresdefault.jpg)](https://www.youtube.com/watch?v=-4U_SbjS41M)
+
+**[Watch the Kiro Hackathon Awards on YouTube](https://www.youtube.com/watch?v=-4U_SbjS41M)**
+
+---
+
 ## The Story
 
 Curatos DNA was built in a single hackathon sprint for the **Dynamous x Kiro Hackathon 2026**, competing against **160 submissions** from developers around the world. The challenge: build something meaningful using [Kiro CLI](https://kiro.dev).
@@ -94,7 +102,7 @@ Curatos is a startup under **ResumoCast Ventures**. This hackathon prototype pro
 
 ## Local Development
 
-> This is the hackathon version. For the commercial product, visit [ResumoCast Ventures](https://resumocast.com).
+> This is the hackathon version. For the commercial product, visit [ResumoCast Ventures](https://resumocast.com.br).
 
 ```bash
 git clone https://github.com/carrgust/kiro-hackathon-gustavo-carriconde.git
@@ -147,6 +155,6 @@ This code is provided for reference purposes only. No permission is granted to c
 
 ## Author
 
-**Gustavo Martini Carriconde**
+**Gustavo Carriconde**
 
-[ResumoCast Ventures](https://resumocast.com)
+[ResumoCast Ventures](https://resumocast.com.br)
