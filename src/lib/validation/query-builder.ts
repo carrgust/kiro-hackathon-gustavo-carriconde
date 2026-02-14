@@ -7,12 +7,42 @@ interface QuerySet {
 // Cache: avoids regenerating queries for the same idea
 let cachedQueries: { idea: string; queries: Record<string, Record<string, QuerySet>> } | null = null;
 
+function buildFallbackQueries(
+  idea: string,
+  pillars: { key: string; name: string; subcategories: { key: string; name: string }[] }[]
+): Record<string, Record<string, QuerySet>> {
+  const queries: Record<string, Record<string, QuerySet>> = {};
+  const baseQuery = idea.substring(0, 60);
+
+  for (const p of pillars) {
+    queries[p.key] = {};
+    for (const s of p.subcategories) {
+      queries[p.key][s.key] = {
+        google: baseQuery + ' ' + s.name,
+        reddit: baseQuery + ' ' + s.name,
+        hackernews: baseQuery + ' ' + s.name,
+        wikipedia: s.name,
+        academic: baseQuery + ' research',
+      };
+    }
+  }
+
+  return queries;
+}
+
 export async function buildSmartQueries(
   idea: string,
   geography: string,
   pillars: { key: string; name: string; subcategories: { key: string; name: string }[] }[]
 ): Promise<Record<string, Record<string, QuerySet>>> {
   if (cachedQueries && cachedQueries.idea === idea) return cachedQueries.queries;
+
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    const fallback = buildFallbackQueries(idea, pillars);
+    cachedQueries = { idea, queries: fallback };
+    return fallback;
+  }
 
   const pillarList = pillars.map(p =>
     p.key + ': ' + p.subcategories.map(s => s.key).join(', ')
@@ -26,27 +56,6 @@ export async function buildSmartQueries(
     'Return JSON: { "[pillarKey]": { "[subcategoryKey]": { "google": "query", "reddit": "query", "hackernews": "query", "wikipedia": "query", "academic": "query" } } }\n' +
     'Return ONLY the JSON object.';
 
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    // Fallback without API key
-    const fallback: Record<string, Record<string, QuerySet>> = {};
-    for (const p of pillars) {
-      fallback[p.key] = {};
-      for (const s of p.subcategories) {
-        const baseQuery = idea.substring(0, 60);
-        fallback[p.key][s.key] = {
-          google: baseQuery + ' ' + s.name,
-          reddit: baseQuery + ' ' + s.name,
-          hackernews: baseQuery + ' ' + s.name,
-          wikipedia: s.name,
-          academic: baseQuery + ' research',
-        };
-      }
-    }
-    cachedQueries = { idea, queries: fallback };
-    return fallback;
-  }
-
   try {
     const response = await callWithFallback(
       apiKey,
@@ -57,58 +66,36 @@ export async function buildSmartQueries(
     cachedQueries = { idea, queries: parsed };
     return parsed;
   } catch {
-    // Fallback: use idea text directly as query
-    const fallback: Record<string, Record<string, QuerySet>> = {};
-    for (const p of pillars) {
-      fallback[p.key] = {};
-      for (const s of p.subcategories) {
-        const baseQuery = idea.substring(0, 60);
-        fallback[p.key][s.key] = {
-          google: baseQuery + ' ' + s.name,
-          reddit: baseQuery + ' ' + s.name,
-          hackernews: baseQuery + ' ' + s.name,
-          wikipedia: s.name,
-          academic: baseQuery + ' research',
-        };
-      }
-    }
+    const fallback = buildFallbackQueries(idea, pillars);
     cachedQueries = { idea, queries: fallback };
     return fallback;
   }
 }
 
-// Legacy wrapper for backward compatibility
-export function buildSearchQuery(keyword: string, pillar: string, subcategory: string, source: string): string {
-  return keyword + ' ' + subcategory + ' ' + pillar;
-}
-
-// Legacy function upgraded with LLM fallback
 export async function buildQuery(
-  pillarKey: string, 
-  apiId: string, 
+  pillarKey: string,
+  apiId: string,
   keywords: { keyword: string; industry: string },
   businessDescription?: string,
   subcategoryName?: string
 ): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY;
-  
-  // Try LLM-generated query if we have context
+
   if (apiKey && businessDescription && subcategoryName) {
     try {
       const prompt = `Generate a precise ${apiId} search query (5-10 words max) to find evidence about ${subcategoryName} for ${pillarKey}. The business idea is: ${businessDescription}. Return ONLY the search query text, nothing else. No quotes, no explanation.`;
-      
+
       const response = await callWithFallback(
         apiKey,
         [{ role: 'user', content: prompt }],
         { temperature: 0.3, maxTokens: 50 }
       );
-      
+
       return response.trim().replace(/^["']|["']$/g, '');
     } catch (error) {
       console.log('[QueryBuilder] LLM query generation failed, using fallback');
     }
   }
-  
-  // Fallback: simple keyword concatenation
+
   return keywords.keyword + ' ' + pillarKey;
 }

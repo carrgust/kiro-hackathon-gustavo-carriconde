@@ -1,6 +1,7 @@
 import { getProvider, Message } from '@/lib/api';
 import { Hypothesis } from '@/types/project';
 import { PRIMARY_MODEL } from '@/lib/config/models';
+import { stripCodeFences } from '@/lib/utils';
 
 export class StreamingService {
   private apiKey: string;
@@ -157,15 +158,7 @@ Return ONLY the HTML code, no explanations.`;
 
     const response = await provider.chat(messages, PRIMARY_MODEL);
     
-    // Extract HTML from response (remove markdown code blocks if present)
-    let html = response.content.trim();
-    if (html.startsWith('```html')) {
-      html = html.replace(/```html\n?/, '').replace(/```\s*$/, '');
-    } else if (html.startsWith('```')) {
-      html = html.replace(/```\n?/, '').replace(/```\s*$/, '');
-    }
-
-    return html;
+    return stripCodeFences(response.content);
   }
 
   async generatePRD(
@@ -243,14 +236,6 @@ IMPORTANT: Use the exact format FR-001, FR-002, NFR-001, NFR-002 for requirement
 
     const response = await provider.chat(messages, PRIMARY_MODEL);
     
-    // Extract markdown from response (remove markdown code blocks if present)
-    let markdown = response.content.trim();
-    if (markdown.startsWith('```markdown')) {
-      markdown = markdown.replace(/```markdown\n?/, '').replace(/```\s*$/, '');
-    } else if (markdown.startsWith('```')) {
-      markdown = markdown.replace(/```\n?/, '').replace(/```\s*$/, '');
-    }
-
-    return markdown;
+    return stripCodeFences(response.content);
   }
 }

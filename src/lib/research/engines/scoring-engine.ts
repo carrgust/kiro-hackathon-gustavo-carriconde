@@ -4,7 +4,6 @@ import { ChatResponse } from '@/lib/api/types';
 import { HypothesisCheck } from '@/types/project';
 import { FALLBACK_CHAIN } from '@/lib/config/models';
 
-const VALIDATION_MODELS = [...FALLBACK_CHAIN];
 const MAX_RETRIES = 2;
 const BASE_DELAY_MS = 10000;
 const MIN_REQUEST_INTERVAL_MS = 15000;
@@ -132,7 +131,7 @@ export class ScoringEngine {
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
         return await provider.chat(messages, {
-          models: VALIDATION_MODELS,
+          models: [...FALLBACK_CHAIN],
           route: 'fallback'
         });
       } catch (error: any) {

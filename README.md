@@ -1,167 +1,80 @@
-# Curatos DNA - AI-Powered Business Idea Validator
+# Curatos DNA
 
-You type a business idea. It searches 8 real sources (Google, Reddit, Hacker News, FRED, OpenAlex, Wikipedia, Wikidata, RemoteOK). ~50 AI calls analyze the evidence across 7 pillars and 21 subcategories. You get an honest score backed by data, not opinions.
+### 5th Place Winner — Dynamous x Kiro Hackathon 2026 (out of 160 submissions)
 
----
-
-## Live Demo (Try It Now!)
-
-**The app is deployed and ready to use. No installation needed.**
-
-### [https://kiro-hackathon-gustavo-carriconde.vercel.app](https://kiro-hackathon-gustavo-carriconde.vercel.app)
-
-- Connected to Neon PostgreSQL database on Vercel
-- OpenRouter API key configured
-- Judges can use it immediately
+An AI-powered business idea validator that searches 8 real sources, runs ~50 AI calls, and scores your idea across 7 pillars and 21 subcategories — backed by data, not opinions.
 
 ---
 
-## Demo Video
+## Demo
 
-**[https://youtu.be/bwmtiFe6iec](https://youtu.be/bwmtiFe6iec)** - 2-5 minute walkthrough of the full validation flow
+[![Watch the Demo](https://img.youtube.com/vi/bwmtiFe6iec/maxresdefault.jpg)](https://youtu.be/bwmtiFe6iec)
 
----
-
-## Features
-
-### 7-Pillar Validation
-Analyzes your business idea across 7 critical dimensions:
-- **Problem Severity** - Pain intensity, frequency, workarounds
-- **Market Opportunity** - TAM, adjacent markets, growth rate
-- **Competitive Landscape** - Competitor weaknesses, differentiation
-- **Solution Fit** - Problem-solution match, feature completeness
-- **Monetization Potential** - Pricing models, unit economics
-- **Go-to-Market Clarity** - Channel strategy, adoption readiness
-- **Timing and Trends** - Market timing, industry shifts, economics
-
-### Evidence Matrix
-**21 subcategories × 8 sources = 168 data points**
-
-Each subcategory is validated against 8 real-world sources:
-- Google (via Serper API)
-- Reddit (via PullPush API)
-- Hacker News
-- FRED Economic Data
-- OpenAlex Academic Papers
-- Wikipedia
-- Wikidata
-- RemoteOK Job Listings
-
-### Smart LLM Query Generation
-- AI generates targeted search queries for each pillar/subcategory/source combination
-- No generic keyword stuffing - context-aware queries
-- Fallback to template-based queries if LLM fails
-
-### Business Plan Generator
-Auto-generates investor-ready business plan with:
-- Executive Summary
-- Market Analysis
-- Financial Projections
-- Interactive charts (Recharts)
-
-### PRD Generator
-Comprehensive Product Requirements Document with:
-- User personas
-- User stories
-- Functional requirements (FR-001, FR-002...)
-- Non-functional requirements (NFR-001, NFR-002...)
-- Full traceability: Users → Stories → Requirements
-
-### Idea Refinement with AI
-- Identifies weak pillars (score < 70)
-- AI suggests improvements for each weak area
-- Regenerates refined 7-pillar description
-
-### Auto Coder (DNA to Working Code)
-- Reads the PRD
-- Generates working HTML/CSS/JS landing page
-- Live preview in iframe
-- Download or copy to clipboard
+**[Watch the full demo on YouTube](https://youtu.be/bwmtiFe6iec)**
 
 ---
 
-## How It Works
+## The Story
+
+Curatos DNA was built in a single hackathon sprint for the **Dynamous x Kiro Hackathon 2026**, competing against **160 submissions** from developers around the world. The challenge: build something meaningful using [Kiro CLI](https://kiro.dev).
+
+The idea was simple but ambitious — what if you could type a business idea and get an honest, evidence-based validation instead of gut feelings? Not a survey. Not a pitch deck template. A system that actually goes out, searches real sources, and tells you what the data says.
+
+The result was Curatos DNA: an app that takes a raw business idea, normalizes it into 7 validation pillars, generates ~50 targeted search queries, hits 8 real-world APIs in parallel (Google, Reddit, Hacker News, FRED economic data, OpenAlex academic papers, Wikipedia, Wikidata, RemoteOK job listings), and then uses AI to analyze every result for relevance, impact, and confidence. That's **168 data points** per validation (21 subcategories x 8 sources).
+
+It doesn't stop at scoring. It identifies your weak pillars, suggests improvements, generates investor-ready business plans with financial projections, creates full Product Requirements Documents with traceability (users -> stories -> requirements), and even auto-generates a working landing page from the PRD.
+
+The entire project was built using Kiro CLI's steering documents and feature specifications (see the `.kiro/` folder for the full development history).
+
+**It placed 5th out of 160 submissions.**
+
+---
+
+## What It Does
 
 ```
-1. User enters business idea + geography
+1. You type a business idea + target geography
    ↓
-2. AI normalizes into 7-pillar description
+2. AI normalizes it into a 7-pillar description
    ↓
-3. Smart query generation (LLM creates ~50 targeted queries)
+3. Smart query generation (~50 targeted queries)
    ↓
-4. Parallel API calls (8 sources × 21 subcategories)
+4. Parallel API calls across 8 real-world sources
    ↓
-5. LLM analyzes each source result (relevance, impact, confidence)
+5. AI analyzes each result (relevance, impact, confidence)
    ↓
-6. Scores calculated (subcategory → pillar → overall)
+6. Scores calculated: subcategory → pillar → overall
    ↓
-7. Evidence matrix displayed (color-coded scores)
+7. Color-coded evidence matrix displayed
    ↓
-8. AI refines weak pillars
+8. AI refines your weak pillars
    ↓
-9. Business plan + PRD generated
+9. Business plan + PRD auto-generated
    ↓
-10. AutoCoder builds working prototype
+10. AutoCoder builds a working prototype
 ```
+
+### The 7 Pillars
+
+| Pillar | What It Measures |
+|--------|-----------------|
+| Problem Severity | Pain intensity, frequency, workarounds |
+| Market Opportunity | TAM, adjacent markets, growth rate |
+| Competitive Landscape | Competitor weaknesses, differentiation |
+| Solution Fit | Problem-solution match, feature completeness |
+| Monetization Potential | Pricing models, unit economics |
+| Go-to-Market Clarity | Channel strategy, adoption readiness |
+| Timing and Trends | Market timing, industry shifts, economics |
+
+### The 8 Sources
+
+Google (Serper API), Reddit (PullPush API), Hacker News, FRED Economic Data, OpenAlex Academic Papers, Wikipedia, Wikidata, RemoteOK Job Listings
 
 ---
 
-## Local Installation (Optional)
+## What's Next
 
-**Note:** For the easiest experience, use the live demo at the Vercel URL - no installation required. Local setup is optional.
-
-### Prerequisites
-
-- **Node.js 18+**
-- **PostgreSQL database** (Docker recommended, or external provider like Neon)
-- **OpenRouter API key** - Requires funded account. Costs ~$0.01 per validation using gemini-2.5-flash-lite (~50 LLM calls per validation)
-- **Serper API key** - For Google search (2,500 free searches at serper.dev)
-
-### Installation Steps
-
-```bash
-# 1. Clone repository
-git clone https://github.com/carrgust/kiro-hackathon-gustavo-carriconde.git
-cd kiro-hackathon-gustavo-carriconde
-
-# 2. Install dependencies
-npm install
-
-# 3. Start PostgreSQL (if using Docker)
-docker-compose up -d
-
-# 4. Configure environment variables
-cp .env.local.example .env.local
-# Edit .env.local with your values (see below)
-
-# 5. Run database migrations
-npx prisma generate
-npx prisma migrate dev
-
-# 6. Start development server
-npm run dev
-
-# 7. Open browser
-# Navigate to http://localhost:5001
-```
-
-### Environment Variables
-
-Create `.env.local` with the following variables:
-
-```bash
-# Database connection string
-DATABASE_URL="postgresql://user:password@localhost:5432/curatos"
-
-# OpenRouter API key (required for AI features)
-OPENROUTER_API_KEY="sk-or-v1-..."
-
-# Serper API key (required for Google search)
-SERPER_API_KEY="..."
-
-# NextAuth secret (generate with: openssl rand -base64 32)
-NEXTAUTH_SECRET="..."
-```
+Curatos is a startup under **ResumoCast Ventures**. This hackathon prototype proved the concept — an improved commercial version of Curatos DNA will be available soon.
 
 ---
 
@@ -179,14 +92,28 @@ NEXTAUTH_SECRET="..."
 
 ---
 
-## Built with Kiro CLI
+## Local Development
 
-This entire project was built using [Kiro CLI](https://kiro.dev) for the **Dynamous x Kiro Hackathon 2026**.
+> This is the hackathon version. For the commercial product, visit [ResumoCast Ventures](https://resumocast.com).
 
-See the `.kiro/` folder for:
-- **Steering documents** - Product vision, technical architecture, project structure
-- **Feature specifications** - 7 detailed specs
-- **Development log** - Complete build timeline and decisions
+```bash
+git clone https://github.com/carrgust/kiro-hackathon-gustavo-carriconde.git
+cd kiro-hackathon-gustavo-carriconde
+npm install
+cp .env.local.example .env.local
+# Edit .env.local with your DATABASE_URL, OPENROUTER_API_KEY, SERPER_API_KEY, NEXTAUTH_SECRET
+npx prisma generate && npx prisma migrate dev
+npm run dev
+# Open http://localhost:5001
+```
+
+---
+
+## License
+
+All rights reserved. Copyright (c) 2026 ResumoCast Ventures.
+
+This code is provided for reference purposes only. No permission is granted to copy, modify, distribute, or use this software for any purpose without explicit written consent from ResumoCast Ventures.
 
 ---
 
@@ -194,5 +121,4 @@ See the `.kiro/` folder for:
 
 **Gustavo Martini Carriconde**
 
-Dynamous x Kiro Hackathon 2026
-
+[ResumoCast Ventures](https://resumocast.com)

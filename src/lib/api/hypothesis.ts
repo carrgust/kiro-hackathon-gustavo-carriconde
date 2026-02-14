@@ -1,7 +1,6 @@
 import { getProvider, Message } from '@/lib/api';
 import { Hypothesis } from '@/types/project';
 import { getTokenTracker } from './token-tracker';
-import { calculateConfidence } from '../confidence';
 import { ScoringEngine } from '@/lib/research/engines/scoring-engine';
 import { processValidationResult } from '@/lib/wtp-atp-utils';
 

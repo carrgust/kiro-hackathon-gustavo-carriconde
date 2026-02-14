@@ -385,10 +385,11 @@ export default function Dashboard() {
       setIsValidating(true);
       
       addRationale('[VALIDATING] Researching 7 pillars × 3 subcategories × 5 sources = 105 searches...');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Validation error:', error);
-      addRationale(`[ERROR] ${error.message}`);
-      toast.error(error.message || 'Validation failed');
+      const message = error instanceof Error ? error.message : 'Validation failed';
+      addRationale(`[ERROR] ${message}`);
+      toast.error(message);
     }
   }, [addRationale]);
 
@@ -461,9 +462,9 @@ Respond ONLY with valid JSON, no other text.`;
       const result = jsonMatch ? JSON.parse(jsonMatch[0]) : { sufficient: true, missing: [] };
       
       return result;
-    } catch (error: any) {
+    } catch (error) {
       // Ignore abort errors (user stopped processing)
-      if (error.name === 'AbortError') {
+      if (error instanceof DOMException && error.name === 'AbortError') {
         console.log('[AUTO-PRD] Assessment aborted by user');
         return { sufficient: false, missing: ['Processing stopped'] };
       }
@@ -718,9 +719,9 @@ Respond ONLY with valid JSON, no other text.`;
             break;
         }
         
-      } catch (error: any) {
+      } catch (error) {
         // Ignore abort errors (user stopped processing)
-        if (error.name === 'AbortError') {
+        if (error instanceof DOMException && error.name === 'AbortError') {
           console.log('Orchestrator loop aborted by user');
           return;
         }
@@ -1630,11 +1631,7 @@ This DNA contains ${dna.problems.length + dna.solutions.length + dna.requirement
         </div>
         
         <div style={{ display: activeSection === 'PROCESSING' ? 'block' : 'none' }}>
-          <ProcessingSection
-            key="processing"
-            isOnline={!!hypothesisService}
-            isProcessing={engineRunning}
-          >
+          <ProcessingSection key="processing">
             {/* Continuous Mode Indicator */}
             {continuousMode && (
               <div className="mb-4 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/50 rounded-lg p-3">

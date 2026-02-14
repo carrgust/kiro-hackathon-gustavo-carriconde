@@ -1,6 +1,7 @@
 import type { Feature, PRD } from './types';
 import { callLLM } from './llm';
 import type { DesignSystem } from './designer';
+import { stripCodeFences } from '@/lib/utils';
 
 export interface ValidationCheck {
   name: string;
@@ -76,10 +77,7 @@ ANTI-PATTERNS (NEVER do these):
     { role: 'user', content: userMessage },
   ], { maxTokens: 32000 });
 
-  let html = response.trim();
-  if (html.startsWith('```')) {
-    html = html.replace(/^```(?:html)?\n?/, '').replace(/\n?```$/, '');
-  }
+  const html = stripCodeFences(response);
 
   if (!html.includes('<html') && !html.includes('<!DOCTYPE')) {
     throw new Error('Response does not contain valid HTML');

@@ -1,11 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { FileText, Loader2, Pencil } from 'lucide-react';
+import { FileText, Pencil } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import GlassCard from '@/components/GlassCard';
-import { toast } from 'sonner';
 
 const ExecutiveSummaryCharts = dynamic(() => import('@/components/BusinessPlanCharts').then(m => ({ default: m.ExecutiveSummaryCharts })), { ssr: false });
 const MarketSalesCharts = dynamic(() => import('@/components/BusinessPlanCharts').then(m => ({ default: m.MarketSalesCharts })), { ssr: false });

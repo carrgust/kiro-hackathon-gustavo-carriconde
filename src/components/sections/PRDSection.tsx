@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, Users, BookOpen, Cpu, Shield, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 // TypeScript interfaces for structured PRD data
@@ -56,11 +56,11 @@ interface PRDSectionProps {
 
 // Section config
 const SECTIONS = [
-  { key: 'executive_summary' as const, label: 'Executive Summary', icon: FileText },
-  { key: 'target_users' as const, label: 'Target Users & Personas', icon: Users },
-  { key: 'user_stories' as const, label: 'User Stories', icon: BookOpen },
-  { key: 'functional_requirements' as const, label: 'Functional Requirements', icon: Cpu },
-  { key: 'non_functional_requirements' as const, label: 'Non-Functional Requirements', icon: Shield },
+  { key: 'executive_summary' as const, label: 'Executive Summary' },
+  { key: 'target_users' as const, label: 'Target Users & Personas' },
+  { key: 'user_stories' as const, label: 'User Stories' },
+  { key: 'functional_requirements' as const, label: 'Functional Requirements' },
+  { key: 'non_functional_requirements' as const, label: 'Non-Functional Requirements' },
 ];
 
 export default function PRDSection({ prdData, isGenerating, onGenerate, canGenerate, onNextStage }: PRDSectionProps) {
@@ -123,7 +123,7 @@ export default function PRDSection({ prdData, isGenerating, onGenerate, canGener
       {prdData && (
         <>
           <div className="rounded-2xl p-6 space-y-6" style={{ background: 'rgba(6, 182, 212, 0.08)', border: '1px solid rgba(6, 182, 212, 0.15)' }}>
-            {SECTIONS.map(({ key, label, icon: Icon }) => {
+            {SECTIONS.map(({ key, label }) => {
               if (!revealedSections.includes(key)) return null;
 
               const isExpanded = expandedSections.has(key);

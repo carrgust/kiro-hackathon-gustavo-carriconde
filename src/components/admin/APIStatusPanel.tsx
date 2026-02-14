@@ -110,14 +110,15 @@ export default function APIStatusPanel() {
           fullResponse: result.fullResponse,
         },
       }));
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       setApiStates(prev => ({
         ...prev,
         [apiId]: {
           status: 'error',
           lastTested: new Date(),
-          error: error.message,
-          fullResponse: { error: error.message },
+          error: message,
+          fullResponse: { error: message },
         },
       }));
     }
@@ -144,13 +145,14 @@ export default function APIStatusPanel() {
         });
         const result: APITestResult = await res.json();
         return { apiId: api.id, result };
-      } catch (error: any) {
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
         return {
           apiId: api.id,
           result: {
             success: false,
-            error: error.message,
-            fullResponse: { error: error.message },
+            error: message,
+            fullResponse: { error: message },
           } as APITestResult,
         };
       }

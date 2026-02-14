@@ -2,14 +2,10 @@ import { ReactNode } from 'react';
 
 interface ProcessingSectionProps {
   children: ReactNode;
-  isOnline: boolean;
-  isProcessing: boolean;
 }
 
 export default function ProcessingSection({
   children,
-  isOnline,
-  isProcessing,
 }: ProcessingSectionProps) {
   return (
     <div

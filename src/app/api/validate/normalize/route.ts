@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { NORMALIZER_PROMPT } from '@/lib/validation/prompts';
 import { callWithFallback } from '@/lib/validation/model-client';
+import { stripCodeFences } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,15 +56,7 @@ export async function POST(req: NextRequest) {
     // Parse JSON response
     let analysis: Record<string, string>;
     try {
-      // Remove markdown code blocks if present
-      let cleanResponse = response.trim();
-      if (cleanResponse.startsWith('```json')) {
-        cleanResponse = cleanResponse.replace(/```json\n?/, '').replace(/```\s*$/, '');
-      } else if (cleanResponse.startsWith('```')) {
-        cleanResponse = cleanResponse.replace(/```\n?/, '').replace(/```\s*$/, '');
-      }
-      
-      analysis = JSON.parse(cleanResponse);
+      analysis = JSON.parse(stripCodeFences(response));
       
       // Validate required fields
       const requiredFields = ['problem', 'market', 'competition', 'solution', 'monetization', 'gtm', 'timing'];

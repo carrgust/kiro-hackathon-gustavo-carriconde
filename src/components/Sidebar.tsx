@@ -66,12 +66,12 @@ export default function Sidebar({ activeSection, onSectionChange, unlockedSectio
               }}
               disabled={!isUnlocked}
             >
-              <Icon 
-                size={20} 
-                className={isActive && isUnlocked ? 'text-white' : isUnlocked ? 'text-gray-500' : 'text-gray-500'} 
+              <Icon
+                size={20}
+                className={isActive && isUnlocked ? 'text-white' : 'text-gray-500'}
               />
-              <span 
-                className={`text-sm whitespace-nowrap ${isActive && isUnlocked ? 'text-white font-semibold' : isUnlocked ? 'text-gray-400 font-medium' : 'text-gray-400 font-medium'}`}
+              <span
+                className={`text-sm whitespace-nowrap ${isActive && isUnlocked ? 'text-white font-semibold' : 'text-gray-400 font-medium'}`}
               >
                 {label}
               </span>

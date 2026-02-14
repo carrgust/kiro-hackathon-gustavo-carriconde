@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { callWithFallback } from '@/lib/validation/model-client';
+import { stripCodeFences } from '@/lib/utils';
 
 const BUSINESS_PLAN_PROMPT = `You are a business plan expert. Generate a concise, investor-ready business plan in JSON format.
 
@@ -143,11 +144,7 @@ Generate a comprehensive business plan with chart data based on this validated d
     // Parse and validate JSON
     let businessPlan;
     try {
-      let cleanResponse = response.trim();
-      if (cleanResponse.startsWith('```json')) {
-        cleanResponse = cleanResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      }
-      businessPlan = JSON.parse(cleanResponse);
+      businessPlan = JSON.parse(stripCodeFences(response));
     } catch (parseError) {
       console.error('[GenerateBusinessPlan] JSON parse error:', parseError);
       return NextResponse.json(
@@ -243,10 +240,10 @@ Generate a comprehensive business plan with chart data based on this validated d
 
     return NextResponse.json({ businessPlan });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('[GenerateBusinessPlan] Error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to generate business plan' },
+      { error: error instanceof Error ? error.message : 'Failed to generate business plan' },
       { status: 500 }
     );
   }

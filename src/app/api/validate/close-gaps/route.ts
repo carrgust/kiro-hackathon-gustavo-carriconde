@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { callWithFallback } from '@/lib/validation/model-client';
+import { stripCodeFences } from '@/lib/utils';
 
 interface Subcategory {
   name: string;
@@ -83,13 +84,7 @@ Return JSON only: { "diagnosis": "...", "actions": ["...", "...", "..."], "prior
 
         console.log(`[CloseGaps] LLM response for ${pillar.name}:`, response.substring(0, 100));
 
-        // Parse JSON response
-        let cleanResponse = response.trim();
-        if (cleanResponse.startsWith('```json')) {
-          cleanResponse = cleanResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-        }
-
-        const analysis = JSON.parse(cleanResponse);
+        const analysis = JSON.parse(stripCodeFences(response));
 
         gaps.push({
           pillarName: pillar.name,
@@ -137,12 +132,7 @@ Return JSON: { "problem": "...", "market": "...", "competition": "...", "solutio
 
         console.log('[CloseGaps] Improved idea response length:', response.length);
 
-        let cleanResponse = response.trim();
-        if (cleanResponse.startsWith('```json')) {
-          cleanResponse = cleanResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-        }
-
-        improvedIdea = JSON.parse(cleanResponse);
+        improvedIdea = JSON.parse(stripCodeFences(response));
         console.log('[CloseGaps] Successfully generated improved idea');
       } catch (error) {
         console.error('[CloseGaps] Failed to generate improved idea:', error);

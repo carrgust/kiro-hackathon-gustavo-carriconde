@@ -1,5 +1,6 @@
 import type { PRD, Feature } from './types';
 import { callLLM } from './llm';
+import { stripCodeFences } from '@/lib/utils';
 
 const SYSTEM_PROMPT = `You are a software architect. Decompose this PRD into implementable UI features for a single-page HTML mockup.
 
@@ -33,9 +34,7 @@ export async function decomposePRDToFeatures(prd: PRD): Promise<Feature[]> {
 
   let parsed: any[];
   try {
-    let cleaned = response.trim();
-    if (cleaned.startsWith('```')) cleaned = cleaned.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
-    const data = JSON.parse(cleaned);
+    const data = JSON.parse(stripCodeFences(response));
     parsed = Array.isArray(data) ? data : data.features || [];
   } catch {
     throw new Error('Failed to parse features JSON');

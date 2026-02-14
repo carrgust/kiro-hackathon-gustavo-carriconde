@@ -52,11 +52,6 @@ export function downloadCSV(hypotheses: Hypothesis[], filename = 'validated-hypo
   downloadFile(exportToCSV(hypotheses), `${filename}.csv`, 'text/csv');
 }
 
-// Markdown Export for PRD
-export function exportPRDToMarkdown(prdContent: string): string {
-  return prdContent;
-}
-
 export function downloadMarkdown(content: string, filename = 'prd') {
   downloadFile(content, `${filename}.md`, 'text/markdown');
 }

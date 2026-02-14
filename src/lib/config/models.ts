@@ -16,9 +16,8 @@ export const FALLBACK_CHAIN = [
 // AutoCoder-specific fallback chain (designer, decomposer, implementer)
 export const AUTOCODER_FALLBACK_CHAIN = [
   'google/gemini-2.5-flash-lite',
-  'meta-llama/llama-4-scout',    // Fallback     
+  'meta-llama/llama-4-scout',
   'qwen/qwen-2.5-7b-instruct',
-
 ] as const;
 
 // Convenience exports (derived from position)

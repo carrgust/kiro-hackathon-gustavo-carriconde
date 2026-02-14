@@ -58,13 +58,6 @@ export const SECTION_COLORS = {
 export type SectionKey = keyof typeof SECTION_COLORS;
 
 /**
- * Get section color configuration
- */
-export function getSectionColor(section: SectionKey) {
-  return SECTION_COLORS[section];
-}
-
-/**
  * Status colors for indicators
  */
 export const STATUS_COLORS = {

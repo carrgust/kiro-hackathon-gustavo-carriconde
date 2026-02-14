@@ -1,8 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Search, MessageCircle, Terminal, TrendingUp, BookOpen, Globe, Database, Briefcase, RotateCcw, Target, CheckCircle2, Pencil, CheckCircle } from 'lucide-react';
-import { getSourceFavicon, getSourceLabel } from '@/lib/source-favicons';
+import { Target, Pencil } from 'lucide-react';
 import { useRef, useEffect, useState } from 'react';
 import GlassCard from '@/components/GlassCard';
 import EvidenceMatrix from './EvidenceMatrix';
@@ -18,17 +17,6 @@ import '@/styles/validation-dashboard.css';
  * 4. Perfect typography - SF Pro hierarchy
  * 5. Mathematical spacing - 8px grid
  */
-
-const API_ICONS: Record<string, React.ElementType> = {
-  'search': Search,
-  'message-circle': MessageCircle,
-  'terminal': Terminal,
-  'trending-up': TrendingUp,
-  'book-open': BookOpen,
-  'globe': Globe,
-  'database': Database,
-  'briefcase': Briefcase,
-};
 
 interface Source {
   apiId?: string;
@@ -409,135 +397,3 @@ export default function ValidationDashboardV2({
   );
 }
 
-// Pillar Card Component
-function PillarCard({
-  pillar,
-  onSourceClick,
-  delay
-}: {
-  pillar: Pillar;
-  onSourceClick: (s: Source) => void;
-  delay: number;
-}) {
-  return (
-    <motion.div
-      className="vd-pillar-card"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
-    >
-      {/* Header */}
-      <div className="vd-pillar-header">
-        <h3 className="vd-pillar-title">{pillar.name}</h3>
-        <span className="vd-pillar-score">{pillar.score || 0}</span>
-      </div>
-
-      {/* Progress Bar */}
-      <div style={{ 
-        height: '8px', 
-        background: 'rgba(255, 255, 255, 0.05)', 
-        borderRadius: '4px', 
-        overflow: 'hidden',
-        margin: '16px 0'
-      }}>
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${pillar.score || 0}%` }}
-          transition={{ duration: 1, delay: delay + 0.2 }}
-          style={{
-            height: '100%',
-            background: (pillar.score || 0) >= 70 
-              ? 'linear-gradient(90deg, #10B981, #34D399)' 
-              : (pillar.score || 0) >= 50 
-              ? 'linear-gradient(90deg, #F59E0B, #FBBF24)' 
-              : 'linear-gradient(90deg, #EF4444, #F87171)',
-            borderRadius: '4px'
-          }}
-        />
-      </div>
-
-      {/* Separator */}
-      <div className="vd-pillar-separator" />
-
-      {/* Subcategories */}
-      <div className="vd-subcategory-list">
-        {pillar.subcategories.map((sub) => (
-          <SubcategoryRow
-            key={sub.key}
-            subcategory={sub}
-            onSourceClick={onSourceClick}
-          />
-        ))}
-      </div>
-    </motion.div>
-  );
-}
-
-// Subcategory Row Component
-function SubcategoryRow({
-  subcategory,
-  onSourceClick
-}: {
-  subcategory: Subcategory;
-  onSourceClick: (s: Source) => void;
-}) {
-  return (
-    <div className="vd-subcategory-row">
-      <span className="vd-subcategory-name">{subcategory.name}</span>
-      <div className="vd-subcategory-sources" style={{ display: 'flex', alignItems: 'center' }}>
-        {subcategory.sources.filter(s => s.status === 'found').map((source, idx) => {
-          // Get source identifier from various possible fields
-          const sourceId = source.apiId || source.apiName || source.type || source.name || '';
-          const faviconUrl = getSourceFavicon(sourceId, source.url);
-          const sourceLabel = getSourceLabel(sourceId);
-          const isActive = source.status === 'found';
-          
-          return (
-            <button
-              key={idx}
-              onClick={() => isActive && onSourceClick(source)}
-              disabled={!isActive}
-              title={`${sourceLabel}: ${source.title || source.status}`}
-              style={{
-                marginLeft: idx === 0 ? '0' : '-8px',
-                position: 'relative',
-                zIndex: subcategory.sources.length - idx,
-                cursor: isActive ? 'pointer' : 'default',
-                opacity: isActive ? 1 : 0.4,
-                transition: 'all 0.2s',
-                background: 'transparent',
-                border: 'none',
-                padding: 0
-              }}
-              onMouseEnter={(e) => {
-                if (isActive) {
-                  e.currentTarget.style.transform = 'scale(1.1)';
-                  e.currentTarget.style.zIndex = '100';
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.zIndex = String(subcategory.sources.length - idx);
-              }}
-            >
-              <img
-                src={faviconUrl}
-                alt="Source favicon"
-                className="rounded-full"
-                style={{
-                  width: '24px',
-                  height: '24px',
-                  border: '2px solid rgba(255, 255, 255, 0.2)',
-                  background: '#1a1a1a',
-                  objectFit: 'contain',
-                  padding: '2px'
-                }}
-              />
-            </button>
-          );
-        })}
-      </div>
-      <span className="vd-subcategory-score">{subcategory.score || 0}</span>
-    </div>
-  );
-}
