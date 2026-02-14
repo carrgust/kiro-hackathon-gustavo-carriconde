@@ -109,6 +109,34 @@ npm run dev
 
 ---
 
+## Contributing
+
+Contributions are welcome! If you'd like to help improve Curatos DNA, here's how:
+
+1. **Fork** the repository
+2. **Create a branch** for your feature or fix (`git checkout -b feature/my-feature`)
+3. **Commit** your changes with clear, descriptive messages
+4. **Push** to your fork and open a **Pull Request**
+
+### Guidelines
+
+- Keep PRs focused — one feature or fix per PR
+- Follow the existing code style (TypeScript, Tailwind CSS)
+- Test your changes locally before submitting
+- Describe what your PR does and why in the description
+
+### Areas Where Help Is Appreciated
+
+- New data source integrations (beyond the current 8)
+- Improved scoring algorithms
+- UI/UX enhancements
+- Performance optimizations
+- Bug fixes and documentation improvements
+
+By submitting a contribution, you agree that your work will be owned by ResumoCast Ventures under the same terms as the rest of the project.
+
+---
+
 ## License
 
 All rights reserved. Copyright (c) 2026 ResumoCast Ventures.
